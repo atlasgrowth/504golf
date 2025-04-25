@@ -34,7 +34,7 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
     setAlertOpen(true);
   };
   
-  const markAsServed = async (orderId: number) => {
+  const markAsServed = async (orderId: string) => {
     try {
       await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'served' });
       setDetailsOpen(false);

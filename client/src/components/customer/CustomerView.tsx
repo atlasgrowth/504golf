@@ -17,12 +17,34 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
   const { toast } = useToast();
   const { lastMessage } = useWebSocket(bayNumber);
   
-  const { data: bay, isLoading: bayLoading } = useQuery({
+  const { data: bay, isLoading: bayLoading } = useQuery<{
+    id: number;
+    number: number;
+    floor: number;
+    status: string;
+  }>({
     queryKey: [`/api/bay/${bayNumber}`],
   });
 
   // Get menu
-  const { data: menu, isLoading: menuLoading } = useQuery({
+  const { data: menu = [], isLoading: menuLoading } = useQuery<Array<{
+    category: {
+      id: number;
+      name: string;
+      slug: string;
+    };
+    items: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      category: string;
+      price_cents: number;
+      station: string;
+      prep_seconds: number;
+      image_url: string | null;
+      active: boolean;
+    }>;
+  }>>({
     queryKey: ['/api/menu'],
   });
 
