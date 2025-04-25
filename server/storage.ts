@@ -424,9 +424,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    // Fetch the menu item to get its price_cents
+    const menuItem = await this.getMenuItemById(orderItem.menuItemId);
+    
+    // Add price_cents and station info from the menu item
+    const orderItemWithPrice = {
+      ...orderItem,
+      price_cents: menuItem?.price_cents || 0,
+      station: orderItem.station || menuItem?.station || null,
+      cookSeconds: menuItem?.prep_seconds || 300
+    };
+    
     const [newOrderItem] = await db
       .insert(orderItems)
-      .values(orderItem)
+      .values(orderItemWithPrice)
       .returning();
     return newOrderItem;
   }
