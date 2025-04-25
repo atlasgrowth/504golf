@@ -87,17 +87,39 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   estimatedCompletionTime: true,
 });
 
+// Order item status enum
+export enum OrderItemStatus {
+  NEW = "NEW",
+  COOKING = "COOKING",
+  READY = "READY",
+  DELIVERED = "DELIVERED",
+  VOIDED = "VOIDED"
+}
+
+// Order status enum
+export enum OrderStatus {
+  NEW = "NEW",
+  COOKING = "COOKING",
+  READY = "READY",
+  SERVED = "SERVED",
+  CANCELLED = "CANCELLED"
+}
+
 // Order items table
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderId: uuid("order_id").notNull().references(() => orders.id),
   menuItemId: uuid("menu_item_id").notNull().references(() => menuItems.id),
   quantity: integer("quantity").notNull(),
-  firedAt: timestamp("fired_at"),
-  readyBy: timestamp("ready_by"),
-  completed: boolean("completed").notNull().default(false),
-  notes: text("notes"),
-  station: text("station"), // Added for P2 - copying from menuItem but storing it with the order
+  station: text("station"), // The station responsible for preparing the item
+  status: text("status").$type<OrderItemStatus>().default(OrderItemStatus.NEW), // Current status of the item
+  cookSeconds: integer("cook_seconds").default(300), // Time in seconds it should take to cook
+  firedAt: timestamp("fired_at", { withTimezone: true }), // When cooking started
+  readyAt: timestamp("ready_at", { withTimezone: true }), // When item should be ready
+  readyBy: timestamp("ready_by", { withTimezone: true }), // Legacy field - use readyAt instead
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }), // When the item was delivered to customer
+  completed: boolean("completed").notNull().default(false), // Legacy field - true if delivered/completed
+  notes: text("notes"), // Special preparation instructions
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({

@@ -6,10 +6,10 @@
  */
 
 import { storage } from './storage';
-import { OrderItemStatus } from '../packages/shared/src/schema';
 import { broadcastUpdate, sendBayUpdate } from './ws';
 import { toOrderItemDTO } from './dto';
-import { ItemReadyMessage } from '../packages/shared/src/types';
+import { db } from './db';
+import { sql } from 'drizzle-orm';
 
 /**
  * Check for items that are cooking and should be ready
@@ -17,57 +17,35 @@ import { ItemReadyMessage } from '../packages/shared/src/types';
  */
 export async function checkCookingItems() {
   try {
-    // Get all currently cooking items from the database
-    const cookingItems = await storage.getOrderItemsByStation('*', OrderItemStatus.COOKING);
-    const now = new Date();
+    console.log('Checking for items that need to be marked as ready...');
     
-    for (const item of cookingItems) {
-      // Check if item has a readyAt timestamp and it's in the past
-      if (item.readyAt && new Date(item.readyAt) <= now) {
-        console.log(`Item ${item.id} should be marked as ready based on timer`);
-        
-        // Mark the item as ready
-        const updatedItem = await storage.markOrderItemReady(item.id);
-        
-        if (updatedItem) {
-          // Get the order to send bay info
-          const order = await storage.getOrderById(updatedItem.orderId);
-          
-          if (order) {
-            // Get bay info
-            const bay = await storage.getBayById(order.bayId);
-            
-            // Calculate elapsed time in seconds
-            const firedTime = updatedItem.firedAt ? new Date(updatedItem.firedAt).getTime() : Date.now();
-            const readyTime = updatedItem.readyAt ? new Date(updatedItem.readyAt).getTime() : Date.now();
-            const elapsedSeconds = Math.floor((readyTime - firedTime) / 1000);
-            
-            // Create properly typed item ready message
-            const itemReadyMessage: ItemReadyMessage = {
-              type: 'item_ready',
-              data: {
-                orderId: updatedItem.orderId,
-                orderItem: toOrderItemDTO(updatedItem),
-                station: updatedItem.station || '',
-                readyAt: updatedItem.readyAt ? updatedItem.readyAt.toISOString() : new Date().toISOString(),
-                elapsedSeconds,
-                bayId: order.bayId,
-                bayNumber: bay?.number || order.bayId,
-                status: 'READY'
-              }
-            };
-            
-            // Broadcast to all kitchen clients
-            broadcastUpdate('item_ready', itemReadyMessage.data);
-            
-            // Send update to the specific bay
-            sendBayUpdate(order.bayId, 'item_ready', itemReadyMessage.data);
-          }
-        }
+    // Temporarily disable automatic timer checks until the schema is updated
+    console.log('Timer checks paused until schema migration is complete');
+    return;
+
+    /*
+    // The code below will be re-enabled after migration is complete
+    // and the schema has the necessary status fields
+    
+    // Use a simplified query approach
+    try {
+      const { rows } = await db.execute(sql`
+        SELECT * FROM order_items 
+        WHERE fired_at IS NOT NULL 
+        AND completed = false
+      `);
+      
+      console.log(`Found ${rows.length} items that are cooking`);
+      
+      for (const item of rows) {
+        // Process cooking items logic here
       }
+    } catch (queryError) {
+      console.error('Error querying cooking items:', queryError);
     }
+    */
   } catch (error) {
-    console.error('Error checking cooking items:', error);
+    console.error('Error in timer check:', error);
   }
 }
 
