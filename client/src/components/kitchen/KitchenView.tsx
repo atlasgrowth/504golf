@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import OrderPriorityTabs from "./OrderPriorityTabs";
 import KitchenOrderGrid from "./KitchenOrderGrid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OrderSummary } from "@shared/schema";
 
 export default function KitchenView() {
   const { toast } = useToast();
@@ -15,7 +16,7 @@ export default function KitchenView() {
   
   // Get active orders based on selected tab
   const endpoint = activeTab === "all" ? "/api/orders" : `/api/orders/${activeTab}`;
-  const { data: orders, isLoading: ordersLoading } = useQuery({
+  const { data: orders, isLoading: ordersLoading } = useQuery<OrderSummary[]>({
     queryKey: [endpoint],
   });
   
@@ -39,10 +40,11 @@ export default function KitchenView() {
   // Handle WebSocket messages
   useEffect(() => {
     if (lastMessage?.type === 'ordersUpdate') {
-      queryClient.setQueryData(['/api/orders'], lastMessage.data);
+      const updatedOrders = lastMessage.data as OrderSummary[];
+      queryClient.setQueryData(['/api/orders'], updatedOrders);
       
       // Check for new orders and notify
-      if (orders && lastMessage.data.length > orders.length) {
+      if (orders && updatedOrders.length > orders.length) {
         toast({
           title: 'New Order Received',
           description: `A new order has been placed.`,
@@ -54,13 +56,13 @@ export default function KitchenView() {
   // Count orders by status
   const countByStatus = {
     all: orders?.length || 0,
-    preparing: orders?.filter(o => o.status === 'preparing').length || 0,
-    ready: orders?.filter(o => o.status === 'ready').length || 0,
-    delayed: orders?.filter(o => o.isDelayed).length || 0,
+    preparing: orders?.filter((o: OrderSummary) => o.status === 'preparing').length || 0,
+    ready: orders?.filter((o: OrderSummary) => o.status === 'ready').length || 0,
+    delayed: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
   
   // Filter orders based on active tab
-  const filteredOrders = orders?.filter(order => {
+  const filteredOrders = orders?.filter((order: OrderSummary) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'delayed') return order.isDelayed;
     return order.status === activeTab;

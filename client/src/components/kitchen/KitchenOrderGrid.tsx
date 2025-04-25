@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { OrderSummary } from "@shared/schema";
+import { OrderSummary, OrderWithItems } from "@shared/schema";
 
 interface KitchenOrderGridProps {
   orders: OrderSummary[];
@@ -49,7 +49,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   
   // Load full order details
   const getOrderDetails = (orderId: string) => {
-    return useQuery({
+    return useQuery<OrderWithItems>({
       queryKey: [`/api/order/${orderId}`],
     });
   };
@@ -148,7 +148,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                             {item.quantity}x {item.menuItem.name}
                           </span>
                         </div>
-                        <span className="text-xs text-neutral-500">{item.menuItem.prepTime} min prep</span>
+                        <span className="text-xs text-neutral-500">{item.menuItem.prep_seconds / 60} min prep</span>
                       </div>
                     ))
                   ) : (
