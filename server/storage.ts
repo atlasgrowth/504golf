@@ -240,10 +240,10 @@ export class DatabaseStorage implements IStorage {
                 id: item.menuItemId,
                 name: 'Unknown Item',
                 description: 'Item details unavailable',
-                price: 0,
+                price_cents: 0, // Changed from price to price_cents to match schema
                 category: 'Unknown',
                 station: item.station || 'Unknown',
-                cookMinutes: 5
+                prep_seconds: 300 // Changed from cookMinutes to prep_seconds to match schema
               }
             };
           } catch (error) {
@@ -255,10 +255,12 @@ export class DatabaseStorage implements IStorage {
                 id: item.menuItemId,
                 name: 'Error: Item Unavailable',
                 description: 'Could not retrieve item details',
-                price: 0,
+                price_cents: 0, // Changed from price to price_cents to match schema
                 category: 'Unknown',
                 station: item.station || 'Unknown',
-                cookMinutes: 5
+                prep_seconds: 300, // Changed from cookMinutes to prep_seconds to match schema
+                image_url: null,
+                active: true
               }
             };
           }
