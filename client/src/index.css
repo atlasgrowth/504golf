@@ -2,187 +2,187 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Modern 2025 Color Scheme */
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --muted: 210 40% 93%;
-  --muted-foreground: 215 16% 47%;
-  
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  
-  /* Subtle glass effect base */
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  
-  /* Five O Four Golf primary green */
-  --primary: 147 100% 35%;
-  --primary-foreground: 0 0% 100%;
-  
-  /* Secondary color - dark blue for contrast */
-  --secondary: 210 100% 30%;
-  --secondary-foreground: 210 40% 98%;
-  
-  /* Accent color - green */
-  --accent: 142 71% 45%;
-  --accent-foreground: 222 47% 11%;
-  
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  
-  /* Success color */
-  --success: 142 71% 45%;
-  --success-foreground: 210 40% 98%;
-  
-  /* Warning color */
-  --warning: 38 92% 50%;
-  --warning-foreground: 222 47% 11%;
-  
-  --ring: 196 100% 47%;
-  --radius: 1rem;
-}
-
-.dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  
-  /* Dark mode glass effect base */
-  --card: 222 47% 12%;
-  --card-foreground: 210 40% 98%;
-  
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  
-  /* Vibrant primary in dark mode */
-  --primary: 196 100% 50%;
-  --primary-foreground: 222 47% 11%;
-  
-  /* Secondary color in dark mode */
-  --secondary: 262 83% 63%;
-  --secondary-foreground: 210 40% 98%;
-  
-  /* Accent color in dark mode */
-  --accent: 142 71% 48%;
-  --accent-foreground: 210 40% 98%;
-  
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  
-  /* Success color in dark mode */
-  --success: 142 71% 45%;
-  --success-foreground: 210 40% 98%;
-  
-  /* Warning color in dark mode */
-  --warning: 38 92% 50%;
-  --warning-foreground: 222 47% 11%;
-  
-  --ring: 196 100% 50%;
-  --radius: 1rem;
-}
-
 @layer base {
-  * {
-    @apply border-border;
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 151 55% 42%;
+    --primary-foreground: 151 55% 97%;
+
+    --secondary: 151 55% 48%;
+    --secondary-foreground: 151 55% 97%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 144 70% 42%;
+    --accent-foreground: 144 70% 97%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 151 55% 42%;
+
+    --radius: 0.5rem;
   }
 
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-    background-image: 
-      radial-gradient(at 100% 0%, hsla(196, 100%, 85%, 0.15) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(262, 83%, 85%, 0.15) 0px, transparent 50%);
-    background-attachment: fixed;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 151 55% 52%;
+    --primary-foreground: 151 5% 10%;
+
+    --secondary: 151 55% 42%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 144 70% 42%;
+    --accent-foreground: 144 5% 10%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 151 55% 50%;
   }
 }
 
 @layer components {
-  /* Five O Four Golf Card Styles */
-  .card-glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
-  }
-  
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  /* Five O Four Golf specific components */
+  .fiveofour-card {
+    @apply bg-white rounded-lg border border-emerald-200 shadow-md overflow-hidden;
   }
 
-  .fiveofour-header {
+  .fiveofour-card-header {
+    @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white p-4 font-bold;
+  }
+
+  .btn-modern {
+    @apply relative overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px];
+  }
+
+  .btn-modern::after {
+    @apply content-[''] absolute bottom-0 left-0 w-full h-0 bg-white opacity-20 transition-all duration-300;
+  }
+
+  .btn-modern:hover::after {
+    @apply h-full;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:translate-y-[-4px] hover:shadow-md;
+  }
+
+  .section-divider {
+    @apply flex items-center my-4;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    @apply content-[''] block h-px bg-emerald-200 flex-1;
+  }
+
+  .section-divider::before {
+    @apply mr-3;
+  }
+
+  .section-divider::after {
+    @apply ml-3;
+  }
+
+  .section-divider span {
+    @apply text-sm text-emerald-600 font-medium;
+  }
+}
+
+.fiveofour-header {
     @apply border-l-4 border-primary bg-white p-6 rounded-xl shadow-md;
   }
-  
+
   .fiveofour-card {
     @apply bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-primary;
   }
-  
+
   .fiveofour-button {
     @apply bg-primary text-white py-2.5 px-4 rounded-lg hover:brightness-110 transition-all shadow-md font-medium;
   }
-  
+
   /* Glass morphism effects */
   .glassmorphism {
     @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
   }
-  
+
   .glassmorphism-dark {
     @apply bg-black/50 backdrop-blur-md border border-white/10 shadow-lg;
   }
-  
+
   /* Button styles */
   .btn-modern {
     @apply rounded-full font-medium shadow-md transition-all duration-300 
            hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px];
   }
-  
+
   /* Interactive hover effects */
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
   }
-  
+
   /* Status indicators */
   .status-badge {
     @apply px-3 py-1 rounded-full text-sm font-medium;
   }
-  
+
   .status-badge-success {
     @apply bg-success/20 text-success border border-success/30;
   }
-  
+
   .status-badge-warning {
     @apply bg-warning/20 text-warning-foreground border border-warning/30;
   }
-  
+
   .status-badge-error {
     @apply bg-destructive/20 text-destructive border border-destructive/30;
   }
-  
+
   /* Section dividers */
   .section-divider {
     @apply flex items-center my-8;
   }
-  
+
   .section-divider::before,
   .section-divider::after {
     @apply flex-1 h-px bg-border content-[''];
   }
-  
+
   .section-divider span {
     @apply mx-4 text-muted-foreground;
   }
-  
+
   /* Navigation */
   .nav-item {
     @apply flex items-center space-x-2 px-4 py-2 rounded-lg transition-all
            hover:bg-muted cursor-pointer;
   }
-  
+
   .nav-item.active {
     @apply bg-primary/10 text-primary;
   }
@@ -228,4 +228,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary));
 }
-
