@@ -35,18 +35,18 @@ export interface IStorage {
   
   // Orders
   getOrders(): Promise<Order[]>;
-  getOrderById(id: number): Promise<Order | undefined>;
-  getOrderWithItems(id: number): Promise<OrderWithItems | undefined>;
+  getOrderById(id: string): Promise<Order | undefined>;
+  getOrderWithItems(id: string): Promise<OrderWithItems | undefined>;
   getOrdersByBayId(bayId: number): Promise<Order[]>;
   getActiveOrders(): Promise<OrderSummary[]>;
   getOrdersByStatus(status: string): Promise<OrderSummary[]>;
   createOrder(order: InsertOrder, cart: Cart): Promise<Order>;
-  updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   
   // Order Items
-  getOrderItems(orderId: number): Promise<OrderItem[]>;
+  getOrderItems(orderId: string): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
-  updateOrderItemStatus(id: number, completed: boolean): Promise<OrderItem | undefined>;
+  updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined>;
   
   // Initialize with sample data
   initializeData(): Promise<void>;
@@ -183,15 +183,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(orders.createdAt));
   }
 
-  async getOrderById(id: number): Promise<Order | undefined> {
+  async getOrderById(id: string): Promise<Order | undefined> {
     const [order] = await db
       .select()
       .from(orders)
-      .where(eq(orders.id, id.toString()));
+      .where(eq(orders.id, id));
     return order || undefined;
   }
 
-  async getOrderWithItems(id: number): Promise<OrderWithItems | undefined> {
+  async getOrderWithItems(id: string): Promise<OrderWithItems | undefined> {
     const order = await this.getOrderById(id);
     if (!order) return undefined;
 
@@ -242,7 +242,7 @@ export class DatabaseStorage implements IStorage {
     const summaries = await Promise.all(
       activeOrders.map(async (order) => {
         const bay = await this.getBayById(order.bayId);
-        const items = await this.getOrderItems(Number(order.id));
+        const items = await this.getOrderItems(order.id);
         
         // Calculate how many minutes ago the order was created
         const now = new Date();
@@ -281,7 +281,7 @@ export class DatabaseStorage implements IStorage {
     const summaries = await Promise.all(
       ordersWithStatus.map(async (order) => {
         const bay = await this.getBayById(order.bayId);
-        const items = await this.getOrderItems(Number(order.id));
+        const items = await this.getOrderItems(order.id);
         
         // Calculate how many minutes ago the order was created
         const now = new Date();
@@ -329,22 +329,22 @@ export class DatabaseStorage implements IStorage {
     return newOrder;
   }
 
-  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     const [updatedOrder] = await db
       .update(orders)
       .set({ status: status.toUpperCase() })
-      .where(eq(orders.id, id.toString()))
+      .where(eq(orders.id, id))
       .returning();
     
     return updatedOrder || undefined;
   }
 
   // Order Items
-  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+  async getOrderItems(orderId: string): Promise<OrderItem[]> {
     return db
       .select()
       .from(orderItems)
-      .where(eq(orderItems.orderId, orderId.toString()));
+      .where(eq(orderItems.orderId, orderId));
   }
 
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
@@ -355,11 +355,11 @@ export class DatabaseStorage implements IStorage {
     return newOrderItem;
   }
 
-  async updateOrderItemStatus(id: number, completed: boolean): Promise<OrderItem | undefined> {
+  async updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined> {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({ completed })
-      .where(eq(orderItems.id, id.toString()))
+      .where(eq(orderItems.id, id))
       .returning();
     
     return updatedOrderItem || undefined;

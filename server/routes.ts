@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/order/:id', async (req: Request, res: Response) => {
     try {
-      const orderId = parseInt(req.params.id);
+      const orderId = req.params.id;
       const order = await storage.getOrderWithItems(orderId);
       
       if (!order) {
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put('/api/order/:id/status', async (req: Request, res: Response) => {
     try {
-      const orderId = parseInt(req.params.id);
+      const orderId = req.params.id;
       const { status } = updateOrderStatusSchema.parse(req.body);
       
       const updatedOrder = await storage.updateOrderStatus(orderId, status);
@@ -269,7 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put('/api/orderitem/:id/status', async (req: Request, res: Response) => {
     try {
-      const orderItemId = parseInt(req.params.id);
+      const orderItemId = req.params.id;
       const { completed } = updateOrderItemStatusSchema.parse(req.body);
       
       const updatedOrderItem = await storage.updateOrderItemStatus(orderItemId, completed);
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the full order to send updated data
-      const order = await storage.getOrderWithItems(parseInt(updatedOrderItem.orderId));
+      const order = await storage.getOrderWithItems(updatedOrderItem.orderId);
       
       if (order) {
         // Broadcast update if order status changed
