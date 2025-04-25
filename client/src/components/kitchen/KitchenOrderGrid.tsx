@@ -110,7 +110,9 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
         </div>
       ) : (
         orders.map((order) => {
-          const { data: orderDetails } = getOrderDetails(order.id);
+          const { data: orderDetails, isLoading, error } = getOrderDetails(order.id);
+          
+          console.log(`Order ${order.id} details:`, { orderDetails, isLoading, error });
           
           return (
             <div 
