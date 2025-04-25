@@ -13,20 +13,20 @@ const clients = new Map<string, { ws: WebSocket, bayId?: number }>();
 
 // Send update to all connected clients
 function broadcastUpdate(type: string, data: any) {
-  for (const client of clients.values()) {
+  clients.forEach(client => {
     if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(JSON.stringify({ type, data }));
     }
-  }
+  });
 }
 
 // Send update to clients for a specific bay
 function sendBayUpdate(bayId: number, type: string, data: any) {
-  for (const client of clients.values()) {
+  clients.forEach(client => {
     if (client.ws.readyState === WebSocket.OPEN && client.bayId === bayId) {
       client.ws.send(JSON.stringify({ type, data }));
     }
-  }
+  });
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -191,9 +191,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     order: insertOrderSchema,
     cart: z.object({
       items: z.array(z.object({
-        menuItemId: z.number(),
+        menuItemId: z.string(),
         name: z.string(),
-        price: z.number(),
+        priceCents: z.number(),
         quantity: z.number(),
       })),
       specialInstructions: z.string().optional(),
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the full order to send updated data
-      const order = await storage.getOrderWithItems(updatedOrderItem.orderId);
+      const order = await storage.getOrderWithItems(parseInt(updatedOrderItem.orderId));
       
       if (order) {
         // Broadcast update if order status changed
