@@ -11,13 +11,18 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   // Set initial tab to READY by default
   const [activeTab, setActiveTab] = useState("READY");
   
+  // Filter out SERVED orders first
+  const activeOrders = orders.filter(o => 
+    o.status.toUpperCase() !== "SERVED" && o.status !== "served"
+  );
+  
   // Compute counts for each status
-  const cooking = orders.filter(o => o.status === "COOKING" || o.status === "cooking").length;
-  const ready = orders.filter(o => o.status === "READY" || o.status === "ready").length;
-  const delayed = orders.filter(o => o.isDelayed && o.status !== "SERVED" && o.status !== "served").length;
+  const cooking = activeOrders.filter(o => o.status === "COOKING" || o.status === "cooking").length;
+  const ready = activeOrders.filter(o => o.status === "READY" || o.status === "ready").length;
+  const delayed = activeOrders.filter(o => o.isDelayed).length;
   
   const tabs = [
-    { id: "ALL", label: "All Orders" },
+    { id: "ALL", label: "All Orders", count: activeOrders.length },
     { id: "COOKING", label: "Cooking", count: cooking },
     { id: "READY", label: "Ready", count: ready },
     { id: "DELAYED", label: "Delayed", count: delayed },
