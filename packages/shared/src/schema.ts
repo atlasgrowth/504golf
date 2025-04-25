@@ -93,17 +93,29 @@ export const orderItems = pgTable("order_items", {
   orderId: uuid("order_id").notNull().references(() => orders.id),
   menuItemId: uuid("menu_item_id").notNull().references(() => menuItems.id),
   quantity: integer("quantity").notNull(),
-  firedAt: timestamp("fired_at"),
+  // Status enum for item-level tracking
+  status: text("status").notNull().default("NEW"), // NEW, COOKING, READY, DELIVERED
+  // Preparation timing fields
+  cookSeconds: integer("cook_seconds").notNull().default(300), // Default 5 minutes if not specified
+  firedAt: timestamp("fired_at"), // When cook starts preparing the item
+  readyAt: timestamp("ready_at"), // Auto-calculated from firedAt + cookSeconds
+  deliveredAt: timestamp("delivered_at"), // When item is delivered to customer
+  // Legacy fields (to be migrated/deprecated)
   readyBy: timestamp("ready_by"),
   completed: boolean("completed").notNull().default(false),
   notes: text("notes"),
-  station: text("station"), // Added for P2 - copying from menuItem but storing it with the order
+  station: text("station").notNull(), // Required station assignment for KDS
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
   orderId: true,
   menuItemId: true,
   quantity: true,
+  status: true,
+  cookSeconds: true,
+  firedAt: true,
+  readyAt: true,
+  deliveredAt: true,
   notes: true,
   station: true,
 });
@@ -126,6 +138,23 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
   menuItem: one(menuItems, { fields: [orderItems.menuItemId], references: [menuItems.id] }),
 }));
+
+// Define order item status enum
+export enum OrderItemStatus {
+  NEW = "NEW",
+  COOKING = "COOKING",
+  READY = "READY",
+  DELIVERED = "DELIVERED"
+}
+
+// Define order status enum
+export enum OrderStatus {
+  PENDING = "pending",
+  PREPARING = "preparing",
+  READY = "ready",
+  SERVED = "served",
+  CANCELLED = "cancelled"
+}
 
 // Types
 export type User = typeof users.$inferSelect;
