@@ -8,7 +8,6 @@ import {
   type OrderWithItems, type OrderSummary, type Cart,
   OrderItemStatus, OrderStatus
 } from "../shared/schema";
-import { pool } from "./db";
 
 export interface IStorage {
   // Users

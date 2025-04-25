@@ -23,7 +23,7 @@ export default function ServerMenuItems({ menuData, onAddToCart }: ServerMenuIte
     onAddToCart({
       menuItemId: item.id,
       name: item.name,
-      priceCents: item.price_cents,
+      priceCents: item.price_cents, // This matches the database column name
       quantity: 1
     });
   };
