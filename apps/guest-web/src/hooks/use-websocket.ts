@@ -24,13 +24,13 @@ export const useWebSocket = (bayId?: number): WebSocketHook => {
       console.log('WebSocket connection established');
       setReadyState(WebSocket.OPEN);
       
-      // Register as customer with bay ID if provided
+      // Register as guest client with bay number if provided
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ 
           type: "register", 
           data: { 
-            clientType: "customer",
-            ...(bayId !== undefined && { bayId }) 
+            clientType: "guest",
+            ...(bayId !== undefined && { bayId })
           } 
         }));
       }

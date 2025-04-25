@@ -4,23 +4,38 @@ import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 1000, // 5 seconds
-      gcTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      retry: false,
     },
   },
 });
 
-export async function apiRequest<T = any>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+// Helper to make API requests
+export async function apiRequest(
+  url: string, 
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+  body?: any
+) {
+  const options: RequestInit = {
+    method,
     headers: {
       'Content-Type': 'application/json',
     },
-    ...options,
-  });
+    credentials: 'include',
+  };
 
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+  
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    throw new Error(`API request failed: ${response.status}`);
+  }
+  
+  if (response.status === 204) {
+    return null;
   }
 
   return response.json();
