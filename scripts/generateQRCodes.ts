@@ -74,7 +74,9 @@ async function generateQRCodeForBayNumber(bayNumber: number) {
 }
 
 // Check if we're running this script directly
-if (require.main === module) {
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+
+if (isMainModule) {
   const bayNumber = process.argv[2] ? parseInt(process.argv[2], 10) : null;
   
   if (bayNumber) {
