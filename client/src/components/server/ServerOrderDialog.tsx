@@ -266,7 +266,34 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="grid grid-flow-col auto-cols-max overflow-x-auto pb-3 gap-0 border-b">
+                    <div className="flex overflow-x-auto pb-2 border-b">
+                      {/* Sort categories to put main food categories first, before desserts */}
+                      {(() => {
+                        // Create a copy of categories for sorting
+                        const sortedCategories = [...categories].sort((a, b) => {
+                          // Put desserts at the end
+                          if (a.name.toLowerCase().includes('dessert')) return 1;
+                          if (b.name.toLowerCase().includes('dessert')) return -1;
+                          return a.name.localeCompare(b.name);
+                        });
+                        
+                        // Map categories to buttons
+                        return sortedCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
+                              selectedTab === category.slug 
+                                ? "border-primary text-primary font-medium" 
+                                : "border-transparent text-neutral-700 hover:text-neutral-900"
+                            }`}
+                            onClick={() => setSelectedTab(category.slug)}
+                          >
+                            {category.name}
+                          </button>
+                        ));
+                      })()}
+                      
+                      {/* Add "All Items" at the end */}
                       <button 
                         key="all-items"
                         className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
@@ -278,20 +305,6 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                       >
                         All Items
                       </button>
-                      
-                      {categories.map((category) => (
-                        <button
-                          key={category.id}
-                          className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
-                            selectedTab === category.slug 
-                              ? "border-primary text-primary font-medium" 
-                              : "border-transparent text-neutral-700 hover:text-neutral-900"
-                          }`}
-                          onClick={() => setSelectedTab(category.slug)}
-                        >
-                          {category.name}
-                        </button>
-                      ))}
                     </div>
                   </div>
                 )}
