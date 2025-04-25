@@ -1,9 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
 import { db } from '../server/db';
 import { bays } from '../shared/schema';
 import { eq } from 'drizzle-orm';
+
+// Convert ESM URL to file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const OUTPUT_DIR = path.join(__dirname, '../client/src/assets/qr-codes');
 
