@@ -381,23 +381,29 @@ export class DatabaseStorage implements IStorage {
     for (const item of cart.items) {
       // Look up the menu item to get its station
       let station = item.station;
+      let cookSeconds = null;
       
       // If station isn't provided in the cart item, get it from the menu item
       if (!station) {
         const menuItem = await this.getMenuItemById(item.menuItemId);
         station = menuItem?.station;
+        // Set cook seconds based on prep time from menu item
+        if (menuItem && menuItem.prep_seconds) {
+          cookSeconds = menuItem.prep_seconds;
+        }
       }
       
       // Use direct SQL approach with the pool to handle the column name difference
       await pool.query(
-        `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station) 
-         VALUES ($1, $2, $3, $4, $5)`,
+        `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station, cook_seconds) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           newOrder.id,
           item.menuItemId,
           item.quantity,
           cart.specialInstructions || null,
-          station || null
+          station || null,
+          cookSeconds || 300 // Default to 5 minutes if not available
         ]
       );
     }
@@ -459,6 +465,10 @@ export class DatabaseStorage implements IStorage {
     
     if (!orderItem) return undefined;
     
+    // Get the menu item to ensure we have the station
+    const menuItem = await this.getMenuItemById(orderItem.menuItemId);
+    const station = orderItem.station || (menuItem ? menuItem.station : null);
+    
     // Calculate readyAt time based on firedAt + cookSeconds (default 5 min/300 sec if not set)
     const readyAt = new Date(now);
     readyAt.setSeconds(readyAt.getSeconds() + (orderItem.cookSeconds || 300));
@@ -470,6 +480,7 @@ export class DatabaseStorage implements IStorage {
         status: OrderItemStatus.COOKING,
         firedAt: now,
         readyAt: readyAt,
+        station: station, // Set the station from menu item if not already set
         completed: false // Reset completed flag in case it was set
       })
       .where(eq(orderItems.id, id))
@@ -502,12 +513,25 @@ export class DatabaseStorage implements IStorage {
   async markOrderItemReady(id: string): Promise<OrderItem | undefined> {
     const now = new Date();
     
+    // Get the order item to ensure we have the station
+    const [orderItem] = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.id, id));
+    
+    if (!orderItem) return undefined;
+    
+    // Get the menu item to ensure we have the station
+    const menuItem = await this.getMenuItemById(orderItem.menuItemId);
+    const station = orderItem.station || (menuItem ? menuItem.station : null);
+    
     // Update the order item
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
         status: OrderItemStatus.READY,
-        readyAt: now // Update the actual ready time
+        readyAt: now, // Update the actual ready time
+        station: station // Ensure station is set
       })
       .where(eq(orderItems.id, id))
       .returning();
@@ -559,12 +583,25 @@ export class DatabaseStorage implements IStorage {
   async markOrderItemDelivered(id: string): Promise<OrderItem | undefined> {
     const now = new Date();
     
+    // Get the order item to ensure we have the station
+    const [orderItem] = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.id, id));
+    
+    if (!orderItem) return undefined;
+    
+    // Get the menu item to ensure we have the station
+    const menuItem = await this.getMenuItemById(orderItem.menuItemId);
+    const station = orderItem.station || (menuItem ? menuItem.station : null);
+    
     // Update the order item
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
         status: OrderItemStatus.DELIVERED,
         deliveredAt: now,
+        station: station, // Ensure station is set
         completed: true // Maintain backward compatibility
       })
       .where(eq(orderItems.id, id))
