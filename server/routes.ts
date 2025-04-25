@@ -181,7 +181,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Order not found' });
       }
       
-      res.json(order);
+      // OrderWithItems already has the correct structure from storage
+      // but we can ensure consistency with DTO format if needed
+      const orderDTO = {
+        ...toOrderDTO(order),
+        items: order.items.map(item => ({
+          ...toOrderItemDTO(item),
+          menuItem: toMenuItemDTO(item.menuItem)
+        })),
+        bay: toBayDTO(order.bay)
+      };
+      
+      res.json(orderDTO);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch order' });
     }
@@ -214,9 +225,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate('ordersUpdate', updatedOrders);
       
       // Send update to the specific bay
-      sendBayUpdate(order.bayId, 'newOrder', newOrder);
+      sendBayUpdate(order.bayId, 'newOrder', toOrderDTO(newOrder));
       
-      res.status(201).json(newOrder);
+      res.status(201).json(toOrderDTO(newOrder));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -249,9 +260,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate('ordersUpdate', updatedOrders);
       
       // Send update to the specific bay
-      sendBayUpdate(updatedOrder.bayId, 'orderStatusUpdate', updatedOrder);
+      sendBayUpdate(updatedOrder.bayId, 'orderStatusUpdate', toOrderDTO(updatedOrder));
       
-      res.json(updatedOrder);
+      res.json(toOrderDTO(updatedOrder));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -290,12 +301,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send update to the specific bay
         sendBayUpdate(order.bayId, 'orderItemUpdate', {
           orderId: order.id,
-          orderItem: updatedOrderItem,
+          orderItem: toOrderItemDTO(updatedOrderItem),
           orderStatus: order.status
         });
       }
       
-      res.json(updatedOrderItem);
+      res.json(toOrderItemDTO(updatedOrderItem));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
