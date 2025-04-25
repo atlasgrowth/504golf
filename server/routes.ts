@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const items = await storage.getMenuItemsByCategory(category.id);
-      res.json(items);
+      res.json(items.map(toMenuItemDTO));
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch menu items' });
     }
@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Bay not found' });
       }
       
-      res.json(bay);
+      res.json(toBayDTO(bay));
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch bay' });
     }
@@ -150,6 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/orders', async (_req: Request, res: Response) => {
     try {
       const orders = await storage.getActiveOrders();
+      // OrderSummary objects are already in camelCase format
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch orders' });

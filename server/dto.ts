@@ -1,16 +1,14 @@
-import type { MenuItem, Order, OrderItem, Bay, Category } from "@shared/schema";
-
 /**
  * Maps menu item database row to DTO with consistent naming
  */
-export const toMenuItemDTO = (row: MenuItem) => ({
+export const toMenuItemDTO = (row: any) => ({
   id: row.id,
   name: row.name,
+  description: row.description,
   category: row.category,
   priceCents: row.price_cents,
   prepSeconds: row.prep_seconds,
   station: row.station,
-  description: row.description,
   imageUrl: row.image_url,
   active: row.active
 });
@@ -18,25 +16,26 @@ export const toMenuItemDTO = (row: MenuItem) => ({
 /**
  * Maps order database row to DTO with consistent naming
  */
-export const toOrderDTO = (row: Order) => ({
+export const toOrderDTO = (row: any) => ({
   id: row.id,
-  orderNumber: row.orderNumber,
-  bayId: row.bayId,
+  orderNumber: row.order_number,
+  bayId: row.bay_id,
   status: row.status,
-  specialInstructions: row.specialInstructions,
-  createdAt: row.createdAt
+  orderType: row.order_type,
+  specialInstructions: row.special_instructions,
+  createdAt: row.created_at
 });
 
 /**
  * Maps order item database row to DTO with consistent naming
  */
-export const toOrderItemDTO = (row: OrderItem) => ({
+export const toOrderItemDTO = (row: any) => ({
   id: row.id,
-  orderId: row.orderId,
-  menuItemId: row.menuItemId,
-  quantity: row.quantity, // Updated from qty to quantity
-  firedAt: row.firedAt,
-  readyBy: row.readyBy,
+  orderId: row.order_id,
+  menuItemId: row.menu_item_id,
+  quantity: row.quantity,
+  firedAt: row.fired_at,
+  readyBy: row.ready_by,
   completed: row.completed,
   notes: row.notes
 });
@@ -44,7 +43,7 @@ export const toOrderItemDTO = (row: OrderItem) => ({
 /**
  * Maps bay database row to DTO with consistent naming
  */
-export const toBayDTO = (row: Bay) => ({
+export const toBayDTO = (row: any) => ({
   id: row.id,
   number: row.number,
   floor: row.floor,
@@ -54,7 +53,7 @@ export const toBayDTO = (row: Bay) => ({
 /**
  * Maps category database row to DTO with consistent naming
  */
-export const toCategoryDTO = (row: Category) => ({
+export const toCategoryDTO = (row: any) => ({
   id: row.id,
   name: row.name,
   slug: row.slug
