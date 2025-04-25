@@ -48,23 +48,28 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   };
   
   // Load full order details
-  const getOrderDetails = (orderId: string) => {
-    return useQuery<OrderWithItems>({
-      queryKey: [`/api/order/${orderId}`],
+  const getOrderDetails = (orderId: string) =>
+    useQuery<OrderWithItems>({
+      // API route is /api/order/:id  (singular)
+      queryKey: ["/api/order", orderId],
+      queryFn: () => apiRequest("GET", `/api/order/${orderId}`),
+      staleTime: 10_000,
     });
-  };
   
   // Mark item as completed
   const toggleItemCompletion = async (orderItemId: string, completed: boolean) => {
     try {
-      await apiRequest('PUT', `/api/orderitem/${orderItemId}/status`, { completed });
+      // If the item hasn't been fired yet, call /fire first
+      const endpoint = completed ? "/ready" : "/fire";
+      await apiRequest("POST", `/api/order-items/${orderItemId}${endpoint}`);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order'] });
       
       toast({
-        title: completed ? "Item Completed" : "Item Marked Incomplete",
-        description: "Order has been updated.",
+        title: completed ? "Item Ready" : "Item Fired",
+        description: "Order item status has been updated.",
       });
     } catch (error) {
       toast({
@@ -78,10 +83,11 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   // Mark order as ready
   const markOrderAsReady = async (orderId: string) => {
     try {
-      await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'ready' });
+      await apiRequest("POST", `/api/order/${orderId}/ready`);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order'] });
       
       toast({
         title: "Order Ready",
@@ -119,6 +125,11 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                   <div>
                     <span className="text-sm font-medium text-neutral-600">Order #{order.orderNumber}</span>
                     <h3 className="font-poppins font-bold text-lg">Bay {order.bayNumber} (Floor {order.floor})</h3>
+                    <p className="text-xs text-neutral-500">
+                      Placed&nbsp;
+                      {new Date(order.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      &nbsp;—&nbsp;{order.timeElapsed} min ago
+                    </p>
                   </div>
                   <div className="flex flex-col items-end">
                     <TimerPill minutes={order.timeElapsed} isDelayed={order.isDelayed} />
