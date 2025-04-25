@@ -7,7 +7,7 @@ interface ServerMenuItemsProps {
     category: Category;
     items: MenuItem[];
   }>;
-  onAddToCart: (item: { menuItemId: number; name: string; price: number; quantity: number }) => void;
+  onAddToCart: (item: { menuItemId: string; name: string; priceCents: number; quantity: number }) => void;
 }
 
 export default function ServerMenuItems({ menuData, onAddToCart }: ServerMenuItemsProps) {
@@ -23,7 +23,7 @@ export default function ServerMenuItems({ menuData, onAddToCart }: ServerMenuIte
     onAddToCart({
       menuItemId: item.id,
       name: item.name,
-      price: item.price,
+      priceCents: item.price_cents,
       quantity: 1
     });
   };
@@ -33,17 +33,17 @@ export default function ServerMenuItems({ menuData, onAddToCart }: ServerMenuIte
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {allItems.map((item) => (
           <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full">
-            {item.imageUrl && (
-              <img src={item.imageUrl} className="w-24 h-full object-cover" alt={item.name} />
+            {item.image_url && (
+              <img src={item.image_url} className="w-24 h-full object-cover" alt={item.name} />
             )}
             <div className="p-3 flex-1 flex flex-col">
               <div className="flex justify-between">
                 <h3 className="font-medium text-neutral-800">{item.name}</h3>
-                <span className="font-medium text-primary">{formatPrice(item.price)}</span>
+                <span className="font-medium text-primary">{formatPrice(item.price_cents)}</span>
               </div>
               <p className="text-sm text-neutral-600 mb-2 flex-grow">{item.description}</p>
               <div className="flex justify-between items-center mt-auto">
-                <span className="text-xs text-neutral-500">Prep time: {item.prepTime} min</span>
+                <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prep_seconds / 60)} min</span>
                 <Button 
                   size="sm"
                   variant="outline"

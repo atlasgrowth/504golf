@@ -63,7 +63,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   }, [open]);
   
   // Add item to cart
-  const addToCart = (item: { menuItemId: number; name: string; price: number; quantity: number }) => {
+  const addToCart = (item: { menuItemId: string; name: string; priceCents: number; quantity: number }) => {
     setCart(prevCart => {
       const existingItem = prevCart.items.find(i => i.menuItemId === item.menuItemId);
       
@@ -86,7 +86,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   };
   
   // Remove item from cart
-  const removeFromCart = (menuItemId: number) => {
+  const removeFromCart = (menuItemId: string) => {
     setCart(prevCart => ({
       ...prevCart,
       items: prevCart.items.filter(item => item.menuItemId !== menuItemId)
@@ -94,7 +94,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   };
   
   // Update item quantity
-  const updateQuantity = (menuItemId: number, quantity: number) => {
+  const updateQuantity = (menuItemId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(menuItemId);
       return;
@@ -119,7 +119,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   };
   
   // Calculate total
-  const totalPrice = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalPrice = cart.items.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0);
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   
   // Format price from cents to dollars
@@ -288,17 +288,17 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {menuData.flatMap(category => category.items).map((item) => (
                         <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full">
-                          {item.imageUrl && (
-                            <img src={item.imageUrl} className="w-24 h-full object-cover" alt={item.name} />
+                          {item.image_url && (
+                            <img src={item.image_url} className="w-24 h-full object-cover" alt={item.name} />
                           )}
                           <div className="p-3 flex-1 flex flex-col">
                             <div className="flex justify-between">
                               <h3 className="font-medium text-neutral-800">{item.name}</h3>
-                              <span className="font-medium text-primary">{formatPrice(item.price)}</span>
+                              <span className="font-medium text-primary">{formatPrice(item.price_cents)}</span>
                             </div>
                             <p className="text-sm text-neutral-600 mb-2 flex-grow">{item.description}</p>
                             <div className="flex justify-between items-center mt-auto">
-                              <span className="text-xs text-neutral-500">Prep time: {item.prepTime} min</span>
+                              <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prep_seconds / 60)} min</span>
                               <Button 
                                 size="sm"
                                 variant="outline"
@@ -306,7 +306,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                                 onClick={() => addToCart({
                                   menuItemId: item.id,
                                   name: item.name,
-                                  price: item.price,
+                                  priceCents: item.price_cents,
                                   quantity: 1
                                 })}
                               >
@@ -347,7 +347,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   <div key={item.menuItemId} className="flex justify-between border-b pb-2">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-neutral-600">{formatPrice(item.price)} each</p>
+                      <p className="text-sm text-neutral-600">{formatPrice(item.priceCents)} each</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
