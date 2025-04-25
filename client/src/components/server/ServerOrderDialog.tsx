@@ -304,11 +304,11 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                           <div className="p-3 flex-1 flex flex-col">
                             <div className="flex justify-between">
                               <h3 className="font-medium text-neutral-800">{item.name}</h3>
-                              <span className="font-medium text-primary">{formatPrice(item.price_cents)}</span>
+                              <span className="font-medium text-primary">{formatPrice(item.priceCents)}</span>
                             </div>
                             <p className="text-sm text-neutral-600 mb-2 flex-grow">{item.description}</p>
                             <div className="flex justify-between items-center mt-auto">
-                              <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prep_seconds / 60)} min</span>
+                              <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prepSeconds / 60)} min</span>
                               <Button 
                                 size="sm"
                                 variant="outline"
@@ -316,7 +316,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                                 onClick={() => addToCart({
                                   menuItemId: item.id,
                                   name: item.name,
-                                  priceCents: item.price_cents,
+                                  priceCents: item.priceCents,
                                   quantity: 1
                                 })}
                               >

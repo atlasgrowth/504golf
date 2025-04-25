@@ -1,18 +1,14 @@
-const fs = require('fs');
+import { readFileSync } from 'fs';
 
 try {
-  const data = fs.readFileSync('menu_response.json', 'utf8');
+  const data = readFileSync('menu_response.json', 'utf8');
   const menu = JSON.parse(data);
   
-  // Check first few menu items
-  for (let i = 0; i < Math.min(5, menu.length); i++) {
-    const category = menu[i];
-    console.log(`Category: ${category.category.name}`);
-    
-    for (let j = 0; j < Math.min(3, category.items.length); j++) {
-      const item = category.items[j];
-      console.log(`- Item: ${item.name}, price_cents: ${item.price_cents}, type: ${typeof item.price_cents}`);
-    }
+  // Display a sample item with all its properties
+  if (menu.length > 0 && menu[0].items.length > 0) {
+    const sampleItem = menu[0].items[0];
+    console.log('Sample Menu Item Properties:');
+    console.log(JSON.stringify(sampleItem, null, 2));
   }
 } catch (error) {
   console.error('Error:', error);
