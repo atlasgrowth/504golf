@@ -413,11 +413,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         // Send messages to connected clients
-        for (const client of wsClients.values()) {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(orderUpdatedMessage));
+        const clients = getClients();
+        // Use forEach instead of for...of to avoid MapIterator compatibility issues
+        clients.forEach(client => {
+          if (client.ws.readyState === WebSocket.OPEN) {
+            client.ws.send(JSON.stringify(orderUpdatedMessage));
           }
-        }
+        });
       }
       
       // Return the updated order
