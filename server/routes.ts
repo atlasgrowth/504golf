@@ -81,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Get items for this station
               const items = await storage.getOrderItemsByStation(
                 station, 
-                station !== '*' ? undefined : null // If station is *, don't filter by status
+                station !== '*' ? undefined : undefined // If station is *, don't filter by status
               );
               
               // Group items by status
@@ -416,8 +416,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             estimatedCompletionTime: fullOrder.estimatedCompletionTime 
               ? new Date(fullOrder.estimatedCompletionTime).toISOString() 
               : null,
-            readyAt: new Date().toISOString(),
-            servedAt: null
+            completionTime: new Date().toISOString(),
+            isDelayed: fullOrder.estimatedCompletionTime 
+              ? new Date() > new Date(fullOrder.estimatedCompletionTime) 
+              : false
           }
         };
         

@@ -211,7 +211,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         </div>
                         <div className="flex flex-col items-end">
                           <span className="text-xs font-medium text-neutral-800">
-                            ${item.menuItem?.price ? (item.menuItem.price / 100).toFixed(2) : (item.menuItem?.price_cents ? (item.menuItem.price_cents / 100).toFixed(2) : '0.00')}
+                            ${item.menuItem?.price_cents ? (item.menuItem.price_cents / 100).toFixed(2) : '0.00'}
                           </span>
                           <span className="text-xs text-neutral-500">
                             {item.menuItem?.station || item.station || 'Kitchen'}
