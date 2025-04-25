@@ -1,96 +1,48 @@
-import { db } from './db';
-import { bays, categories, menuItems, orders, orderItems, users } from '@shared/schema';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import * as schema from '../shared/schema';
 
 /**
  * This script initializes the database tables based on the schema.
  * It's used for development and testing purposes.
  */
 async function main() {
-  console.log('Creating database tables...');
-  try {
-    await createTables();
-    console.log('Tables created successfully');
-  } catch (error) {
-    console.error('Error creating tables:', error);
-    process.exit(1);
-  }
+  // Create tables if they don't exist
+  await createTables();
+  
+  console.log('Database migration complete!');
+  process.exit(0);
 }
 
 async function createTables() {
-  // Using drizzle-kit directly for migrations
-  console.log('Creating users table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      username TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'customer'
-    )
-  `);
-
-  console.log('Creating categories table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS categories (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      slug TEXT NOT NULL UNIQUE
-    )
-  `);
-
-  console.log('Creating bays table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS bays (
-      id SMALLINT PRIMARY KEY,
-      number SMALLINT NOT NULL,
-      floor SMALLINT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'empty'
-    )
-  `);
-
-  console.log('Creating menu_items table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS menu_items (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      name TEXT NOT NULL,
-      category TEXT NOT NULL,
-      price_cents INTEGER NOT NULL,
-      station TEXT NOT NULL,
-      prep_seconds INTEGER NOT NULL,
-      description TEXT,
-      image_url TEXT,
-      active BOOLEAN NOT NULL DEFAULT true
-    )
-  `);
-
-  console.log('Creating orders table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      order_number TEXT,
-      bay_id SMALLINT NOT NULL REFERENCES bays(id),
-      status TEXT NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      special_instructions TEXT,
-      order_type TEXT NOT NULL DEFAULT 'customer'
-    )
-  `);
-
-  console.log('Creating order_items table...');
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS order_items (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      order_id UUID NOT NULL REFERENCES orders(id),
-      menu_item_id UUID NOT NULL REFERENCES menu_items(id),
-      quantity INTEGER NOT NULL,
-      fired_at TIMESTAMP,
-      ready_by TIMESTAMP,
-      completed BOOLEAN NOT NULL DEFAULT false,
-      notes TEXT
-    )
-  `);
+  const client = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  
+  try {
+    await client.connect();
+    const db = drizzle(client, { schema });
+    
+    console.log('Running database migrations...');
+    await db.execute(/*sql*/`
+      ALTER TABLE IF EXISTS "orders" 
+      ADD COLUMN IF NOT EXISTS "estimated_completion_time" TIMESTAMP;
+      
+      ALTER TABLE IF EXISTS "order_items" 
+      ADD COLUMN IF NOT EXISTS "station" TEXT;
+    `);
+    
+    console.log('Schema migration complete');
+  } catch (error) {
+    console.error('Error migrating schema:', error);
+    throw error;
+  } finally {
+    await client.end();
+  }
 }
 
-// Run the script if executed directly
-if (require.main === module) {
-  main().then(() => process.exit(0));
-}
+main().catch((err) => {
+  console.error('Migration failed:', err);
+  process.exit(1);
+});
