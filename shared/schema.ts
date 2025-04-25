@@ -76,6 +76,7 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
+  estimatedCompletionTime: timestamp("estimated_completion_time"), // New field for P2
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
@@ -83,6 +84,7 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   status: true,
   specialInstructions: true,
   orderType: true,
+  estimatedCompletionTime: true,
 });
 
 // Order items table
@@ -95,6 +97,7 @@ export const orderItems = pgTable("order_items", {
   readyBy: timestamp("ready_by"),
   completed: boolean("completed").notNull().default(false),
   notes: text("notes"),
+  station: text("station"), // Added for P2 - copying from menuItem but storing it with the order
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
@@ -102,6 +105,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
   menuItemId: true,
   quantity: true,
   notes: true,
+  station: true,
 });
 
 // Define relations
@@ -153,7 +157,7 @@ export type OrderSummary = {
   id: string;
   bayId: number;
   bayNumber?: number;
-  orderNumber?: number; // Display number for kitchen (usually derived from ID)
+  orderNumber?: string | number; // Display number for kitchen (usually derived from ID)
   floor: number;
   status: string;
   createdAt: Date;
@@ -168,6 +172,7 @@ export type CartItem = {
   name: string;
   priceCents: number;
   quantity: number;
+  station?: string;
 };
 
 export type Cart = {

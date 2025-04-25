@@ -149,5 +149,33 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 // Composite types for requests/responses
 export type OrderWithItems = Order & { 
   items: (OrderItem & { menuItem: MenuItem })[], 
-  bay: Bay 
+  bay: Bay,
+  estimatedCompletionTime?: string | Date | null
+};
+
+export type OrderSummary = {
+  id: string;
+  bayId: number;
+  bayNumber?: number;
+  orderNumber?: string | number; // Display number for kitchen (usually derived from ID)
+  floor: number;
+  status: string;
+  createdAt: Date;
+  timeElapsed: number; // minutes since creation
+  totalItems: number;
+  isDelayed: boolean;
+  estimatedCompletionTime?: string | Date | null;
+};
+
+export type CartItem = {
+  menuItemId: string;
+  name: string;
+  priceCents: number;
+  quantity: number;
+  station?: string;
+};
+
+export type Cart = {
+  items: CartItem[];
+  specialInstructions?: string;
 };

@@ -1,8 +1,14 @@
 // Export all types from our schema
-export * from "../../shared/schema";
+export * from "./schema";
 
 // Export WebSocket related types
 export * from "./types";
+
+// Export WebSocket utilities
+export * from "./ws";
+
+// Export hooks
+export * from "./hooks/use-websocket";
 
 // Export utility functions and constants
 export const KITCHEN_STATIONS = [

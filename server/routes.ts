@@ -3,11 +3,13 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertOrderSchema, type Cart } from "@shared/schema";
 import { 
+  insertOrderSchema, type Cart
+} from "../shared/schema";
+import {
   WebSocketMessage, WebSocketMessageType, 
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage
-} from "@swingeats/shared";
+} from "../shared/types";
 import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
