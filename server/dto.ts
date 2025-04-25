@@ -6,10 +6,10 @@ export const toMenuItemDTO = (row: any) => ({
   name: row.name,
   description: row.description,
   category: row.category,
-  priceCents: row.price_cents,
-  prepSeconds: row.prep_seconds,
+  priceCents: row.priceCents || row.price_cents,
+  prepSeconds: row.prepSeconds || row.prep_seconds,
   station: row.station,
-  imageUrl: row.image_url,
+  imageUrl: row.imageUrl || row.image_url,
   active: row.active
 });
 
@@ -18,12 +18,11 @@ export const toMenuItemDTO = (row: any) => ({
  */
 export const toOrderDTO = (row: any) => ({
   id: row.id,
-  orderNumber: row.order_number,
-  bayId: row.bay_id,
+  bayId: row.bayId || row.bay_id,
   status: row.status,
-  orderType: row.order_type,
-  specialInstructions: row.special_instructions,
-  createdAt: row.created_at
+  orderType: row.orderType || row.order_type,
+  specialInstructions: row.specialInstructions || row.special_instructions,
+  createdAt: row.createdAt || row.created_at
 });
 
 /**
@@ -31,11 +30,11 @@ export const toOrderDTO = (row: any) => ({
  */
 export const toOrderItemDTO = (row: any) => ({
   id: row.id,
-  orderId: row.order_id,
-  menuItemId: row.menu_item_id,
+  orderId: row.orderId || row.order_id,
+  menuItemId: row.menuItemId || row.menu_item_id,
   quantity: row.quantity,
-  firedAt: row.fired_at,
-  readyBy: row.ready_by,
+  firedAt: row.firedAt || row.fired_at,
+  readyBy: row.readyBy || row.ready_by,
   completed: row.completed,
   notes: row.notes
 });

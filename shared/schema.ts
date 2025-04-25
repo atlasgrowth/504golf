@@ -71,7 +71,6 @@ export const insertBaySchema = createInsertSchema(bays).pick({
 // Orders table
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
-  orderNumber: text("order_number"),
   bayId: smallint("bay_id").notNull().references(() => bays.id),
   status: text("status").notNull().default("pending"), // pending, preparing, ready, served, cancelled
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -151,7 +150,6 @@ export type OrderWithItems = Order & {
 
 export type OrderSummary = {
   id: string;
-  orderNumber?: string;
   bayId: number;
   bayNumber?: number;
   floor: number;
