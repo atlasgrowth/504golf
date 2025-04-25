@@ -11,7 +11,10 @@ export type WebSocketMessageType =
   | "order_created"
   | "order_updated"
   | "order_item_updated"
-  | "bay_updated";
+  | "bay_updated"
+  | "item_cooking"
+  | "item_ready"
+  | "item_delivered";
 
 /**
  * Base WebSocket message interface
@@ -83,6 +86,58 @@ export interface BayUpdatedMessage extends WebSocketMessage {
   data: {
     bay: Bay;
     orders: Order[];
+    status: string;
+  };
+}
+
+/**
+ * Item cooking message - sent when an item is fired (starts cooking)
+ */
+export interface ItemCookingMessage extends WebSocketMessage {
+  type: "item_cooking";
+  data: {
+    orderId: string;
+    orderItem: OrderItem;
+    station: string;
+    firedAt: string;
+    cookSeconds: number | null;
+    readyAt: string;
+    bayId: number;
+    bayNumber: number;
+    status: string;
+  };
+}
+
+/**
+ * Item ready message - sent when an item is ready to be delivered
+ */
+export interface ItemReadyMessage extends WebSocketMessage {
+  type: "item_ready";
+  data: {
+    orderId: string;
+    orderItem: OrderItem;
+    station: string;
+    readyAt: string;
+    elapsedSeconds: number;
+    bayId: number;
+    bayNumber: number;
+    status: string;
+  };
+}
+
+/**
+ * Item delivered message - sent when an item is delivered to the customer
+ */
+export interface ItemDeliveredMessage extends WebSocketMessage {
+  type: "item_delivered";
+  data: {
+    orderId: string;
+    orderItem: OrderItem;
+    station: string;
+    deliveredAt: string;
+    totalCookTime: number;
+    bayId: number;
+    bayNumber: number;
     status: string;
   };
 }
