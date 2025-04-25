@@ -49,14 +49,18 @@ export default function ServerView() {
     setStatusFilter(tab);
   };
 
-  // Filter orders based on the selected tab and remove SERVED orders completely
+  // Filter orders based on the selected tab
   const filteredOrders = orders.filter(order => {
-    // Always exclude served orders from all views
+    // For the SERVED tab, show only served orders
+    if (statusFilter === 'SERVED') {
+      return order.status.toUpperCase() === 'SERVED' || order.status === 'served';
+    }
+    
+    // For all other tabs, exclude served orders
     if (order.status.toUpperCase() === 'SERVED' || order.status === 'served') {
       return false;
     }
     
-    // Removed "ALL" filter since we only want the pipeline view
     if (statusFilter === 'DELAYED') return order.isDelayed;
     return order.status.toUpperCase() === statusFilter;
   });

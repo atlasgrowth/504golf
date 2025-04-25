@@ -100,11 +100,16 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
   
   // Helper to determine row styling based on order status
   const getRowClass = (order: OrderSummary) => {
+    const status = order.status.toUpperCase();
+    
+    if (status === "SERVED") {
+      return "border-l-4 border-neutral-400 opacity-70"; // Past orders are dimmed
+    }
+    
     if (order.isDelayed) {
       return "animate-pulse border-l-4 border-red-500";
     }
     
-    const status = order.status.toUpperCase();
     if (status === "NEW" || status === "COOKING") {
       return "border-l-4 border-blue-400";
     } else if (status === "READY") {

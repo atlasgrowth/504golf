@@ -21,12 +21,17 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   const ready = activeOrders.filter(o => o.status === "READY" || o.status === "ready").length;
   const delayed = activeOrders.filter(o => o.isDelayed).length;
   
-  // Main pipeline tabs only - removed "ALL"
+  // Get count of served orders (for today)
+  const served = orders.filter(o => 
+    o.status.toUpperCase() === "SERVED" || o.status === "served"
+  ).length;
+  
+  // Main pipeline tabs + Past Orders for the day
   const tabs = [
     { id: "COOKING", label: "Cooking", count: cooking },
     { id: "READY", label: "Ready", count: ready },
     { id: "DELAYED", label: "Delayed", count: delayed },
-    // Could add a { id: "HISTORY", label: "Past Orders" } tab in the future
+    { id: "SERVED", label: "Past Orders", count: served }
   ];
   
   // When tab changes, notify parent
