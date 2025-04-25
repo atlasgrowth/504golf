@@ -379,7 +379,16 @@ export class DatabaseStorage implements IStorage {
 
     // Then create order items from the cart
     for (const item of cart.items) {
-      // Use a direct SQL approach with the pool to handle the column name difference
+      // Look up the menu item to get its station
+      let station = item.station;
+      
+      // If station isn't provided in the cart item, get it from the menu item
+      if (!station) {
+        const menuItem = await this.getMenuItemById(item.menuItemId);
+        station = menuItem?.station;
+      }
+      
+      // Use direct SQL approach with the pool to handle the column name difference
       await pool.query(
         `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station) 
          VALUES ($1, $2, $3, $4, $5)`,
@@ -388,7 +397,7 @@ export class DatabaseStorage implements IStorage {
           item.menuItemId,
           item.quantity,
           cart.specialInstructions || null,
-          item.station || null
+          station || null
         ]
       );
     }
@@ -466,7 +475,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orderItems.id, id))
       .returning();
     
+    // Update parent order status to COOKING if needed
+    if (updatedOrderItem) {
+      // Get the order
+      const order = await this.getOrderById(updatedOrderItem.orderId);
+      if (order && order.status !== OrderStatus.COOKING) {
+        // Update order status to cooking
+        await this.updateOrderStatus(order.id, OrderStatus.COOKING);
+      }
+    }
+    
     return updatedOrderItem || undefined;
+  }
+  
+  // Helper to get station by menu item ID
+  private async getMenuItemStationById(menuItemId: string): Promise<string | null> {
+    try {
+      const menuItem = await this.getMenuItemById(menuItemId);
+      return menuItem?.station || null;
+    } catch (error) {
+      console.error(`Error fetching station for menu item ${menuItemId}:`, error);
+      return null;
+    }
   }
 
   async markOrderItemReady(id: string): Promise<OrderItem | undefined> {
@@ -482,7 +512,48 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orderItems.id, id))
       .returning();
     
+    // Update parent order status if appropriate
+    if (updatedOrderItem) {
+      // Check if all items in the order are READY or DELIVERED
+      await this.updateOrderStatusBasedOnItems(updatedOrderItem.orderId);
+    }
+    
     return updatedOrderItem || undefined;
+  }
+  
+  // Check all order items and update order status accordingly
+  private async updateOrderStatusBasedOnItems(orderId: string): Promise<void> {
+    // Get all order items for this order
+    const items = await this.getOrderItems(orderId);
+    
+    // No items, nothing to do
+    if (items.length === 0) return;
+    
+    // If any item is cooking, the order is cooking
+    const hasCookingItems = items.some(item => item.status === OrderItemStatus.COOKING);
+    if (hasCookingItems) {
+      await this.updateOrderStatus(orderId, OrderStatus.COOKING);
+      return;
+    }
+    
+    // If all items are READY or DELIVERED, and at least one is READY, order is READY
+    const allReadyOrDelivered = items.every(item => 
+      item.status === OrderItemStatus.READY || 
+      item.status === OrderItemStatus.DELIVERED
+    );
+    const hasReadyItems = items.some(item => item.status === OrderItemStatus.READY);
+    
+    if (allReadyOrDelivered && hasReadyItems) {
+      await this.updateOrderStatus(orderId, OrderStatus.READY);
+      return;
+    }
+    
+    // If all items are DELIVERED, order is SERVED
+    const allDelivered = items.every(item => item.status === OrderItemStatus.DELIVERED);
+    if (allDelivered) {
+      await this.updateOrderStatus(orderId, OrderStatus.SERVED);
+      return;
+    }
   }
 
   async markOrderItemDelivered(id: string): Promise<OrderItem | undefined> {
@@ -498,6 +569,12 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(orderItems.id, id))
       .returning();
+    
+    // Update parent order status if appropriate
+    if (updatedOrderItem) {
+      // Check if all items in the order are delivered
+      await this.updateOrderStatusBasedOnItems(updatedOrderItem.orderId);
+    }
     
     return updatedOrderItem || undefined;
   }
