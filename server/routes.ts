@@ -15,7 +15,7 @@ import {
 } from "./dto";
 
 // WebSocket clients
-const clients = new Map<string, { ws: WebSocket, bayId?: number }>();
+const clients = new Map<string, { ws: WebSocket, clientType?: 'kitchen' | 'server' | 'guest', bayId?: number }>();
 
 // Send update to all connected clients
 function broadcastUpdate(type: WebSocketMessageType, data: any) {
@@ -60,21 +60,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const data = JSON.parse(message.toString()) as WebSocketMessage;
         
-        // Handle client registration
+        // Handle client registration - normalized approach
         if (data.type === 'register') {
-          const registerMessage = data as any; // Type casting to access data.clientType
-          const clientType = registerMessage.data.clientType;
-          const bayId = registerMessage.data.bayId;
+          const registerData = data as ClientRegistrationMessage;
+          const clientType = registerData.data.clientType;
+          const bayId = registerData.data.bayId;
           
-          // Store the client with its bay ID if provided
-          if (bayId) {
-            clients.set(clientId, { ws, bayId });
-            
+          // Store the client info including type and bay ID if provided
+          clients.set(clientId, { ws, clientType, bayId });
+          
+          // Auto-subscribe guests and servers to their bay
+          if (bayId && (clientType === 'guest' || clientType === 'server')) {
             // Send current bay orders
             const bay = await storage.getBayById(bayId);
             if (bay) {
               const orders = await storage.getOrdersByBayId(bayId);
-              const bayMessage: WebSocketMessage = {
+              const bayMessage: BayUpdatedMessage = {
                 type: 'bay_updated',
                 data: { 
                   bay: toBayDTO(bay), 

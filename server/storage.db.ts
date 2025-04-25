@@ -6,7 +6,7 @@ import {
   orders, type Order, type InsertOrder, 
   orderItems, type OrderItem, type InsertOrderItem,
   type OrderWithItems, type OrderSummary, type Cart
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from './db';
 import { desc, eq, and, inArray } from 'drizzle-orm';
 import { randomUUID } from 'crypto';

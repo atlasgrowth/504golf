@@ -2,7 +2,7 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
 import ws from "ws";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 import { 
   Bay, InsertBay, 
   MenuItem, InsertMenuItem, 
@@ -11,7 +11,7 @@ import {
   Cart,
   OrderSummary,
   OrderWithItems
-} from "@shared/schema";
+} from "../shared/schema";
 
 // Configure database connection
 neonConfig.webSocketConstructor = ws;
