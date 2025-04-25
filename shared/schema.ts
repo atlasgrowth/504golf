@@ -72,8 +72,8 @@ export const insertBaySchema = createInsertSchema(bays).pick({
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderNumber: text("order_number"),
-  bayId: smallint("bay_id").notNull(),
-  status: text("status").notNull().default("NEW"), // NEW, COOKING, READY, SERVED, LATE
+  bayId: smallint("bay_id").notNull().references(() => bays.id),
+  status: text("status").notNull().default("pending"), // pending, preparing, ready, served, cancelled
   createdAt: timestamp("created_at").notNull().defaultNow(),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
@@ -89,8 +89,8 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
 // Order items table
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id").notNull(),
-  menuItemId: uuid("menu_item_id").notNull(),
+  orderId: uuid("order_id").notNull().references(() => orders.id),
+  menuItemId: uuid("menu_item_id").notNull().references(() => menuItems.id),
   quantity: integer("quantity").notNull(),
   firedAt: timestamp("fired_at"),
   readyBy: timestamp("ready_by"),
