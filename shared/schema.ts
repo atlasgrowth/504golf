@@ -71,22 +71,16 @@ export const insertBaySchema = createInsertSchema(bays).pick({
 // Orders table
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
-  orderNumber: text("order_number"),
   bayId: smallint("bay_id").notNull(),
   status: text("status").notNull().default("NEW"), // NEW, COOKING, READY, SERVED, LATE
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  estimatedCompletionTime: timestamp("estimated_completion_time"),
-  completedAt: timestamp("completed_at"),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
-  orderNumber: true,
   bayId: true,
   status: true,
-  estimatedCompletionTime: true,
-  completedAt: true,
   specialInstructions: true,
   orderType: true,
 });
