@@ -51,6 +51,12 @@ export interface IStorage {
   // Legacy method (to be deprecated) - updates completed flag
   updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined>;
   
+  // Methods to support enhanced status tracking
+  markFired(id: string): Promise<OrderItem | undefined>;
+  markReady(id: string): Promise<OrderItem | undefined>;
+  markDelivered(id: string): Promise<OrderItem | undefined>;
+  autoFlipReady(): Promise<OrderItem[]>;
+  
   // New methods for enhanced status tracking
   fireOrderItem(id: string): Promise<OrderItem | undefined>; // Sets status to COOKING and captures firedAt timestamp
   markOrderItemReady(id: string): Promise<OrderItem | undefined>; // Sets status to READY
@@ -448,6 +454,60 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedOrderItem || undefined;
+  }
+  
+  // New convenience methods with shorter names for the workflow script
+  async markFired(id: string): Promise<OrderItem | undefined> {
+    return this.fireOrderItem(id);
+  }
+  
+  async markReady(id: string): Promise<OrderItem | undefined> {
+    return this.markOrderItemReady(id);
+  }
+  
+  async markDelivered(id: string): Promise<OrderItem | undefined> {
+    return this.markOrderItemDelivered(id);
+  }
+  
+  // Automatically find and mark items as ready that have exceeded their cook time
+  async autoFlipReady(): Promise<OrderItem[]> {
+    const now = new Date();
+    
+    // Find items that are COOKING and have reached their readyAt time
+    const cookingItems = await db
+      .select()
+      .from(orderItems)
+      .where(
+        and(
+          eq(orderItems.status, OrderItemStatus.COOKING),
+          // Filter out nulls before comparing date
+          // @ts-ignore - drizzle ORM type issue
+          or(
+            eq(orderItems.readyAt, null),
+            // @ts-ignore - drizzle ORM type issue
+            like(orderItems.readyAt, "% %") // Any non-null value
+          )
+        )
+      );
+    
+    const results: OrderItem[] = [];
+    
+    // Process each item
+    for (const item of cookingItems) {
+      // Skip if no readyAt time set
+      if (!item.readyAt) continue;
+      
+      // Check if the item should be ready by now
+      if (new Date(item.readyAt) <= now) {
+        // Mark it as ready automatically
+        const updatedItem = await this.markOrderItemReady(item.id);
+        if (updatedItem) {
+          results.push(updatedItem);
+        }
+      }
+    }
+    
+    return results;
   }
 
   async getOrderItemsByStation(station: string, status?: string): Promise<OrderItem[]> {

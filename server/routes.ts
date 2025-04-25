@@ -268,16 +268,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create new order
+  // Create new order - allow minimal payload during demo
   const createOrderSchema = z.object({
-    order: insertOrderSchema,
+    order: z.object({
+      bayId: z.number().int().positive(),
+      specialInstructions: z.string().optional(),
+      orderType: z.string().optional().default("customer"),
+    }),
     cart: z.object({
       items: z.array(z.object({
-        menuItemId: z.string(),
-        name: z.string(),
-        priceCents: z.number(),
-        quantity: z.number(),
-        station: z.string().optional(), // Added for P2
+        menuItemId: z.string().uuid(),
+        quantity: z.number().int().positive()
       })),
       specialInstructions: z.string().optional(),
     }),
@@ -299,9 +300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const estimatedCompletionTime = new Date();
       estimatedCompletionTime.setMinutes(estimatedCompletionTime.getMinutes() + estimatedMinutes);
       
-      // Add estimatedCompletionTime to order data
+      // Add estimatedCompletionTime and required fields to order data
       const orderWithEstimatedTime = {
         ...order,
+        status: OrderStatus.NEW,
         estimatedCompletionTime
       };
       
@@ -506,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderItemId = req.params.id;
       
       // Fire the order item (sets status to COOKING)
-      const updatedItem = await storage.fireOrderItem(orderItemId);
+      const updatedItem = await storage.markFired(orderItemId);
       
       if (!updatedItem) {
         return res.status(404).json({ message: 'Order item not found' });
@@ -558,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderItemId = req.params.id;
       
       // Mark the order item as ready
-      const updatedItem = await storage.markOrderItemReady(orderItemId);
+      const updatedItem = await storage.markReady(orderItemId);
       
       if (!updatedItem) {
         return res.status(404).json({ message: 'Order item not found' });
@@ -614,7 +616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderItemId = req.params.id;
       
       // Mark the order item as delivered
-      const updatedItem = await storage.markOrderItemDelivered(orderItemId);
+      const updatedItem = await storage.markDelivered(orderItemId);
       
       if (!updatedItem) {
         return res.status(404).json({ message: 'Order item not found' });

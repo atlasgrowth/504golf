@@ -195,8 +195,8 @@ export type OrderSummary = {
 
 export type CartItem = {
   menuItemId: string;
-  name: string;
-  priceCents: number;
+  name?: string;
+  priceCents?: number;
   quantity: number;
   station?: string;
 };
