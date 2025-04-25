@@ -65,6 +65,7 @@ export interface OrderItemDTO {
   station: string | null;
   completed: boolean;
   cookSeconds: number | null;
+  price_cents: number | null;
   firedAt: string | null; // ISO string
   readyAt: string | null; // ISO string
   deliveredAt: string | null; // ISO string
@@ -97,6 +98,7 @@ export const toOrderItemDTO = (row: any): OrderItemDTO => {
     station: row.station,
     completed: typeof row.completed === 'boolean' ? row.completed : false,
     cookSeconds: row.cookSeconds || row.cook_seconds || null,
+    price_cents: row.price_cents || 0,
     // Convert Date objects to ISO strings for all date fields
     firedAt: row.firedAt instanceof Date ? row.firedAt.toISOString() : 
             (row.fired_at instanceof Date ? row.fired_at.toISOString() : 
