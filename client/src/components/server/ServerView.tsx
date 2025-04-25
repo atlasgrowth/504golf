@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BaySelection from "./BaySelection";
 import ActiveOrdersTable from "./ActiveOrdersTable";
 import ServerOrderDialog from "./ServerOrderDialog";
+import BayTabs from "./BayTabs";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,7 @@ export default function ServerView() {
   const { lastMessage } = useWebSocket();
   const [serverName, setServerName] = useState("Alex Johnson");
   const [newOrderDialogOpen, setNewOrderDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("READY"); // Default to READY tab
 
   // Get active orders
   const { data: orders = [], isLoading: ordersLoading } = useQuery<OrderSummary[]>({
@@ -41,6 +43,18 @@ export default function ServerView() {
 
   // Count alerts/flagged orders
   const alertCount = orders.filter(order => order.isDelayed).length || 0;
+
+  // Handle tab change and filter orders based on status
+  const handleTabChange = (tab: string) => {
+    setStatusFilter(tab);
+  };
+
+  // Filter orders based on the selected tab
+  const filteredOrders = orders.filter(order => {
+    if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'DELAYED') return order.isDelayed && order.status !== 'SERVED' && order.status !== 'served';
+    return order.status.toUpperCase() === statusFilter;
+  });
 
   const toggleNewOrderDialog = () => {
     console.log("Opening new order dialog");
@@ -79,14 +93,20 @@ export default function ServerView() {
       {/* Bay Selection */}
       <BaySelection />
       
-      {/* Active Orders Table */}
+      {/* Status Tabs and Active Orders Table */}
       {ordersLoading ? (
         <div className="bg-white rounded-lg shadow-md p-4">
           <h2 className="font-poppins font-semibold text-lg mb-4">Active Orders</h2>
           <Skeleton className="h-64 w-full" />
         </div>
       ) : (
-        <ActiveOrdersTable orders={orders} />
+        <div>
+          {/* Status filter tabs */}
+          <BayTabs orders={orders} onTabChange={handleTabChange} />
+          
+          {/* Table with filtered orders */}
+          <ActiveOrdersTable orders={filteredOrders} statusFilter={statusFilter} />
+        </div>
       )}
       
       {/* New Order Dialog - conditionally render instead of using open prop */}
