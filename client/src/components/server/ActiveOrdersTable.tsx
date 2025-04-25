@@ -235,7 +235,7 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
                           </div>
                           <div className="text-right">
                             <div className="font-medium">
-                              ${item.menuItem?.price_cents ? (item.menuItem.price_cents / 100).toFixed(2) : '0.00'}
+                              ${((item.price_cents || item.menuItem?.price_cents || 0) / 100).toFixed(2)}
                             </div>
                             <div className="text-xs text-neutral-500">
                               {item.status || 'NEW'}
