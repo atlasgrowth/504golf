@@ -16,7 +16,7 @@ import {
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
 import { 
-  registerClient, removeClient, 
+  registerClient, removeClient, getClients,
   broadcastUpdate, sendBayUpdate, sendStationUpdate 
 } from './ws';
 import { startTimers } from './timers';
@@ -374,6 +374,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       OrderStatus.SERVED, 
       OrderStatus.CANCELLED
     ]).or(z.enum(['pending', 'preparing', 'ready', 'served', 'cancelled'])),
+  });
+  
+  // Add endpoint for quickly marking an order as ready
+  app.post('/api/order/:id/ready', async (req: Request, res: Response) => {
+    try {
+      const orderId = req.params.id;
+      
+      // Update the order status directly to READY
+      const updatedOrder = await storage.updateOrderStatus(orderId, OrderStatus.READY);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      
+      // Get full order details
+      const fullOrder = await storage.getOrderWithItems(orderId);
+      
+      // Broadcast order update to connected clients
+      const updatedOrders = await storage.getActiveOrders();
+      broadcastUpdate('ordersUpdate', updatedOrders);
+      
+      if (fullOrder) {
+        // Create order update message
+        const orderUpdatedMessage: OrderUpdatedMessage = {
+          type: 'order_updated',
+          data: {
+            order: toOrderDTO(updatedOrder),
+            items: fullOrder.items.map(item => toOrderItemDTO(item)),
+            status: OrderStatus.READY,
+            timeElapsed: Math.round((Date.now() - new Date(fullOrder.createdAt).getTime()) / 60000),
+            estimatedCompletionTime: fullOrder.estimatedCompletionTime 
+              ? new Date(fullOrder.estimatedCompletionTime).toISOString() 
+              : null,
+            readyAt: new Date().toISOString(),
+            servedAt: null
+          }
+        };
+        
+        // Send messages to connected clients
+        for (const client of wsClients.values()) {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(orderUpdatedMessage));
+          }
+        }
+      }
+      
+      // Return the updated order
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error marking order as ready:', error);
+      res.status(500).json({ message: 'Failed to mark order as ready' });
+    }
   });
   
   app.put('/api/order/:id/status', async (req: Request, res: Response) => {

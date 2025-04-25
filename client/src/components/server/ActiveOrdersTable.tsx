@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -157,9 +158,10 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
       
       {/* Order Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>View the complete details for this order</DialogDescription>
           </DialogHeader>
           
           {selectedOrder && (
@@ -211,9 +213,10 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
       
       {/* Alert Dialog */}
       <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Send Alert to Kitchen</DialogTitle>
+            <DialogDescription>Alert the kitchen staff about this order</DialogDescription>
           </DialogHeader>
           
           {selectedOrder && (

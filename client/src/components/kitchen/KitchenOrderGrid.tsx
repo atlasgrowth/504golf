@@ -52,7 +52,12 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
     useQuery<OrderWithItems>({
       // API route is /api/order/:id  (singular)
       queryKey: ["/api/order", orderId],
-      queryFn: () => apiRequest("GET", `/api/order/${orderId}`),
+      queryFn: async () => {
+        console.log(`Fetching order details for order ${orderId}`);
+        const response = await apiRequest("GET", `/api/order/${orderId}`);
+        console.log(`Order details response for ${orderId}:`, response);
+        return response;
+      },
       staleTime: 10_000,
     });
   
