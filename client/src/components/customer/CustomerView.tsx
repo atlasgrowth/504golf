@@ -7,6 +7,7 @@ import OrderSummary from "./OrderSummary";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MapPin, GolfBall, Utensils } from "lucide-react";
 import golfLogo from "@/assets/golf-logo.svg";
 
 interface CustomerViewProps {
@@ -54,50 +55,97 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
       toast({
         title: 'Order Status Updated',
         description: `Your order is now ${lastMessage.data.status}`,
+        variant: 'default',
       });
     }
   }, [lastMessage, toast]);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6 bg-white shadow-lg rounded-lg">
-      {/* Header */}
-      <div className="mb-6 text-center">
-        <div className="flex justify-center mb-2">
-          <img src={golfLogo} alt="SwingEats Logo" className="w-10 h-10 text-primary" />
+    <div className="min-h-screen bg-background pb-6">
+      {/* Fixed Header */}
+      <header className="sticky top-0 z-20 glassmorphism shadow-sm px-4 py-3">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="mr-3 bg-primary/10 p-2 rounded-full">
+              <img src={golfLogo} alt="SwingEats Logo" className="w-6 h-6" />
+            </div>
+            <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+              SwingEats
+            </h1>
+          </div>
+          
+          <div className="flex items-center bg-muted/40 px-3 py-1 rounded-full">
+            <MapPin className="h-4 w-4 text-primary mr-1" />
+            {bayLoading ? (
+              <Skeleton className="h-5 w-16" />
+            ) : (
+              <span className="text-sm font-medium">Bay {bayNumber} • Floor {bay?.floor}</span>
+            )}
+          </div>
         </div>
-        <h1 className="font-poppins font-bold text-2xl text-primary">SwingEats</h1>
-        <div className="flex items-center justify-center mt-2 space-x-2">
-          <i className="fas fa-location-dot text-neutral-600"></i>
-          {bayLoading ? (
-            <Skeleton className="h-5 w-32" />
-          ) : (
-            <span className="text-neutral-700">Bay {bayNumber} - Floor {bay?.floor}</span>
-          )}
+      </header>
+      
+      <main className="max-w-md mx-auto px-4 pt-5 pb-32">
+        {/* Banner */}
+        <div className="relative mb-6 overflow-hidden rounded-xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-secondary/90 z-0"></div>
+          <div className="relative z-10 p-4 text-white">
+            <div className="flex items-start">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold mb-1">Golf Course Dining</h2>
+                <p className="text-sm text-white/90">
+                  Order delicious food right to your bay
+                </p>
+              </div>
+              <div className="p-2 bg-white/20 backdrop-blur-sm rounded-full">
+                <GolfIcon className="h-8 w-8" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Menu Categories */}
+        {menuLoading ? (
+          <div className="mb-6 animate-pulse">
+            <Skeleton className="h-12 w-full rounded-lg" />
+          </div>
+        ) : (
+          <div className="mb-6">
+            <MenuCategories categories={menu?.map(item => item.category) || []} />
+          </div>
+        )}
+        
+        {/* Menu Items */}
+        {menuLoading ? (
+          <div className="space-y-6 mb-8">
+            {Array(3).fill(0).map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="flex flex-col sm:flex-row rounded-xl overflow-hidden bg-muted/30">
+                  <div className="w-full sm:w-32 h-32 bg-muted"></div>
+                  <div className="p-4 flex-1">
+                    <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-muted/60 rounded w-1/4 mb-3"></div>
+                    <div className="h-4 bg-muted/60 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-muted/60 rounded w-5/6"></div>
+                    <div className="flex justify-end mt-4">
+                      <div className="h-8 bg-muted/80 rounded-full w-28"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <MenuItems menuData={menu || []} />
+        )}
+      </main>
+      
+      {/* Fixed Order Summary at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        <div className="max-w-md mx-auto">
+          <OrderSummary bayNumber={bayNumber} />
         </div>
       </div>
-      
-      {/* Menu Categories */}
-      {menuLoading ? (
-        <div className="mb-6">
-          <Skeleton className="h-10 w-full mb-2" />
-        </div>
-      ) : (
-        <MenuCategories categories={menu?.map(item => item.category) || []} />
-      )}
-      
-      {/* Menu Items */}
-      {menuLoading ? (
-        <div className="space-y-4 mb-8">
-          {Array(3).fill(0).map((_, index) => (
-            <Skeleton key={index} className="h-24 w-full" />
-          ))}
-        </div>
-      ) : (
-        <MenuItems menuData={menu || []} />
-      )}
-      
-      {/* Order Summary */}
-      <OrderSummary bayNumber={bayNumber} />
     </div>
   );
 }

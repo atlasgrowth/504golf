@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useOrder } from "@/contexts/OrderContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ShoppingCart, Trash2, Minus, Plus, Info, Receipt, Send, Utensils } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface OrderSummaryProps {
   bayNumber: number;
@@ -54,7 +55,7 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
       
       toast({
         title: "Order Placed",
-        description: `Your order #${newOrder.orderNumber} has been placed successfully!`,
+        description: `Your order #${newOrder.orderNumber || 'XXX'} has been placed successfully!`,
       });
     } catch (error) {
       console.error("Failed to place order:", error);
@@ -69,111 +70,180 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
   };
   
   return (
-    <div className="border-t border-neutral-200 pt-4">
-      <div className="flex justify-between items-center">
-        <h2 className="font-poppins font-semibold text-lg">Your Order ({totalItems} items)</h2>
-        <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
-          <DialogTrigger asChild>
-            <button 
-              className="text-sm text-primary font-medium"
-              disabled={totalItems === 0}
-            >
-              View details
-            </button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Your Order</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              {cart.items.map((item) => (
-                <div key={item.menuItemId} className="flex justify-between items-center border-b pb-2">
-                  <div className="flex-1">
-                    <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-neutral-600">{formatPrice(item.priceCents)} each</p>
+    <div className="relative">
+      <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+      
+      <div className="bg-white glassmorphism rounded-t-xl border-t border-t-white/30 shadow-lg px-5 pt-5 pb-6 mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <ShoppingCart className="w-5 h-5 mr-2 text-primary" />
+            <h2 className="font-semibold text-lg">Your Order</h2>
+            {totalItems > 0 && (
+              <Badge variant="secondary" className="ml-2 animate-pulse-subtle">
+                {totalItems} item{totalItems !== 1 ? 's' : ''}
+              </Badge>
+            )}
+          </div>
+          
+          <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                disabled={totalItems === 0}
+              >
+                <Receipt className="w-4 h-4 mr-1" />
+                Details
+              </Button>
+            </DialogTrigger>
+            
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center text-xl">
+                  <ShoppingCart className="w-5 h-5 mr-2 text-primary" />
+                  Order Summary
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-1">
+                {cart.items.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground flex flex-col items-center">
+                    <Utensils className="w-12 h-12 mb-2 text-muted" />
+                    <p>Your cart is empty</p>
+                    <p className="text-sm mt-1">Add some delicious items to get started</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      className="px-2 py-1 bg-neutral-200 rounded-md"
-                      onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
+                ) : (
+                  cart.items.map((item) => (
+                    <div 
+                      key={item.menuItemId} 
+                      className="flex justify-between items-center p-3 rounded-lg hover:bg-muted/30 transition-colors"
                     >
-                      -
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button 
-                      className="px-2 py-1 bg-neutral-200 rounded-md"
-                      onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
-                    >
-                      +
-                    </button>
-                    <button 
-                      className="text-danger ml-2"
-                      onClick={() => removeFromCart(item.menuItemId)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18"></path>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                      </svg>
-                    </button>
+                      <div className="flex-1 mr-4">
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">{formatPrice(item.priceCents)} each</p>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        
+                        <span className="w-5 text-center">{item.quantity}</span>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full"
+                          onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => removeFromCart(item.menuItemId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                <div className="space-y-1 pt-2">
+                  <div className="flex items-center text-sm font-medium">
+                    <Info className="w-4 h-4 mr-1 text-muted-foreground" />
+                    <label className="text-muted-foreground">
+                      Special Instructions
+                    </label>
                   </div>
+                  
+                  <Textarea 
+                    placeholder="Allergies, preferences, or special requests"
+                    value={cart.specialInstructions || ""}
+                    onChange={(e) => updateSpecialInstructions(e.target.value)}
+                    className="w-full bg-muted/30 border-muted transition-all focus:ring-1 focus:ring-primary/50"
+                    rows={3}
+                  />
                 </div>
-              ))}
-              
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Special Instructions
-                </label>
-                <Textarea 
-                  placeholder="Any special requests or allergies?"
-                  value={cart.specialInstructions || ""}
-                  onChange={(e) => updateSpecialInstructions(e.target.value)}
-                  className="w-full"
-                  rows={3}
-                />
+                
+                <div className="flex justify-between items-center font-medium text-lg pt-4 border-t">
+                  <span>Total:</span>
+                  <span className="text-primary font-bold">{formatPrice(totalPrice)}</span>
+                </div>
               </div>
               
-              <div className="flex justify-between font-medium text-lg pt-2">
-                <span>Total:</span>
-                <span>{formatPrice(totalPrice)}</span>
-              </div>
-              
-              <div className="flex space-x-2 mt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setOrderDialogOpen(false)}>
-                  Cancel
-                </Button>
+              <DialogFooter className="sm:justify-between gap-3 mt-2">
                 <Button 
-                  className="flex-1 bg-primary hover:bg-primary-dark" 
+                  variant="outline" 
+                  onClick={() => setOrderDialogOpen(false)}
+                  className="sm:w-1/2"
+                >
+                  Continue Shopping
+                </Button>
+                
+                <Button 
+                  className="sm:w-1/2 bg-primary hover:bg-primary/90 group" 
                   onClick={placeOrder}
                   disabled={isSubmitting || totalItems === 0}
                 >
-                  {isSubmitting ? "Submitting..." : "Confirm Order"}
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <Send className="mr-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      Confirm Order
+                    </div>
+                  )}
                 </Button>
-              </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        <div className="flex justify-between items-center p-3 mb-5 bg-muted/30 rounded-lg">
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">Total Price</span>
+            <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+              {formatPrice(totalPrice)}
+            </span>
+          </div>
+          
+          <div className="flex flex-col items-end">
+            <span className="text-sm text-muted-foreground">Bay</span>
+            <span className="font-medium">{bayNumber}</span>
+          </div>
+        </div>
+        
+        <Button 
+          className="w-full py-6 bg-primary hover:bg-primary/90 rounded-xl btn-modern group"
+          disabled={totalItems === 0 || isSubmitting}
+          onClick={placeOrder}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Processing...
             </div>
-          </DialogContent>
-        </Dialog>
+          ) : (
+            <div className="flex items-center justify-center">
+              <Send className="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              {totalItems === 0 ? "Add items to order" : "Place Order"}
+            </div>
+          )}
+        </Button>
       </div>
-      <div className="flex justify-between items-center mt-3 mb-4">
-        <span className="text-neutral-700">Total:</span>
-        <span className="font-poppins font-bold text-xl">{formatPrice(totalPrice)}</span>
-      </div>
-      <button 
-        className="w-full py-3 bg-primary text-white font-poppins font-medium rounded-lg shadow-md flex items-center justify-center space-x-2 disabled:opacity-50"
-        disabled={totalItems === 0 || isSubmitting}
-        onClick={placeOrder}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 12h-3a2 2 0 0 1-2-2V7"></path>
-          <path d="M14 3.5v7"></path>
-          <path d="M21 3v7"></path>
-          <path d="M21 12v2a6 6 0 0 1-6 6c-1.57 0-2.94-.81-3.75-2.03"></path>
-          <path d="M7.5 9H4.5C3.12 9 2 10.12 2 11.5s1.12 2.5 2.5 2.5H7l1.48-4.5"></path>
-          <path d="M11.5 14H9.83c-1.38 0-2.5 1.12-2.5 2.5S8.45 19 9.83 19h1.67l1.5-5"></path>
-        </svg>
-        <span>{isSubmitting ? "Submitting..." : "Place Order"}</span>
-      </button>
     </div>
   );
 }
