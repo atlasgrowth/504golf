@@ -33,6 +33,7 @@ export interface ClientRegistrationMessage extends WebSocketMessage {
   data: {
     clientType: "guest" | "server" | "kitchen";
     bayId?: number;
+    station?: string; // For kitchen clients to filter by station
   };
 }
 

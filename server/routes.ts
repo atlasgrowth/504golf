@@ -4,8 +4,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
 import { 
-  insertOrderSchema, type Cart
-} from "../shared/schema";
+  insertOrderSchema, type Cart, OrderItemStatus
+} from "../packages/shared/src/schema";
 import {
   WebSocketMessage, WebSocketMessageType, 
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
@@ -15,29 +15,11 @@ import {
 import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
-
-// WebSocket clients
-const clients = new Map<string, { ws: WebSocket, clientType?: 'kitchen' | 'server' | 'guest', bayId?: number }>();
-
-// Send update to all connected clients
-function broadcastUpdate(type: WebSocketMessageType, data: any) {
-  const message: WebSocketMessage = { type, data };
-  clients.forEach(client => {
-    if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify(message));
-    }
-  });
-}
-
-// Send update to clients for a specific bay
-function sendBayUpdate(bayId: number, type: WebSocketMessageType, data: any) {
-  const message: WebSocketMessage = { type, data };
-  clients.forEach(client => {
-    if (client.ws.readyState === WebSocket.OPEN && client.bayId === bayId) {
-      client.ws.send(JSON.stringify(message));
-    }
-  });
-}
+import { 
+  registerClient, removeClient, 
+  broadcastUpdate, sendBayUpdate, sendStationUpdate 
+} from './ws';
+import { startTimers } from './timers';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -47,7 +29,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   wss.on('connection', (ws) => {
     const clientId = Math.random().toString(36).substring(2, 15);
-    clients.set(clientId, { ws });
+    
+    // Register the client with just the WebSocket initially
+    registerClient(clientId, ws);
     
     // Send initial data
     storage.getActiveOrders().then(orders => {
@@ -62,14 +46,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const data = JSON.parse(message.toString()) as WebSocketMessage;
         
-        // Handle client registration - normalized approach
+        // Handle client registration with enhanced data
         if (data.type === 'register') {
           const registerData = data as ClientRegistrationMessage;
           const clientType = registerData.data.clientType;
           const bayId = registerData.data.bayId;
+          const station = registerData.data.station; // For kitchen display filtering
           
-          // Store the client info including type and bay ID if provided
-          clients.set(clientId, { ws, clientType, bayId });
+          // Re-register the client with complete info
+          registerClient(clientId, ws, clientType, bayId, station);
           
           // Auto-subscribe guests and servers to their bay
           if (bayId && (clientType === 'guest' || clientType === 'server')) {
@@ -89,7 +74,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           
-          console.log(`Client registered as ${clientType}${bayId ? ` for bay ${bayId}` : ''}`);
+          // For kitchen clients, send items for their station
+          if (clientType === 'kitchen' && station) {
+            try {
+              // Get items for this station
+              const items = await storage.getOrderItemsByStation(
+                station, 
+                station !== '*' ? undefined : null // If station is *, don't filter by status
+              );
+              
+              // Group items by status
+              const newItems = items.filter(item => item.status === OrderItemStatus.NEW);
+              const cookingItems = items.filter(item => item.status === OrderItemStatus.COOKING);
+              const readyItems = items.filter(item => item.status === OrderItemStatus.READY);
+              
+              // Send the station items to the kitchen client
+              const stationMessage: WebSocketMessage = {
+                type: 'ordersUpdate',
+                data: {
+                  station,
+                  new: newItems.map(toOrderItemDTO),
+                  cooking: cookingItems.map(toOrderItemDTO),
+                  ready: readyItems.map(toOrderItemDTO)
+                }
+              };
+              
+              ws.send(JSON.stringify(stationMessage));
+            } catch (error) {
+              console.error(`Error sending station items for ${station}:`, error);
+            }
+          }
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -97,9 +111,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     ws.on('close', () => {
-      clients.delete(clientId);
+      removeClient(clientId);
     });
   });
+  
+  // Start background timer for automatic item status updates
+  startTimers();
   
   // API Routes - prefix all with /api
   app.get('/api/menu', async (_req: Request, res: Response) => {
@@ -363,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update order item completion status
+  // Legacy endpoint - Update order item completion status
   const updateOrderItemStatusSchema = z.object({
     completed: z.boolean(),
   });
@@ -431,6 +448,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({ message: 'Failed to update order item status' });
+    }
+  });
+  
+  // New endpoint - Fire an order item (start cooking)
+  app.post('/api/order-items/:id/fire', async (req: Request, res: Response) => {
+    try {
+      const orderItemId = req.params.id;
+      
+      // Fire the order item (sets status to COOKING)
+      const updatedItem = await storage.fireOrderItem(orderItemId);
+      
+      if (!updatedItem) {
+        return res.status(404).json({ message: 'Order item not found' });
+      }
+      
+      // Get the order to send bay info
+      const order = await storage.getOrderById(updatedItem.orderId);
+      
+      if (!order) {
+        return res.status(500).json({ message: 'Associated order not found' });
+      }
+      
+      // Get bay info
+      const bay = await storage.getBayById(order.bayId);
+      
+      // Create properly typed item cooking message
+      const itemCookingMessage: ItemCookingMessage = {
+        type: 'item_cooking',
+        data: {
+          orderId: updatedItem.orderId,
+          orderItem: toOrderItemDTO(updatedItem),
+          station: updatedItem.station || '',
+          firedAt: updatedItem.firedAt!.toISOString(),
+          cookSeconds: updatedItem.cookSeconds,
+          readyAt: updatedItem.readyAt!.toISOString(),
+          bayId: order.bayId,
+          bayNumber: bay?.number || order.bayId,
+          status: 'COOKING'
+        }
+      };
+      
+      // Broadcast to all kitchen clients
+      broadcastUpdate('item_cooking', itemCookingMessage.data);
+      
+      // Send update to the specific bay
+      sendBayUpdate(order.bayId, 'item_cooking', itemCookingMessage.data);
+      
+      // Return the updated item
+      res.json(toOrderItemDTO(updatedItem));
+    } catch (error) {
+      console.error('Error firing order item:', error);
+      res.status(500).json({ message: 'Failed to fire order item' });
+    }
+  });
+  
+  // New endpoint - Mark an order item as ready
+  app.post('/api/order-items/:id/ready', async (req: Request, res: Response) => {
+    try {
+      const orderItemId = req.params.id;
+      
+      // Mark the order item as ready
+      const updatedItem = await storage.markOrderItemReady(orderItemId);
+      
+      if (!updatedItem) {
+        return res.status(404).json({ message: 'Order item not found' });
+      }
+      
+      // Get the order to send bay info
+      const order = await storage.getOrderById(updatedItem.orderId);
+      
+      if (!order) {
+        return res.status(500).json({ message: 'Associated order not found' });
+      }
+      
+      // Get bay info
+      const bay = await storage.getBayById(order.bayId);
+      
+      // Calculate elapsed time in seconds
+      const firedTime = updatedItem.firedAt ? new Date(updatedItem.firedAt).getTime() : Date.now();
+      const readyTime = updatedItem.readyAt ? new Date(updatedItem.readyAt).getTime() : Date.now();
+      const elapsedSeconds = Math.floor((readyTime - firedTime) / 1000);
+      
+      // Create properly typed item ready message
+      const itemReadyMessage: ItemReadyMessage = {
+        type: 'item_ready',
+        data: {
+          orderId: updatedItem.orderId,
+          orderItem: toOrderItemDTO(updatedItem),
+          station: updatedItem.station || '',
+          readyAt: updatedItem.readyAt ? updatedItem.readyAt.toISOString() : new Date().toISOString(),
+          elapsedSeconds,
+          bayId: order.bayId,
+          bayNumber: bay?.number || order.bayId,
+          status: 'READY'
+        }
+      };
+      
+      // Broadcast to all kitchen clients
+      broadcastUpdate('item_ready', itemReadyMessage.data);
+      
+      // Send update to the specific bay
+      sendBayUpdate(order.bayId, 'item_ready', itemReadyMessage.data);
+      
+      // Return the updated item
+      res.json(toOrderItemDTO(updatedItem));
+    } catch (error) {
+      console.error('Error marking order item as ready:', error);
+      res.status(500).json({ message: 'Failed to mark order item as ready' });
+    }
+  });
+  
+  // New endpoint - Mark an order item as delivered
+  app.post('/api/order-items/:id/deliver', async (req: Request, res: Response) => {
+    try {
+      const orderItemId = req.params.id;
+      
+      // Mark the order item as delivered
+      const updatedItem = await storage.markOrderItemDelivered(orderItemId);
+      
+      if (!updatedItem) {
+        return res.status(404).json({ message: 'Order item not found' });
+      }
+      
+      // Get the order to send bay info
+      const order = await storage.getOrderById(updatedItem.orderId);
+      
+      if (!order) {
+        return res.status(500).json({ message: 'Associated order not found' });
+      }
+      
+      // Get bay info
+      const bay = await storage.getBayById(order.bayId);
+      
+      // Calculate total cook time in seconds (from firedAt to deliveredAt)
+      const firedTime = updatedItem.firedAt ? new Date(updatedItem.firedAt).getTime() : Date.now();
+      const deliveredTime = updatedItem.deliveredAt ? new Date(updatedItem.deliveredAt).getTime() : Date.now();
+      const totalCookTime = Math.floor((deliveredTime - firedTime) / 1000);
+      
+      // Create properly typed item delivered message
+      const itemDeliveredMessage: ItemDeliveredMessage = {
+        type: 'item_delivered',
+        data: {
+          orderId: updatedItem.orderId,
+          orderItem: toOrderItemDTO(updatedItem),
+          station: updatedItem.station || '',
+          deliveredAt: updatedItem.deliveredAt!.toISOString(),
+          totalCookTime,
+          bayId: order.bayId,
+          bayNumber: bay?.number || order.bayId,
+          status: 'DELIVERED'
+        }
+      };
+      
+      // Broadcast to all kitchen clients
+      broadcastUpdate('item_delivered', itemDeliveredMessage.data);
+      
+      // Send update to the specific bay
+      sendBayUpdate(order.bayId, 'item_delivered', itemDeliveredMessage.data);
+      
+      // Check if all items for this order are delivered
+      const orderItems = await storage.getOrderItems(order.id);
+      const allItemsDelivered = orderItems.every(item => item.status === 'DELIVERED' || item.completed);
+      
+      // If all items delivered, update order status to served
+      if (allItemsDelivered && order.status !== 'served') {
+        await storage.updateOrderStatus(order.id, 'served');
+        
+        // Broadcast updated orders
+        const updatedOrders = await storage.getActiveOrders();
+        broadcastUpdate('ordersUpdate', updatedOrders);
+      }
+      
+      // Return the updated item
+      res.json(toOrderItemDTO(updatedItem));
+    } catch (error) {
+      console.error('Error marking order item as delivered:', error);
+      res.status(500).json({ message: 'Failed to mark order item as delivered' });
+    }
+  });
+  
+  // New endpoint - Get order items by station (for KDS)
+  app.get('/api/order-items/station/:station', async (req: Request, res: Response) => {
+    try {
+      const station = req.params.station;
+      const status = req.query.status as string | undefined;
+      
+      // Get items filtered by station and optional status
+      const items = await storage.getOrderItemsByStation(station, status);
+      
+      // Return all matching items
+      res.json(items.map(toOrderItemDTO));
+    } catch (error) {
+      console.error('Error fetching station items:', error);
+      res.status(500).json({ message: 'Failed to fetch items by station' });
     }
   });
   
