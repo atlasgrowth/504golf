@@ -5,13 +5,13 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { 
   insertOrderSchema, type Cart, OrderItemStatus, OrderStatus
-} from "../shared/schema";
+} from "@shared/schema";
 import {
   WebSocketMessage, WebSocketMessageType, 
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
   ClientRegistrationMessage, BayUpdatedMessage,
   ItemCookingMessage, ItemReadyMessage, ItemDeliveredMessage
-} from "../shared/types";
+} from "@shared/types";
 import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";

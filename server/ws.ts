@@ -3,7 +3,7 @@
  */
 
 import { WebSocket } from 'ws';
-import { WebSocketMessage, WebSocketMessageType } from '../packages/shared/src/types';
+import { WebSocketMessage, WebSocketMessageType } from '@shared/types';
 
 // Map to store all connected WebSocket clients
 const clients = new Map<string, { 

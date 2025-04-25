@@ -7,7 +7,7 @@ import {
   orderItems, type OrderItem, type InsertOrderItem,
   type OrderWithItems, type OrderSummary, type Cart,
   OrderItemStatus, OrderStatus
-} from "../shared/schema";
+} from "@shared/schema";
 
 export interface IStorage {
   // Users
