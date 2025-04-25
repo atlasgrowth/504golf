@@ -261,8 +261,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/orders', async (req: Request, res: Response) => {
     try {
+      console.log('Received order request:', JSON.stringify(req.body, null, 2));
+      
       const validatedData = createOrderSchema.parse(req.body);
       const { order, cart } = validatedData;
+      
+      console.log('Validated order data:', JSON.stringify(validatedData, null, 2));
       
       // Calculate estimated completion time based on order items and their complexity
       // A simple algorithm: 5 min base time + 2 min per item
@@ -277,8 +281,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimatedCompletionTime
       };
       
+      console.log('Creating order with data:', JSON.stringify(orderWithEstimatedTime, null, 2));
+      console.log('Cart data:', JSON.stringify(cart, null, 2));
+      
       // Create the order
       const newOrder = await storage.createOrder(orderWithEstimatedTime, cart);
+      
+      console.log('Order created successfully:', JSON.stringify(newOrder, null, 2));
       
       // Broadcast update to all clients
       const updatedOrders = await storage.getActiveOrders();
@@ -310,12 +319,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(toOrderDTO(newOrder));
     } catch (error) {
+      console.error('Error creating order:', error);
+      
       if (error instanceof z.ZodError) {
+        console.error('Validation error:', JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ 
           message: 'Invalid order data', 
           errors: error.errors 
         });
       }
+      
+      // Log the actual error for debugging
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      
       res.status(500).json({ message: 'Failed to create order' });
     }
   });
