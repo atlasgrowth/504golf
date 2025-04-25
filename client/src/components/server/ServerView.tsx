@@ -73,24 +73,24 @@ export default function ServerView() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-lg shadow-sm">
         <div>
-          <h1 className="font-poppins font-bold text-2xl text-primary">SwingEats</h1>
-          <p className="text-neutral-600">Server: <span className="font-medium">{serverName}</span></p>
+          <h1 className="font-poppins font-bold text-3xl text-primary bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">Five O Four Golf</h1>
+          <p className="text-neutral-600 mt-1">Server: <span className="font-semibold text-neutral-800">{serverName}</span></p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
           <button 
-            className="px-3 py-2 bg-white border border-neutral-300 rounded-md flex items-center text-neutral-700"
+            className="px-4 py-2.5 bg-white border border-neutral-300 rounded-lg flex items-center text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm"
             onClick={() => alert("Alert view not implemented yet")}
           >
             <Bell className="h-4 w-4 mr-2" />
             <span>Alerts</span>
             {alertCount > 0 && (
-              <span className="ml-2 bg-danger text-white text-xs px-1.5 rounded-full">{alertCount}</span>
+              <span className="ml-2 bg-danger text-white text-xs px-2 py-0.5 rounded-full">{alertCount}</span>
             )}
           </button>
           <button 
-            className="px-3 py-2 bg-primary text-white rounded-md flex items-center"
+            className="px-4 py-2.5 bg-primary text-white rounded-lg flex items-center hover:bg-primary-dark transition-colors shadow-sm"
             onClick={toggleNewOrderDialog}
           >
             <Plus className="h-4 w-4 mr-2" />
