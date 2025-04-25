@@ -76,11 +76,28 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
       retry: 1, // Only retry once to avoid flooding the server with requests
     });
   
-  // Mark item as completed
-  const toggleItemCompletion = async (orderItemId: string, completed: boolean) => {
+  // Toggle item status between NEW -> COOKING -> READY
+  const toggleItemCompletion = async (orderItemId: string, completed: boolean, currentStatus?: string) => {
     try {
-      // If the item hasn't been fired yet, call /fire first
-      const endpoint = completed ? "/ready" : "/fire";
+      let endpoint;
+      let actionTitle;
+      
+      // If checked true and status is NEW or undefined, call /fire
+      // If checked true and status is COOKING, call /ready  
+      // If unchecked, always call /fire to reset to cooking state
+      if (completed) {
+        if (currentStatus === "COOKING") {
+          endpoint = "/ready";
+          actionTitle = "Item Ready";
+        } else {
+          endpoint = "/fire";
+          actionTitle = "Item Fired";
+        }
+      } else {
+        endpoint = "/fire";
+        actionTitle = "Item Fired";
+      }
+      
       await apiRequest("POST", `/api/order-items/${orderItemId}${endpoint}`);
       
       // Invalidate queries to refresh data
@@ -88,7 +105,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/order'] });
       
       toast({
-        title: completed ? "Item Ready" : "Item Fired",
+        title: actionTitle,
         description: "Order item status has been updated.",
       });
     } catch (error) {
@@ -185,7 +202,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         <div className="flex items-center">
                           <Checkbox 
                             checked={item.completed} 
-                            onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean)}
+                            onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean, item.status || undefined)}
                             className="mr-2 h-4 w-4 text-primary"
                           />
                           <span className={item.completed ? "text-neutral-800 line-through" : "text-neutral-800"}>
