@@ -56,19 +56,15 @@ export default function KitchenView() {
   // Count orders by status
   const countByStatus = {
     all: orders?.length || 0,
-    pending: orders?.filter((o: OrderSummary) => o.status === 'pending' || o.status === 'NEW' || o.status === 'new').length || 0,
-    preparing: orders?.filter((o: OrderSummary) => o.status === 'preparing' || o.status === 'COOKING' || o.status === 'cooking').length || 0,
-    ready: orders?.filter((o: OrderSummary) => o.status === 'ready' || o.status === 'READY').length || 0,
-    late: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
+    preparing: orders?.filter((o: OrderSummary) => o.status === 'preparing').length || 0,
+    ready: orders?.filter((o: OrderSummary) => o.status === 'ready').length || 0,
+    delayed: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
   
   // Filter orders based on active tab
   const filteredOrders = orders?.filter((order: OrderSummary) => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'late') return order.isDelayed;
-    if (activeTab === 'pending') return order.status === 'pending' || order.status === 'NEW' || order.status === 'new';
-    if (activeTab === 'preparing') return order.status === 'preparing' || order.status === 'COOKING' || order.status === 'cooking';
-    if (activeTab === 'ready') return order.status === 'ready' || order.status === 'READY';
+    if (activeTab === 'delayed') return order.isDelayed;
     return order.status === activeTab;
   }) || [];
   
@@ -80,7 +76,7 @@ export default function KitchenView() {
           <h1 className="font-poppins font-bold text-2xl text-primary">SwingEats Kitchen</h1>
           <p className="text-neutral-600">
             Active Orders: <span className="font-semibold">{countByStatus.all}</span> | 
-            Late: <span className="font-semibold text-danger">{countByStatus.late}</span>
+            Delayed: <span className="font-semibold text-danger">{countByStatus.delayed}</span>
           </p>
         </div>
         <div className="flex items-center space-x-3">

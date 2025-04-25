@@ -295,8 +295,6 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(orders.status, "NEW"),
-            eq(orders.status, "pending"),
-            eq(orders.status, "PENDING"),
             eq(orders.status, "COOKING"),
             eq(orders.status, "READY")
           )
