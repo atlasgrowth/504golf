@@ -2,29 +2,35 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BaySelection from "./BaySelection";
 import ActiveOrdersTable from "./ActiveOrdersTable";
+import ServerOrderDialog from "./ServerOrderDialog";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Bell, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { OrderSummary } from "@shared/schema";
 
 export default function ServerView() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { lastMessage } = useWebSocket();
   const [serverName, setServerName] = useState("Alex Johnson");
+  const [newOrderDialogOpen, setNewOrderDialogOpen] = useState(false);
 
   // Get active orders
-  const { data: orders, isLoading: ordersLoading } = useQuery({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<OrderSummary[]>({
     queryKey: ['/api/orders'],
   });
 
   // Handle WebSocket messages
   useEffect(() => {
     if (lastMessage?.type === 'ordersUpdate') {
-      queryClient.setQueryData(['/api/orders'], lastMessage.data);
+      const ordersData = lastMessage.data as OrderSummary[];
+      queryClient.setQueryData(['/api/orders'], ordersData);
       
       // Check for new orders and notify
-      if (orders && lastMessage.data.length > orders.length) {
+      if (orders && ordersData.length > orders.length) {
         toast({
           title: 'New Order Received',
           description: `A new order has been placed.`,
@@ -34,7 +40,7 @@ export default function ServerView() {
   }, [lastMessage, queryClient, orders, toast]);
 
   // Count alerts/flagged orders
-  const alertCount = orders?.filter(order => order.isDelayed).length || 0;
+  const alertCount = orders.filter(order => order.isDelayed).length || 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -45,17 +51,23 @@ export default function ServerView() {
           <p className="text-neutral-600">Server: <span className="font-medium">{serverName}</span></p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="px-3 py-2 bg-white border border-neutral-300 rounded-md flex items-center text-neutral-700">
-            <i className="fas fa-bell mr-2"></i>
+          <Button 
+            variant="outline" 
+            className="flex items-center"
+          >
+            <Bell className="h-4 w-4 mr-2" />
             <span>Alerts</span>
             {alertCount > 0 && (
               <span className="ml-2 bg-danger text-white text-xs px-1.5 rounded-full">{alertCount}</span>
             )}
-          </button>
-          <button className="px-3 py-2 bg-primary text-white rounded-md flex items-center">
-            <i className="fas fa-plus mr-2"></i>
+          </Button>
+          <Button 
+            className="bg-primary hover:bg-primary-dark flex items-center"
+            onClick={() => setNewOrderDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
             <span>New Order</span>
-          </button>
+          </Button>
         </div>
       </div>
       
@@ -69,8 +81,14 @@ export default function ServerView() {
           <Skeleton className="h-64 w-full" />
         </div>
       ) : (
-        <ActiveOrdersTable orders={orders || []} />
+        <ActiveOrdersTable orders={orders} />
       )}
+      
+      {/* New Order Dialog */}
+      <ServerOrderDialog 
+        open={newOrderDialogOpen} 
+        onOpenChange={setNewOrderDialogOpen} 
+      />
     </div>
   );
 }
