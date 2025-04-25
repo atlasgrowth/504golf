@@ -3,27 +3,53 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("customer"), // admin, server, kitchen, customer
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  role: true,
+});
+
+// Categories table
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+});
+
+export const insertCategorySchema = createInsertSchema(categories).pick({
+  name: true,
+  slug: true,
+});
+
 // Menu items table
 export const menuItems = pgTable("menu_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   category: text("category").notNull(),  // Shareables, Smashburgers, etc.
-  price: integer("price_cents").notNull(), // Price in cents
+  price_cents: integer("price_cents").notNull(), // Price in cents
   station: text("station").notNull(),   // Fry, Cold, FlatTop, etc.
-  prepSeconds: integer("prep_seconds").notNull(), // Prep time in seconds
+  prep_seconds: integer("prep_seconds").notNull(), // Prep time in seconds
   description: text("description"), // Optional description
-  imageUrl: text("image_url"), // Optional image URL
+  image_url: text("image_url"), // Optional image URL
   active: boolean("active").notNull().default(true),
 });
 
 export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
   name: true, 
   category: true,
-  price: true,
+  price_cents: true,
   station: true,
-  prepSeconds: true,
+  prep_seconds: true,
   description: true,
-  imageUrl: true,
+  image_url: true,
   active: true,
 });
 
@@ -96,13 +122,23 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 }));
 
 // Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
 export type MenuItem = typeof menuItems.$inferSelect;
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 
 export type Bay = typeof bays.$inferSelect;
 export type InsertBay = z.infer<typeof insertBaySchema>;
 
-export type Order = typeof orders.$inferSelect;
+export type Order = typeof orders.$inferSelect & {
+  orderNumber?: string;
+  estimatedCompletionTime?: Date;
+  completedAt?: Date | null;
+};
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type OrderItem = typeof orderItems.$inferSelect;
