@@ -10,7 +10,8 @@ const clients = new Map<string, {
   ws: WebSocket, 
   clientType?: 'kitchen' | 'server' | 'guest', 
   bayId?: number,
-  station?: string
+  station?: string,
+  floor?: number
 }>();
 
 /**
@@ -21,10 +22,11 @@ export function registerClient(
   ws: WebSocket, 
   clientType?: 'kitchen' | 'server' | 'guest', 
   bayId?: number,
-  station?: string
+  station?: string,
+  floor?: number
 ) {
-  clients.set(clientId, { ws, clientType, bayId, station });
-  console.log(`Client ${clientId} registered as ${clientType}${bayId ? ` for bay ${bayId}` : ''}${station ? ` for station ${station}` : ''}`);
+  clients.set(clientId, { ws, clientType, bayId, station, floor });
+  console.log(`Client ${clientId} registered as ${clientType}${bayId ? ` for bay ${bayId}` : ''}${station ? ` for station ${station}` : ''}${floor ? ` on floor ${floor}` : ''}`);
 }
 
 /**
@@ -81,6 +83,24 @@ export function sendStationUpdate(station: string, type: WebSocketMessageType, d
         (client.clientType === 'kitchen' && (!client.station || client.station === station || client.station === '*'))
       )
     ) {
+      client.ws.send(JSON.stringify(message));
+    }
+  });
+}
+
+/**
+ * Send update to clients for a specific floor
+ */
+export function sendFloorUpdate(floor: number, type: WebSocketMessageType, data: any) {
+  const message: WebSocketMessage = { type, data };
+  
+  clients.forEach(client => {
+    // Bail early if client floor doesn't match target floor
+    if (client.floor !== undefined && client.floor !== floor) {
+      return;
+    }
+    
+    if (client.ws.readyState === WebSocket.OPEN && client.clientType === 'server') {
       client.ws.send(JSON.stringify(message));
     }
   });

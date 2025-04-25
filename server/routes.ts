@@ -52,9 +52,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const clientType = registerData.data.clientType;
           const bayId = registerData.data.bayId;
           const station = registerData.data.station; // For kitchen display filtering
+          const floor = registerData.data.floor; // For server floor filtering
           
           // Re-register the client with complete info
-          registerClient(clientId, ws, clientType, bayId, station);
+          registerClient(clientId, ws, clientType, bayId, station, floor);
           
           // Auto-subscribe guests and servers to their bay
           if (bayId && (clientType === 'guest' || clientType === 'server')) {

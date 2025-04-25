@@ -22,7 +22,8 @@ export const toOrderDTO = (row: any) => ({
   status: row.status,
   orderType: row.orderType || row.order_type,
   specialInstructions: row.specialInstructions || row.special_instructions,
-  createdAt: row.createdAt || row.created_at
+  createdAt: row.createdAt || row.created_at,
+  estimatedCompletionTime: row.estimatedCompletionTime || row.estimated_completion_time
 });
 
 /**
@@ -33,9 +34,14 @@ export const toOrderItemDTO = (row: any) => ({
   orderId: row.orderId || row.order_id,
   menuItemId: row.menuItemId || row.menu_item_id,
   quantity: row.quantity,
-  firedAt: row.firedAt || row.fired_at,
-  readyBy: row.readyBy || row.ready_by,
+  status: row.status,
+  station: row.station,
   completed: row.completed,
+  cookSeconds: row.cookSeconds || row.cook_seconds,
+  firedAt: row.firedAt || row.fired_at,
+  readyAt: row.readyAt || row.ready_at,
+  deliveredAt: row.deliveredAt || row.delivered_at,
+  readyBy: row.readyBy || row.ready_by,
   notes: row.notes
 });
 
