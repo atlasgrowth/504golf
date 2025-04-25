@@ -379,33 +379,25 @@ export class DatabaseStorage implements IStorage {
       .values(order)
       .returning();
 
-    // Then create order items from the cart
+    // Then create order items from the cart – pull price & station from menu_items table
     for (const item of cart.items) {
-      // Look up the menu item to get its station
-      let station = item.station;
-      let cookSeconds = null;
-      
-      // If station isn't provided in the cart item, get it from the menu item
-      if (!station) {
-        const menuItem = await this.getMenuItemById(item.menuItemId);
-        station = menuItem?.station;
-        // Set cook seconds based on prep time from menu item
-        if (menuItem && menuItem.prep_seconds) {
-          cookSeconds = menuItem.prep_seconds;
-        }
-      }
+      // Look up the menu item to get its station and price
+      const menuItem = await this.getMenuItemById(item.menuItemId);
+      const station = menuItem?.station || "GRILL";
+      let cookSeconds = menuItem?.prep_seconds || 300; // Default to 5 minutes if not available
       
       // Use direct SQL approach with the pool to handle the column name difference
       await pool.query(
-        `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station, cook_seconds) 
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station, cook_seconds, price_cents) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           newOrder.id,
           item.menuItemId,
           item.quantity,
           cart.specialInstructions || null,
-          station || null,
-          cookSeconds || 300 // Default to 5 minutes if not available
+          station,
+          cookSeconds,
+          menuItem?.price_cents || 0 // Add price from menu item
         ]
       );
     }
