@@ -5,18 +5,20 @@ interface OrderPriorityTabsProps {
   setActiveTab: (tab: string) => void;
   counts: {
     all: number;
+    pending: number;
     preparing: number;
     ready: number;
-    delayed: number;
+    late: number;
   };
 }
 
 export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: OrderPriorityTabsProps) {
   const tabs = [
     { id: "all", label: "All Orders", count: counts.all },
+    { id: "pending", label: "Pending", count: counts.pending },
     { id: "preparing", label: "In Progress", count: counts.preparing },
     { id: "ready", label: "Ready to Serve", count: counts.ready },
-    { id: "delayed", label: "Delayed", count: counts.delayed, danger: true },
+    { id: "late", label: "Late", count: counts.late, danger: true },
   ];
 
   return (

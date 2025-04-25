@@ -17,9 +17,10 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   );
   
   // Compute counts for each status
+  const pending = activeOrders.filter(o => o.status === "NEW" || o.status === "new" || o.status === "PENDING" || o.status === "pending").length;
   const cooking = activeOrders.filter(o => o.status === "COOKING" || o.status === "cooking").length;
   const ready = activeOrders.filter(o => o.status === "READY" || o.status === "ready").length;
-  const delayed = activeOrders.filter(o => o.isDelayed).length;
+  const late = activeOrders.filter(o => o.isDelayed).length;
   
   // Get count of served orders (for today)
   const served = orders.filter(o => 
@@ -28,9 +29,10 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   
   // Main pipeline tabs + Past Orders for the day
   const tabs = [
+    { id: "PENDING", label: "Pending", count: pending },
     { id: "COOKING", label: "Cooking", count: cooking },
     { id: "READY", label: "Ready", count: ready },
-    { id: "DELAYED", label: "Delayed", count: delayed },
+    { id: "LATE", label: "Late", count: late },
     { id: "SERVED", label: "Past Orders", count: served }
   ];
   
