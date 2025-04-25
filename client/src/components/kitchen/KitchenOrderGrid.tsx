@@ -58,12 +58,14 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
           const response = await apiRequest("GET", `/api/order/${orderId}`);
           console.log(`Order details response for ${orderId}:`, response);
           
-          if (!response || !response.id) {
-            console.error(`Order details response invalid for ${orderId}:`, response);
+          const data = await response.json();
+          
+          if (!data || !data.id) {
+            console.error(`Order details response invalid for ${orderId}:`, data);
             return null;
           }
           
-          return response;
+          return data as OrderWithItems;
         } catch (error) {
           console.error(`Error fetching order details for ${orderId}:`, error);
           return null;
