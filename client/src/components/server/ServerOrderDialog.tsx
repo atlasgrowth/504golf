@@ -208,11 +208,10 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg w-[90%] max-w-4xl h-[80vh] flex flex-col p-4 overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-xl w-[90%] max-w-4xl h-[80vh] flex flex-col p-6 overflow-hidden relative shadow-2xl">
         <button 
-          key="close-button"
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors rounded-full hover:bg-gray-100 p-1"
           onClick={() => onOpenChange(false)}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -221,19 +220,22 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
           </svg>
         </button>
         
-        <div className="mb-4 border-b pb-2">
-          <h2 className="text-xl font-semibold">Create New Order</h2>
+        <div className="mb-5 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-primary">Create New Order</h2>
         </div>
         
-        <div className="flex flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-1 gap-6 overflow-hidden">
           {/* Left side - Menu */}
           <div className="w-2/3 overflow-y-auto pr-4">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <div className="mb-5 bg-neutral-50 p-4 rounded-lg border border-neutral-100">
+              <label className="block text-sm font-medium text-neutral-700 mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary">
+                  <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
+                </svg>
                 Select Bay
               </label>
               <Select value={selectedBay?.toString()} onValueChange={(value) => setSelectedBay(Number(value))}>
-                <SelectTrigger>
+                <SelectTrigger className="border-neutral-200 bg-white focus:ring-2 focus:ring-primary/20">
                   <SelectValue placeholder="Select a bay" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,23 +253,25 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
             </div>
             
             <Tabs defaultValue="menu" className="mt-4">
-              <TabsList>
-                <TabsTrigger value="menu">Menu</TabsTrigger>
-                <TabsTrigger value="specials">Daily Specials</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-2 mb-2">
+                <TabsTrigger value="menu" className="text-base py-2 data-[state=active]:bg-primary data-[state=active]:text-white">Menu</TabsTrigger>
+                <TabsTrigger value="specials" className="text-base py-2 data-[state=active]:bg-primary data-[state=active]:text-white">Daily Specials</TabsTrigger>
               </TabsList>
               
               <TabsContent value="menu" className="pt-4">
                 {categoriesLoading ? (
-                  <p>Loading categories...</p>
+                  <div className="flex items-center justify-center h-20">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                    <span className="ml-2 text-neutral-600">Loading categories...</span>
+                  </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="flex overflow-x-auto pb-2 space-x-2 no-scrollbar">
+                    <div className="flex overflow-x-auto pb-3 space-x-2 no-scrollbar">
                       <button 
-                        key="all-items-button"
-                        className={`px-4 py-2 rounded-full whitespace-nowrap ${
+                        className={`px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
                           selectedTab === "all" 
-                            ? "bg-primary text-white" 
-                            : "bg-white border border-neutral-300 text-neutral-700"
+                            ? "bg-primary text-white shadow-md" 
+                            : "bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                         }`}
                         onClick={() => setSelectedTab("all")}
                       >
@@ -277,10 +281,10 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                       {categories.map((category) => (
                         <button
                           key={category.id}
-                          className={`px-4 py-2 rounded-full whitespace-nowrap ${
+                          className={`px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
                             selectedTab === category.slug 
-                              ? "bg-primary text-white" 
-                              : "bg-white border border-neutral-300 text-neutral-700"
+                              ? "bg-primary text-white shadow-md" 
+                              : "bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                           }`}
                           onClick={() => setSelectedTab(category.slug)}
                         >
@@ -292,27 +296,36 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                 )}
                 
                 {menuLoading ? (
-                  <p>Loading menu items...</p>
+                  <div className="flex items-center justify-center h-40">
+                    <div className="animate-spin h-8 w-8 border-3 border-primary border-t-transparent rounded-full"></div>
+                    <span className="ml-3 text-neutral-600">Loading menu items...</span>
+                  </div>
                 ) : (
                   <div className="space-y-4 mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {menuData.flatMap(category => category.items).map((item) => (
-                        <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full">
+                        <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full hover:shadow-md transition-shadow duration-200 bg-white">
                           {item.image_url && (
-                            <img src={item.image_url} className="w-24 h-full object-cover" alt={item.name} />
+                            <img src={item.image_url} className="w-28 h-full object-cover" alt={item.name} />
                           )}
-                          <div className="p-3 flex-1 flex flex-col">
-                            <div className="flex justify-between">
-                              <h3 className="font-medium text-neutral-800">{item.name}</h3>
-                              <span className="font-medium text-primary">{formatPrice(item.priceCents)}</span>
+                          <div className="p-4 flex-1 flex flex-col">
+                            <div className="flex justify-between items-start mb-1">
+                              <h3 className="font-medium text-neutral-800 leading-tight">{item.name}</h3>
+                              <span className="font-semibold text-primary ml-2">{formatPrice(item.priceCents)}</span>
                             </div>
-                            <p className="text-sm text-neutral-600 mb-2 flex-grow">{item.description}</p>
+                            <p className="text-sm text-neutral-600 mb-3 flex-grow line-clamp-2">{item.description}</p>
                             <div className="flex justify-between items-center mt-auto">
-                              <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prepSeconds / 60)} min</span>
+                              <span className="text-xs flex items-center text-neutral-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                {Math.ceil(item.prepSeconds / 60)} min
+                              </span>
                               <Button 
                                 size="sm"
                                 variant="outline"
-                                className="px-2 py-1 border-primary text-primary hover:bg-primary hover:text-white"
+                                className="px-3 py-1 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
                                 onClick={() => addToCart({
                                   menuItemId: item.id,
                                   name: item.name,
@@ -344,34 +357,47 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
           </div>
           
           {/* Right side - Cart */}
-          <div className="w-1/3 bg-neutral-50 p-4 rounded-md overflow-y-auto">
-            <h3 className="font-semibold text-lg mb-2">Order Summary</h3>
+          <div className="w-1/3 bg-neutral-50 p-5 rounded-lg overflow-y-auto border border-neutral-100 shadow-inner">
+            <h3 className="font-semibold text-lg mb-4 flex items-center text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Order Summary
+            </h3>
             
             {cart.items.length === 0 ? (
-              <div className="text-center py-6 text-neutral-500">
+              <div className="text-center py-10 text-neutral-500 bg-white rounded-lg border border-dashed border-neutral-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2 text-neutral-300">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
                 <p>No items in cart</p>
+                <p className="text-xs mt-1">Add menu items to begin</p>
               </div>
             ) : (
               <div className="space-y-3 mb-4">
                 {cart.items.map((item) => (
-                  <div key={item.menuItemId} className="flex justify-between border-b pb-2">
+                  <div key={item.menuItemId} className="flex justify-between border-b pb-3 mb-2">
                     <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-neutral-600">{formatPrice(item.priceCents)} each</p>
+                      <p className="font-medium text-neutral-800">{item.name}</p>
+                      <p className="text-sm text-neutral-500">{formatPrice(item.priceCents)} each</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
-                        key={`${item.menuItemId}-dec`}
-                        className="px-2 py-1 bg-neutral-200 rounded-md"
+                        className="w-8 h-8 flex items-center justify-center bg-white border border-neutral-200 rounded-full text-neutral-700 hover:bg-neutral-100 transition-colors"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
+                        aria-label="Decrease quantity"
                       >
                         -
                       </button>
-                      <span key={`${item.menuItemId}-qty`}>{item.quantity}</span>
+                      <span className="w-8 text-center font-medium">{item.quantity}</span>
                       <button 
-                        key={`${item.menuItemId}-inc`}
-                        className="px-2 py-1 bg-neutral-200 rounded-md"
+                        className="w-8 h-8 flex items-center justify-center bg-white border border-neutral-200 rounded-full text-neutral-700 hover:bg-neutral-100 transition-colors"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
+                        aria-label="Increase quantity"
                       >
                         +
                       </button>
@@ -382,24 +408,28 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
             )}
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
                 Special Instructions
               </label>
               <Textarea 
                 placeholder="Any special requests or allergies?"
                 value={cart.specialInstructions || ""}
                 onChange={(e) => updateSpecialInstructions(e.target.value)}
-                className="w-full"
+                className="w-full border-neutral-200 focus:border-primary focus:ring focus:ring-primary/20"
                 rows={3}
               />
             </div>
             
-            <div className="border-t pt-4">
-              <div className="flex justify-between mb-2">
+            <div className="border-t pt-4 mt-auto">
+              <div className="flex justify-between mb-2 text-neutral-700">
                 <span>Items:</span>
-                <span>{totalItems}</span>
+                <span className="font-medium">{totalItems}</span>
               </div>
-              <div className="flex justify-between font-semibold text-lg">
+              <div className="flex justify-between font-bold text-xl text-primary">
                 <span>Total:</span>
                 <span>{formatPrice(totalPrice)}</span>
               </div>
@@ -407,21 +437,35 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
           </div>
         </div>
         
-        <div className="mt-4 pt-4 border-t flex justify-end space-x-3">
+        <div className="mt-5 pt-4 border-t flex justify-end space-x-4">
           <button 
-            key="cancel-button"
-            className="px-4 py-2 border border-neutral-300 rounded-md"
+            className="px-5 py-2.5 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </button>
           <button 
-            key="place-order-button"
-            className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
+            className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             onClick={placeOrder}
             disabled={isSubmitting || cart.items.length === 0 || !selectedBay}
           >
-            {isSubmitting ? "Placing Order..." : "Place Order"}
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Placing Order...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Place Order
+              </>
+            )}
           </button>
         </div>
       </div>
