@@ -48,14 +48,14 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   };
   
   // Load full order details
-  const getOrderDetails = (orderId: number) => {
+  const getOrderDetails = (orderId: string) => {
     return useQuery({
       queryKey: [`/api/order/${orderId}`],
     });
   };
   
   // Mark item as completed
-  const toggleItemCompletion = async (orderItemId: number, completed: boolean) => {
+  const toggleItemCompletion = async (orderItemId: string, completed: boolean) => {
     try {
       await apiRequest('PUT', `/api/orderitem/${orderItemId}/status`, { completed });
       
@@ -76,7 +76,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   };
   
   // Mark order as ready
-  const markOrderAsReady = async (orderId: number) => {
+  const markOrderAsReady = async (orderId: string) => {
     try {
       await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'ready' });
       

@@ -73,7 +73,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
   };
 
-  const updateQuantity = (menuItemId: number, quantity: number) => {
+  const updateQuantity = (menuItemId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(menuItemId);
       return;
