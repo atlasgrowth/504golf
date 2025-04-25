@@ -1,3 +1,5 @@
+import { OrderItemStatus, OrderStatus } from "../shared/schema";
+
 export interface MenuItemDTO {
   id: string;
   name: string;
@@ -59,7 +61,7 @@ export interface OrderItemDTO {
   orderId: string;
   menuItemId: string;
   quantity: number;
-  status: string | null;
+  status: OrderItemStatus | null;
   station: string | null;
   completed: boolean;
   cookSeconds: number | null;
@@ -74,46 +76,72 @@ export interface OrderItemDTO {
 /**
  * Maps order item database row to DTO with consistent naming
  */
-export const toOrderItemDTO = (row: any): OrderItemDTO => ({
-  id: row.id,
-  orderId: row.orderId || row.order_id,
-  menuItemId: row.menuItemId || row.menu_item_id,
-  quantity: row.quantity || 1,
-  status: row.status,
-  station: row.station,
-  completed: typeof row.completed === 'boolean' ? row.completed : false,
-  cookSeconds: row.cookSeconds || row.cook_seconds || null,
-  // Convert Date objects to ISO strings for all date fields
-  firedAt: row.firedAt instanceof Date ? row.firedAt.toISOString() : 
-          (row.fired_at instanceof Date ? row.fired_at.toISOString() : 
-           row.firedAt || row.fired_at),
-  readyAt: row.readyAt instanceof Date ? row.readyAt.toISOString() : 
-          (row.ready_at instanceof Date ? row.ready_at.toISOString() : 
-           row.readyAt || row.ready_at),
-  deliveredAt: row.deliveredAt instanceof Date ? row.deliveredAt.toISOString() : 
-               (row.delivered_at instanceof Date ? row.delivered_at.toISOString() : 
+export const toOrderItemDTO = (row: any): OrderItemDTO => {
+  // Validate the status against OrderItemStatus enum
+  let status = row.status;
+  if (status && typeof status === 'string') {
+    // If it's a string but not a valid OrderItemStatus, set to NEW (default)
+    if (!Object.values(OrderItemStatus).includes(status as OrderItemStatus)) {
+      status = OrderItemStatus.NEW;
+    }
+  } else {
+    status = null;
+  }
+
+  return {
+    id: row.id,
+    orderId: row.orderId || row.order_id,
+    menuItemId: row.menuItemId || row.menu_item_id,
+    quantity: row.quantity || 1,
+    status: status,
+    station: row.station,
+    completed: typeof row.completed === 'boolean' ? row.completed : false,
+    cookSeconds: row.cookSeconds || row.cook_seconds || null,
+    // Convert Date objects to ISO strings for all date fields
+    firedAt: row.firedAt instanceof Date ? row.firedAt.toISOString() : 
+            (row.fired_at instanceof Date ? row.fired_at.toISOString() : 
+            row.firedAt || row.fired_at),
+    readyAt: row.readyAt instanceof Date ? row.readyAt.toISOString() : 
+            (row.ready_at instanceof Date ? row.ready_at.toISOString() : 
+            row.readyAt || row.ready_at),
+    deliveredAt: row.deliveredAt instanceof Date ? row.deliveredAt.toISOString() : 
+                (row.delivered_at instanceof Date ? row.delivered_at.toISOString() : 
                 row.deliveredAt || row.delivered_at),
-  readyBy: row.readyBy instanceof Date ? row.readyBy.toISOString() : 
-          (row.ready_by instanceof Date ? row.ready_by.toISOString() : 
-           row.readyBy || row.ready_by),
-  notes: row.notes,
-  menuItem: row.menuItem ? toMenuItemDTO(row.menuItem) : undefined
-});
+    readyBy: row.readyBy instanceof Date ? row.readyBy.toISOString() : 
+            (row.ready_by instanceof Date ? row.ready_by.toISOString() : 
+            row.readyBy || row.ready_by),
+    notes: row.notes,
+    menuItem: row.menuItem ? toMenuItemDTO(row.menuItem) : undefined
+  };
+};
+
+export interface BayDTO {
+  id: number;
+  number: number;
+  floor: number;
+  status: string;
+}
 
 /**
  * Maps bay database row to DTO with consistent naming
  */
-export const toBayDTO = (row: any) => ({
+export const toBayDTO = (row: any): BayDTO => ({
   id: row.id,
   number: row.number,
   floor: row.floor,
-  status: row.status
+  status: row.status || 'empty'
 });
+
+export interface CategoryDTO {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 /**
  * Maps category database row to DTO with consistent naming
  */
-export const toCategoryDTO = (row: any) => ({
+export const toCategoryDTO = (row: any): CategoryDTO => ({
   id: row.id,
   name: row.name,
   slug: row.slug
