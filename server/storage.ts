@@ -125,12 +125,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(menuItems.category, category.name));
   }
 
-  async getMenuItemById(id: number): Promise<MenuItem | undefined> {
-    const [menuItem] = await db
-      .select()
-      .from(menuItems)
-      .where(eq(menuItems.id, id.toString()));
-    return menuItem || undefined;
+  async getMenuItemById(id: string | number): Promise<MenuItem | undefined> {
+    const idString = typeof id === 'number' ? id.toString() : id;
+    try {
+      const [menuItem] = await db
+        .select()
+        .from(menuItems)
+        .where(eq(menuItems.id, idString));
+      return menuItem || undefined;
+    } catch (error) {
+      console.error(`Error fetching menu item with ID ${idString}:`, error);
+      return undefined;
+    }
   }
 
   async createMenuItem(menuItem: InsertMenuItem): Promise<MenuItem> {
@@ -207,27 +213,67 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderWithItems(id: string): Promise<OrderWithItems | undefined> {
-    const order = await this.getOrderById(id);
-    if (!order) return undefined;
+    try {
+      const order = await this.getOrderById(id);
+      if (!order) {
+        console.warn(`Order not found with ID: ${id}`);
+        return undefined;
+      }
 
-    const bay = await this.getBayById(order.bayId);
-    if (!bay) return undefined;
+      const bay = await this.getBayById(order.bayId);
+      if (!bay) {
+        console.warn(`Bay not found for order ${id} with bay ID: ${order.bayId}`);
+        return undefined;
+      }
 
-    const orderItemsList = await this.getOrderItems(id);
-    
-    // Fetch menu items for each order item
-    const items = await Promise.all(
-      orderItemsList.map(async (item) => {
-        const menuItem = await this.getMenuItemById(Number(item.menuItemId));
-        return { ...item, menuItem: menuItem! };
-      })
-    );
+      const orderItemsList = await this.getOrderItems(id);
+      
+      // Fetch menu items for each order item - don't convert menuItemId to number
+      const items = await Promise.all(
+        orderItemsList.map(async (item) => {
+          try {
+            const menuItem = await this.getMenuItemById(item.menuItemId);
+            // Handle case where menuItem might be undefined
+            return { 
+              ...item, 
+              menuItem: menuItem || {
+                id: item.menuItemId,
+                name: 'Unknown Item',
+                description: 'Item details unavailable',
+                price: 0,
+                category: 'Unknown',
+                station: item.station || 'Unknown',
+                cookMinutes: 5
+              }
+            };
+          } catch (error) {
+            console.error(`Error fetching menu item for order item ${item.id}:`, error);
+            // Return the order item with a placeholder menu item on error
+            return { 
+              ...item, 
+              menuItem: {
+                id: item.menuItemId,
+                name: 'Error: Item Unavailable',
+                description: 'Could not retrieve item details',
+                price: 0,
+                category: 'Unknown',
+                station: item.station || 'Unknown',
+                cookMinutes: 5
+              }
+            };
+          }
+        })
+      );
 
-    return {
-      ...order,
-      bay,
-      items,
-    };
+      return {
+        ...order,
+        bay,
+        items,
+      };
+    } catch (error) {
+      console.error(`Error getting order with items for ID ${id}:`, error);
+      return undefined;
+    }
   }
 
   async getOrdersByBayId(bayId: number): Promise<Order[]> {
