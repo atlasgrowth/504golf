@@ -211,9 +211,9 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg w-[90%] max-w-4xl h-[80vh] flex flex-col p-4 overflow-hidden relative">
         <button 
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors"
+          key="close-button"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
           onClick={() => onOpenChange(false)}
-          aria-label="Close dialog"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -263,10 +263,11 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   <div className="mb-6">
                     <div className="flex overflow-x-auto pb-2 space-x-2 no-scrollbar">
                       <button 
+                        key="all-items-button"
                         className={`px-4 py-2 rounded-full whitespace-nowrap ${
                           selectedTab === "all" 
                             ? "bg-primary text-white" 
-                            : "bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+                            : "bg-white border border-neutral-300 text-neutral-700"
                         }`}
                         onClick={() => setSelectedTab("all")}
                       >
@@ -276,10 +277,10 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                       {categories.map((category) => (
                         <button
                           key={category.id}
-                          className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                          className={`px-4 py-2 rounded-full whitespace-nowrap ${
                             selectedTab === category.slug 
                               ? "bg-primary text-white" 
-                              : "bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+                              : "bg-white border border-neutral-300 text-neutral-700"
                           }`}
                           onClick={() => setSelectedTab(category.slug)}
                         >
@@ -296,28 +297,26 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   <div className="space-y-4 mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {menuData.flatMap(category => category.items).map((item) => (
-                        <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full hover:shadow-md transition-shadow">
+                        <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full">
                           {item.image_url && (
                             <img src={item.image_url} className="w-24 h-full object-cover" alt={item.name} />
                           )}
-                          <div className="p-4 flex-1 flex flex-col">
-                            <div className="flex justify-between items-start">
+                          <div className="p-3 flex-1 flex flex-col">
+                            <div className="flex justify-between">
                               <h3 className="font-medium text-neutral-800">{item.name}</h3>
-                              <span className="font-medium text-primary ml-2">{formatPrice(item.price_cents)}</span>
+                              <span className="font-medium text-primary">{formatPrice(item.priceCents)}</span>
                             </div>
-                            <p className="text-sm text-neutral-600 my-2 flex-grow">{item.description}</p>
-                            <div className="flex justify-between items-center mt-auto pt-2">
-                              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-full">
-                                Prep: {Math.ceil(item.prep_seconds / 60)} min
-                              </span>
+                            <p className="text-sm text-neutral-600 mb-2 flex-grow">{item.description}</p>
+                            <div className="flex justify-between items-center mt-auto">
+                              <span className="text-xs text-neutral-500">Prep time: {Math.ceil(item.prepSeconds / 60)} min</span>
                               <Button 
                                 size="sm"
                                 variant="outline"
-                                className="px-3 py-1 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                                className="px-2 py-1 border-primary text-primary hover:bg-primary hover:text-white"
                                 onClick={() => addToCart({
                                   menuItemId: item.id,
                                   name: item.name,
-                                  priceCents: item.price_cents,
+                                  priceCents: item.priceCents,
                                   quantity: 1
                                 })}
                               >
@@ -349,14 +348,8 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
             <h3 className="font-semibold text-lg mb-2">Order Summary</h3>
             
             {cart.items.length === 0 ? (
-              <div className="text-center py-8 text-neutral-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-neutral-400">
-                  <circle cx="8" cy="21" r="1"></circle>
-                  <circle cx="19" cy="21" r="1"></circle>
-                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                </svg>
-                <p>Your cart is empty</p>
-                <p className="text-sm mt-1">Add items from the menu to get started</p>
+              <div className="text-center py-6 text-neutral-500">
+                <p>No items in cart</p>
               </div>
             ) : (
               <div className="space-y-3 mb-4">
@@ -368,17 +361,17 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="px-2 py-1 bg-neutral-200 rounded-md hover:bg-neutral-300 transition-colors"
+                        key={`${item.menuItemId}-dec`}
+                        className="px-2 py-1 bg-neutral-200 rounded-md"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                        aria-label="Decrease quantity"
                       >
                         -
                       </button>
-                      <span className="w-6 text-center">{item.quantity}</span>
+                      <span key={`${item.menuItemId}-qty`}>{item.quantity}</span>
                       <button 
-                        className="px-2 py-1 bg-neutral-200 rounded-md hover:bg-neutral-300 transition-colors"
+                        key={`${item.menuItemId}-inc`}
+                        className="px-2 py-1 bg-neutral-200 rounded-md"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
-                        aria-label="Increase quantity"
                       >
                         +
                       </button>
@@ -416,13 +409,15 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
         
         <div className="mt-4 pt-4 border-t flex justify-end space-x-3">
           <button 
-            className="px-4 py-2 border border-neutral-300 rounded-md hover:bg-neutral-100 transition-colors"
+            key="cancel-button"
+            className="px-4 py-2 border border-neutral-300 rounded-md"
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </button>
           <button 
-            className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50 hover:brightness-110 transition-all"
+            key="place-order-button"
+            className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
             onClick={placeOrder}
             disabled={isSubmitting || cart.items.length === 0 || !selectedBay}
           >
