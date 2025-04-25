@@ -46,7 +46,15 @@ export interface IStorage {
   // Order Items
   getOrderItems(orderId: string): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+  
+  // Legacy method (to be deprecated) - updates completed flag
   updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined>;
+  
+  // New methods for enhanced status tracking
+  fireOrderItem(id: string): Promise<OrderItem | undefined>; // Sets status to COOKING and captures firedAt timestamp
+  markOrderItemReady(id: string): Promise<OrderItem | undefined>; // Sets status to READY
+  markOrderItemDelivered(id: string): Promise<OrderItem | undefined>; // Sets status to DELIVERED and timestamps
+  getOrderItemsByStation(station: string, status?: string): Promise<OrderItem[]>; // Filtered by station and optional status
   
   // Initialize with sample data
   initializeData(): Promise<void>;
@@ -358,11 +366,102 @@ export class DatabaseStorage implements IStorage {
   async updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined> {
     const [updatedOrderItem] = await db
       .update(orderItems)
-      .set({ completed })
+      .set({ 
+        completed,
+        // Also update status based on completed flag for backward compatibility
+        status: completed ? "DELIVERED" : "NEW",
+        // Set deliveredAt timestamp if completed=true
+        deliveredAt: completed ? new Date() : null
+      })
       .where(eq(orderItems.id, id))
       .returning();
     
     return updatedOrderItem || undefined;
+  }
+
+  // New methods for enhanced status tracking
+  async fireOrderItem(id: string): Promise<OrderItem | undefined> {
+    const now = new Date();
+    
+    // Get the order item to calculate readyAt
+    const [orderItem] = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.id, id));
+    
+    if (!orderItem) return undefined;
+    
+    // Calculate readyAt time based on firedAt + cookSeconds
+    const readyAt = new Date(now);
+    readyAt.setSeconds(readyAt.getSeconds() + orderItem.cookSeconds);
+    
+    // Update the order item
+    const [updatedOrderItem] = await db
+      .update(orderItems)
+      .set({
+        status: "COOKING",
+        firedAt: now,
+        readyAt: readyAt,
+        completed: false // Reset completed flag in case it was set
+      })
+      .where(eq(orderItems.id, id))
+      .returning();
+    
+    return updatedOrderItem || undefined;
+  }
+
+  async markOrderItemReady(id: string): Promise<OrderItem | undefined> {
+    const now = new Date();
+    
+    // Update the order item
+    const [updatedOrderItem] = await db
+      .update(orderItems)
+      .set({
+        status: "READY",
+        readyAt: now // Update the actual ready time
+      })
+      .where(eq(orderItems.id, id))
+      .returning();
+    
+    return updatedOrderItem || undefined;
+  }
+
+  async markOrderItemDelivered(id: string): Promise<OrderItem | undefined> {
+    const now = new Date();
+    
+    // Update the order item
+    const [updatedOrderItem] = await db
+      .update(orderItems)
+      .set({
+        status: "DELIVERED",
+        deliveredAt: now,
+        completed: true // Maintain backward compatibility
+      })
+      .where(eq(orderItems.id, id))
+      .returning();
+    
+    return updatedOrderItem || undefined;
+  }
+
+  async getOrderItemsByStation(station: string, status?: string): Promise<OrderItem[]> {
+    if (status) {
+      return db
+        .select()
+        .from(orderItems)
+        .where(
+          and(
+            eq(orderItems.station, station),
+            eq(orderItems.status, status)
+          )
+        )
+        .orderBy(asc(orderItems.firedAt)); // Sort by fire time if applicable
+    } else {
+      return db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.station, station))
+        .orderBy(asc(orderItems.firedAt)); // Sort by fire time if applicable
+    }
   }
 
   // Initialize with sample data

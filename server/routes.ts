@@ -8,8 +8,10 @@ import {
 } from "../shared/schema";
 import {
   WebSocketMessage, WebSocketMessageType, 
-  OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage
-} from "../shared/types";
+  OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
+  ClientRegistrationMessage, BayUpdatedMessage,
+  ItemCookingMessage, ItemReadyMessage, ItemDeliveredMessage
+} from "../packages/shared/src/types";
 import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
