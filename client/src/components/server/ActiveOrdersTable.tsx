@@ -11,26 +11,25 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import ServerFlowDialog from "./ServerFlowDialog";
 import { Utensils } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ActiveOrdersTableProps {
   orders: OrderSummary[];
+  statusFilter?: string;
 }
 
-export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
+export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrdersTableProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
-  const [serveFlowOpen, setServeFlowOpen] = useState(false);
   const { toast } = useToast();
   
   // Get order details with items
-  const { data: orderDetails, isLoading: isLoadingDetails, refetch: refetchOrderDetails } = useQuery<OrderWithItems | null>({
+  const { data: orderDetails, isLoading: isLoadingDetails } = useQuery<OrderWithItems | null>({
     queryKey: ["/api/order", selectedOrder?.id],
     queryFn: async () => {
       if (!selectedOrder) return null;
@@ -57,18 +56,12 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
     setAlertOpen(true);
   };
   
-  const handleServeFlow = (order: OrderSummary) => {
-    setSelectedOrder(order);
-    setServeFlowOpen(true);
-  };
-  
   const markAsServed = async (orderId: string) => {
     try {
       await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'served' });
-      setDetailsOpen(false);
       
       toast({
-        title: "Order Updated",
+        title: "Delivered!",
         description: "Order has been marked as served.",
       });
     } catch (error) {
@@ -78,15 +71,6 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
         variant: "destructive",
       });
     }
-  };
-  
-  const handleServeFlowComplete = () => {
-    setServeFlowOpen(false);
-    
-    toast({
-      title: "Order Service Complete",
-      description: "The order has been successfully served to the customer.",
-    });
   };
   
   const sendAlert = async () => {
@@ -114,6 +98,22 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
     return order.status;
   };
   
+  // Helper to determine row styling based on order status
+  const getRowClass = (order: OrderSummary) => {
+    if (order.isDelayed) {
+      return "animate-pulse border-l-4 border-red-500";
+    }
+    
+    const status = order.status.toUpperCase();
+    if (status === "NEW" || status === "COOKING") {
+      return "border-l-4 border-blue-400";
+    } else if (status === "READY") {
+      return "border-l-4 border-green-500";
+    }
+    
+    return "";
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-md p-4">
       <h2 className="font-poppins font-semibold text-lg mb-4">Active Orders</h2>
@@ -138,7 +138,7 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
               </tr>
             ) : (
               orders.map((order) => (
-                <tr key={order.id}>
+                <tr key={order.id} className={getRowClass(order)}>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className="font-medium">Bay {order.bayNumber}</span>
                     <span className="block text-xs text-neutral-500">Floor {order.floor}</span>
@@ -172,7 +172,7 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
                       {order.status === 'READY' || order.status === 'ready' ? (
                         <button 
                           className="p-1 text-success hover:text-primary"
-                          onClick={() => handleServeFlow(order)}
+                          onClick={() => markAsServed(order.id)}
                           title="Serve Order"
                         >
                           <Utensils size={16} />
@@ -335,17 +335,7 @@ export default function ActiveOrdersTable({ orders }: ActiveOrdersTableProps) {
         </DialogContent>
       </Dialog>
       
-      {/* Server Flow Dialog */}
-      {selectedOrder && (
-        <ServerFlowDialog
-          open={serveFlowOpen}
-          onOpenChange={setServeFlowOpen}
-          order={selectedOrder}
-          orderDetails={orderDetails}
-          isLoadingDetails={isLoadingDetails}
-          onComplete={handleServeFlowComplete}
-        />
-      )}
+      {/* One-click serving - no ServerFlowDialog needed */}
     </div>
   );
 }
