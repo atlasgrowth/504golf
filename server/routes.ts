@@ -207,6 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: z.string(),
         priceCents: z.number(),
         quantity: z.number(),
+        station: z.string().optional(), // Added for P2
       })),
       specialInstructions: z.string().optional(),
     }),
