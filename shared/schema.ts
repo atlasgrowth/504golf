@@ -1,96 +1,70 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uuid, smallint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
-// User schema for authentication
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("server"), // server, kitchen, admin
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  role: true,
-});
-
-// Menu categories
-export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-});
-
-export const insertCategorySchema = createInsertSchema(categories).pick({
-  name: true,
-  slug: true,
-});
-
-// Menu items
+// Menu items table
 export const menuItems = pgTable("menu_items", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  description: text("description").notNull(),
-  price: integer("price").notNull(), // Price in cents
-  categoryId: integer("category_id").notNull(),
-  prepTime: integer("prep_time").notNull(), // Prep time in minutes
-  imageUrl: text("image_url"),
+  category: text("category").notNull(),  // Shareables, Smashburgers, etc.
+  price: integer("price_cents").notNull(), // Price in cents
+  station: text("station").notNull(),   // Fry, Cold, FlatTop, etc.
+  prepSeconds: integer("prep_seconds").notNull(), // Prep time in seconds
+  description: text("description"), // Optional description
+  imageUrl: text("image_url"), // Optional image URL
   active: boolean("active").notNull().default(true),
 });
 
 export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
-  name: true,
-  description: true,
+  name: true, 
+  category: true,
   price: true,
-  categoryId: true,
-  prepTime: true,
+  station: true,
+  prepSeconds: true,
+  description: true,
   imageUrl: true,
   active: true,
 });
 
-// Bays (golf facility locations)
+// Bays table
 export const bays = pgTable("bays", {
-  id: serial("id").primaryKey(),
-  number: integer("number").notNull().unique(),
-  floor: integer("floor").notNull(),
-  status: text("status").notNull().default("empty"), // empty, occupied, active, flagged, alert
+  id: smallint("id").primaryKey(), // Bay numbers from 1-100
+  floor: smallint("floor").notNull(), // Floor number (1-3)
+  status: text("status").notNull().default("empty"), // empty, occupied, active, flagged
 });
 
 export const insertBaySchema = createInsertSchema(bays).pick({
-  number: true,
+  id: true,
   floor: true,
   status: true,
 });
 
-// Orders
+// Orders table
 export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
-  orderNumber: text("order_number").notNull().unique(),
-  bayId: integer("bay_id").notNull(),
-  status: text("status").notNull().default("pending"), // pending, preparing, ready, served, cancelled
-  orderType: text("order_type").notNull(), // customer, server
-  specialInstructions: text("special_instructions"),
+  id: uuid("id").primaryKey().defaultRandom(),
+  bayId: smallint("bay_id").notNull(),
+  status: text("status").notNull().default("NEW"), // NEW, COOKING, READY, SERVED, LATE
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  completedAt: timestamp("completed_at"),
-  estimatedCompletionTime: timestamp("estimated_completion_time"),
+  specialInstructions: text("special_instructions"),
+  orderType: text("order_type").notNull().default("customer"), // customer, server
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
-  orderNumber: true,
   bayId: true,
   status: true,
-  orderType: true,
   specialInstructions: true,
+  orderType: true,
 });
 
-// Order items
+// Order items table
 export const orderItems = pgTable("order_items", {
-  id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
-  menuItemId: integer("menu_item_id").notNull(),
-  quantity: integer("quantity").notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id").notNull(),
+  menuItemId: uuid("menu_item_id").notNull(),
+  qty: integer("qty").notNull(),
+  firedAt: timestamp("fired_at"),
+  readyBy: timestamp("ready_by"),
   completed: boolean("completed").notNull().default(false),
   notes: text("notes"),
 });
@@ -98,17 +72,30 @@ export const orderItems = pgTable("order_items", {
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
   orderId: true,
   menuItemId: true,
-  quantity: true,
+  qty: true,
   notes: true,
 });
 
+// Define relations
+export const menuItemsRelations = relations(menuItems, ({ many }) => ({
+  orderItems: many(orderItems),
+}));
+
+export const baysRelations = relations(bays, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  bay: one(bays, { fields: [orders.bayId], references: [bays.id] }),
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  menuItem: one(menuItems, { fields: [orderItems.menuItemId], references: [menuItems.id] }),
+}));
+
 // Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-
 export type MenuItem = typeof menuItems.$inferSelect;
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 
@@ -128,10 +115,8 @@ export type OrderWithItems = Order & {
 };
 
 export type OrderSummary = {
-  id: number;
-  orderNumber: string;
+  id: string;
   bayId: number;
-  bayNumber: number;
   floor: number;
   status: string;
   createdAt: Date;
@@ -141,7 +126,7 @@ export type OrderSummary = {
 };
 
 export type CartItem = {
-  menuItemId: number;
+  menuItemId: string;
   name: string;
   price: number;
   quantity: number;

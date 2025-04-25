@@ -598,6 +598,407 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from './db';
+import { eq, and, desc, asc, gte, lte, sql } from 'drizzle-orm';
+
+export class DatabaseStorage implements IStorage {
+  // Users (not used in this version, but keeping the interface for compatibility)
+  async getUser(id: number): Promise<User | undefined> {
+    return undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    throw new Error('Users not implemented in database storage');
+  }
+  
+  // Menu Items
+  async getMenuItems(): Promise<MenuItem[]> {
+    return await db.query.menuItems.findMany();
+  }
+
+  async getMenuItemsByCategory(categoryId: number): Promise<MenuItem[]> {
+    return await db.query.menuItems.findMany({
+      where: (menuItems) => eq(menuItems.category, String(categoryId))
+    });
+  }
+
+  async getMenuItemById(id: number): Promise<MenuItem | undefined> {
+    const [item] = await db.query.menuItems.findMany({
+      where: (menuItems) => eq(menuItems.id, String(id))
+    });
+    return item;
+  }
+
+  async createMenuItem(menuItem: InsertMenuItem): Promise<MenuItem> {
+    const [item] = await db.insert(menuItems).values(menuItem).returning();
+    return item;
+  }
+  
+  // Categories (simplified for our new schema, category is just a string)
+  async getCategories(): Promise<Category[]> {
+    const result = await db.execute(
+      sql`SELECT DISTINCT category as name, LOWER(REPLACE(category, ' ', '-')) as slug FROM menu_items`
+    );
+    return result.rows.map((row: any) => ({
+      id: 0, // Not used directly
+      name: row.name,
+      slug: row.slug
+    }));
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    return undefined; // Categories are strings in new schema
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    throw new Error('Categories not implemented in database storage');
+  }
+  
+  // Bays
+  async getBays(): Promise<Bay[]> {
+    return await db.query.bays.findMany();
+  }
+
+  async getBaysByFloor(floor: number): Promise<Bay[]> {
+    return await db.query.bays.findMany({
+      where: (bays) => eq(bays.floor, floor)
+    });
+  }
+
+  async getBayByNumber(number: number): Promise<Bay | undefined> {
+    const [bay] = await db.query.bays.findMany({
+      where: (bays) => eq(bays.id, number)
+    });
+    return bay;
+  }
+
+  async getBayById(id: number): Promise<Bay | undefined> {
+    const [bay] = await db.query.bays.findMany({
+      where: (bays) => eq(bays.id, id)
+    });
+    return bay;
+  }
+
+  async createBay(bay: InsertBay): Promise<Bay> {
+    const [created] = await db.insert(bays).values(bay).returning();
+    return created;
+  }
+
+  async updateBayStatus(id: number, status: string): Promise<Bay | undefined> {
+    const [updated] = await db
+      .update(bays)
+      .set({ status })
+      .where(eq(bays.id, id))
+      .returning();
+    return updated;
+  }
+  
+  // Orders
+  async getOrders(): Promise<Order[]> {
+    return await db.query.orders.findMany();
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    const [order] = await db.query.orders.findMany({
+      where: (orders) => eq(orders.id, String(id))
+    });
+    return order;
+  }
+
+  async getOrderWithItems(id: number): Promise<OrderWithItems | undefined> {
+    const [order] = await db.query.orders.findMany({
+      where: (orders) => eq(orders.id, String(id)),
+      with: {
+        bay: true,
+        items: {
+          with: {
+            menuItem: true
+          }
+        }
+      }
+    });
+    
+    if (!order) return undefined;
+    
+    return order as unknown as OrderWithItems;
+  }
+
+  async getOrdersByBayId(bayId: number): Promise<Order[]> {
+    return await db.query.orders.findMany({
+      where: (orders) => eq(orders.bayId, bayId)
+    });
+  }
+
+  async getActiveOrders(): Promise<OrderSummary[]> {
+    const activeOrders = await db.query.orders.findMany({
+      where: (orders) => 
+        sql`${orders.status} IN ('NEW', 'COOKING', 'READY')`,
+      with: {
+        bay: true,
+        items: true
+      },
+      orderBy: [asc(orders.createdAt)]
+    });
+    
+    const summaries = await Promise.all(activeOrders.map(async (order) => {
+      const timeElapsed = Math.floor(
+        (Date.now() - order.createdAt.getTime()) / (1000 * 60)
+      );
+      
+      const isDelayed = timeElapsed > 20; // Consider orders delayed after 20 minutes
+      
+      return {
+        id: order.id,
+        bayId: order.bayId,
+        floor: order.bay.floor,
+        status: order.status,
+        createdAt: order.createdAt,
+        timeElapsed,
+        totalItems: order.items.reduce((sum, item) => sum + item.qty, 0),
+        isDelayed
+      };
+    }));
+    
+    return summaries;
+  }
+
+  async getOrdersByStatus(status: string): Promise<OrderSummary[]> {
+    const statusOrders = await db.query.orders.findMany({
+      where: (orders) => eq(orders.status, status),
+      with: {
+        bay: true,
+        items: true
+      },
+      orderBy: [asc(orders.createdAt)]
+    });
+    
+    const summaries = await Promise.all(statusOrders.map(async (order) => {
+      const timeElapsed = Math.floor(
+        (Date.now() - order.createdAt.getTime()) / (1000 * 60)
+      );
+      
+      const isDelayed = timeElapsed > 20; // Consider orders delayed after 20 minutes
+      
+      return {
+        id: order.id,
+        bayId: order.bayId,
+        floor: order.bay.floor,
+        status: order.status,
+        createdAt: order.createdAt,
+        timeElapsed,
+        totalItems: order.items.reduce((sum, item) => sum + item.qty, 0),
+        isDelayed
+      };
+    }));
+    
+    return summaries;
+  }
+
+  async createOrder(insertOrder: InsertOrder, cart: Cart): Promise<Order> {
+    // Start a transaction
+    return await db.transaction(async (tx) => {
+      // Create the order
+      const [order] = await tx
+        .insert(orders)
+        .values(insertOrder)
+        .returning();
+      
+      // Create order items and calculate readyBy times
+      for (const item of cart.items) {
+        const [menuItem] = await tx.query.menuItems.findMany({
+          where: (menuItems) => eq(menuItems.id, item.menuItemId)
+        });
+        
+        if (!menuItem) {
+          throw new Error(`Menu item with id ${item.menuItemId} not found`);
+        }
+        
+        const firedAt = new Date();
+        const readyBy = new Date(firedAt.getTime() + menuItem.prepSeconds * 1000);
+        
+        await tx.insert(orderItems).values({
+          orderId: order.id,
+          menuItemId: item.menuItemId,
+          qty: item.quantity,
+          firedAt,
+          readyBy,
+          notes: ""
+        });
+      }
+      
+      // Update the bay status
+      await tx
+        .update(bays)
+        .set({ status: "active" })
+        .where(eq(bays.id, order.bayId));
+      
+      return order;
+    });
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    return await db.transaction(async (tx) => {
+      // Update the order status
+      const [updatedOrder] = await tx
+        .update(orders)
+        .set({ status })
+        .where(eq(orders.id, String(id)))
+        .returning();
+      
+      // If the order is served or cancelled, check if we need to update bay status
+      if (status === 'SERVED' || status === 'LATE') {
+        const activeOrders = await tx.query.orders.findMany({
+          where: (orders) => 
+            and(
+              eq(orders.bayId, updatedOrder.bayId),
+              sql`${orders.status} IN ('NEW', 'COOKING', 'READY')`,
+              sql`${orders.id} != ${String(id)}`
+            )
+        });
+        
+        // If no other active orders for this bay, update bay status to occupied
+        if (activeOrders.length === 0) {
+          await tx
+            .update(bays)
+            .set({ status: "occupied" })
+            .where(eq(bays.id, updatedOrder.bayId));
+        }
+      }
+      
+      return updatedOrder;
+    });
+  }
+  
+  // Order Items
+  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+    return await db.query.orderItems.findMany({
+      where: (orderItems) => eq(orderItems.orderId, String(orderId))
+    });
+  }
+
+  async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
+    const [item] = await db.insert(orderItems).values(orderItem).returning();
+    return item;
+  }
+
+  async updateOrderItemStatus(id: number, completed: boolean): Promise<OrderItem | undefined> {
+    return await db.transaction(async (tx) => {
+      // Update the order item
+      const [updatedItem] = await tx
+        .update(orderItems)
+        .set({ completed })
+        .where(eq(orderItems.id, String(id)))
+        .returning();
+      
+      // Check if all items in the order are completed
+      const orderItemsList = await tx.query.orderItems.findMany({
+        where: (orderItems) => eq(orderItems.orderId, updatedItem.orderId)
+      });
+      
+      const allCompleted = orderItemsList.every(item => item.completed);
+      
+      // If all items are completed, update order status to READY
+      if (allCompleted) {
+        await tx
+          .update(orders)
+          .set({ status: "READY" })
+          .where(eq(orders.id, updatedItem.orderId));
+      }
+      
+      return updatedItem;
+    });
+  }
+  
+  // Initialize database with default data
+  async initializeData(): Promise<void> {
+    // Create bays 1-100
+    const existingBays = await db.query.bays.findMany();
+    
+    if (existingBays.length === 0) {
+      // Populate bays
+      for (let floor = 1; floor <= 3; floor++) {
+        for (let bayNum = 1; bayNum <= 33; bayNum++) {
+          const bayId = (floor - 1) * 33 + bayNum;
+          await db.insert(bays).values({
+            id: bayId,
+            floor,
+            status: "empty"
+          });
+        }
+      }
+      
+      // Populate menu items (from requirements)
+      const menuData = [
+        { "name":"Boudin Balls", "category":"Shareables", "price":1250, "station":"Fry", "prepSeconds":420 },
+        { "name":"504 Wings", "category":"Shareables", "price":1400, "station":"Fry", "prepSeconds":540 },
+        { "name":"Cajun Crawfish Pies", "category":"Shareables", "price":1300, "station":"Fry", "prepSeconds":480 },
+        { "name":"Smoked Tuna Dip with Cajun Fried Crackers", "category":"Shareables", "price":1500, "station":"Cold", "prepSeconds":300 },
+        { "name":"Pineapple Fried Shrimp with Sriracha Sesame Salad", "category":"Shareables", "price":1400, "station":"Fry", "prepSeconds":480 },
+        { "name":"Clubhouse Nachos", "category":"Shareables", "price":1550, "station":"Saute", "prepSeconds":540 },
+        { "name":"Just Chips and Salsa", "category":"Shareables", "price":600, "station":"Cold", "prepSeconds":180 },
+        { "name":"Plus Bowl of Queso", "category":"Shareables", "price":800, "station":"Saute", "prepSeconds":240 },
+        { "name":"Just Chips and Queso", "category":"Shareables", "price":950, "station":"Saute", "prepSeconds":240 },
+        
+        { "name":"The Hangover", "category":"Smashburgers", "price":1800, "station":"FlatTop", "prepSeconds":660 },
+        { "name":"The Classic Ride", "category":"Smashburgers", "price":1700, "station":"FlatTop", "prepSeconds":600 },
+        { "name":"Electric Blue", "category":"Smashburgers", "price":1850, "station":"FlatTop", "prepSeconds":660 },
+        { "name":"Impossible Burger", "category":"Smashburgers", "price":1700, "station":"FlatTop", "prepSeconds":600 },
+        
+        { "name":"504 12\" Pizza", "category":"Pizza & Flatbreads", "price":1700, "station":"PizzaOven", "prepSeconds":900 },
+        { "name":"Cheesy Garlic Bread", "category":"Pizza & Flatbreads", "price":1250, "station":"PizzaOven", "prepSeconds":540 },
+        { "name":"Crazy Cajun Flatbread", "category":"Pizza & Flatbreads", "price":2250, "station":"PizzaOven", "prepSeconds":780 },
+        { "name":"Barbecue Chicken Pizza", "category":"Pizza & Flatbreads", "price":2100, "station":"PizzaOven", "prepSeconds":900 },
+        { "name":"Barbecue Chicken Flatbread Pizza", "category":"Pizza & Flatbreads", "price":2100, "station":"PizzaOven", "prepSeconds":780 },
+        
+        { "name":"Street Party Tacos 'Al Pastor'", "category":"Handhelds", "price":1600, "station":"Saute", "prepSeconds":600 },
+        { "name":"Crispy Fried Chicken Tenders", "category":"Handhelds", "price":1600, "station":"Fry", "prepSeconds":540 },
+        
+        { "name":"Steak Frites", "category":"Entrées & Mains", "price":3800, "station":"FlatTop", "prepSeconds":1200 },
+        { "name":"Shrimp Monique", "category":"Entrées & Mains", "price":2400, "station":"Saute", "prepSeconds":900 },
+        { "name":"Gulf Catch Creole", "category":"Entrées & Mains", "price":2650, "station":"FlatTop", "prepSeconds":960 },
+        { "name":"Golden Fried Seafood Platter", "category":"Entrées & Mains", "price":2300, "station":"Fry", "prepSeconds":780 },
+        { "name":"Make It a Double and Feed an Army", "category":"Entrées & Mains", "price":4600, "station":"Fry", "prepSeconds":1140 },
+        
+        { "name":"Sand Wedge", "category":"Salads & Soups", "price":1300, "station":"Cold", "prepSeconds":300 },
+        { "name":"Classic Caesar Salad", "category":"Salads & Soups", "price":1200, "station":"Cold", "prepSeconds":300 },
+        { "name":"Strawberries & Goat Cheese Salad", "category":"Salads & Soups", "price":1400, "station":"Cold", "prepSeconds":300 },
+        { "name":"Chicken-Andouille Gumbo (Cup)", "category":"Salads & Soups", "price":800, "station":"Boil", "prepSeconds":480 },
+        { "name":"Chicken-Andouille Gumbo (Bowl)", "category":"Salads & Soups", "price":1200, "station":"Boil", "prepSeconds":600 },
+        
+        { "name":"Garlic Grilled Vegetables", "category":"Sides", "price":700, "station":"FlatTop", "prepSeconds":360 },
+        { "name":"Crispy Kettle Fries", "category":"Sides", "price":600, "station":"Fry", "prepSeconds":360 },
+        { "name":"House Green Salad", "category":"Sides", "price":800, "station":"Cold", "prepSeconds":240 },
+        { "name":"Chips and Salsa", "category":"Sides", "price":600, "station":"Cold", "prepSeconds":180 },
+        { "name":"Plus Bowl of Queso (Side)", "category":"Sides", "price":800, "station":"Saute", "prepSeconds":240 },
+        
+        { "name":"The Big Kid Burger", "category":"Kids", "price":1200, "station":"FlatTop", "prepSeconds":540 },
+        { "name":"Fried Chicken Tenders (Kids)", "category":"Kids", "price":1200, "station":"Fry", "prepSeconds":480 },
+        
+        { "name":"On the Green (Key Lime Pie)", "category":"Desserts", "price":800, "station":"Cold", "prepSeconds":240 },
+        { "name":"Very Berry Cheesecake", "category":"Desserts", "price":900, "station":"Cold", "prepSeconds":240 },
+        { "name":"Pecan Chocolate Chip Bread Pudding", "category":"Desserts", "price":1200, "station":"Oven", "prepSeconds":600 }
+      ];
+      
+      for (const item of menuData) {
+        await db.insert(menuItems).values({
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          station: item.station,
+          prepSeconds: item.prepSeconds,
+          description: `Delicious ${item.name}`,
+          active: true
+        });
+      }
+    }
+  }
+}
+
+// Use the database storage instead of memory storage
+export const storage = new DatabaseStorage();
 // Initialize data
 storage.initializeData();

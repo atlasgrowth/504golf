@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage";
+import { storage } from "./storage-adapter";
 import { z } from "zod";
 import { insertOrderSchema, type Cart } from "@shared/schema";
 
