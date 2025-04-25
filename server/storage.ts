@@ -392,9 +392,9 @@ export class DatabaseStorage implements IStorage {
     
     if (!orderItem) return undefined;
     
-    // Calculate readyAt time based on firedAt + cookSeconds
+    // Calculate readyAt time based on firedAt + cookSeconds (default 5 min/300 sec if not set)
     const readyAt = new Date(now);
-    readyAt.setSeconds(readyAt.getSeconds() + orderItem.cookSeconds);
+    readyAt.setSeconds(readyAt.getSeconds() + (orderItem.cookSeconds || 300));
     
     // Update the order item
     const [updatedOrderItem] = await db
@@ -452,7 +452,8 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(orderItems.station, station),
-            eq(orderItems.status, status)
+            // Use the string value directly rather than enum comparison
+            eq(orderItems.status, status as any)
           )
         )
         .orderBy(asc(orderItems.firedAt)); // Sort by fire time if applicable

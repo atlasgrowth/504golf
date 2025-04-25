@@ -42,14 +42,14 @@ export async function checkCookingItems() {
           `, [item.id]);
           
           // Get order details for notifications
-          const order = await storage.getOrderById(item.order_id);
+          const order = await storage.getOrderById(item.order_id as string);
           
           if (order) {
             // Get bay details
             const bay = await storage.getBayById(order.bayId);
             
             // Calculate elapsed time
-            const firedAt = item.fired_at ? new Date(item.fired_at) : new Date();
+            const firedAt = item.fired_at ? new Date(item.fired_at as string) : new Date();
             const now = new Date();
             const elapsedSeconds = Math.floor((now.getTime() - firedAt.getTime()) / 1000);
             
@@ -65,7 +65,7 @@ export async function checkCookingItems() {
                   quantity: item.quantity,
                   station: item.station || '',
                   status: 'READY',
-                  firedAt: item.fired_at ? new Date(item.fired_at).toISOString() : null,
+                  firedAt: item.fired_at ? new Date(item.fired_at as string).toISOString() : null,
                   readyAt: now.toISOString()
                 },
                 station: item.station || '',
@@ -95,10 +95,10 @@ export async function checkCookingItems() {
       
       for (const item of cookingItems) {
         try {
-          const firedAt = item.fired_at ? new Date(item.fired_at) : null;
+          const firedAt = item.fired_at ? new Date(item.fired_at as string) : null;
           if (!firedAt) continue;
           
-          const cookSeconds = item.cook_seconds || 300; // Default 5 minutes
+          const cookSeconds = Number(item.cook_seconds) || 300; // Default 5 minutes
           const expectedReadyTime = new Date(firedAt.getTime() + (cookSeconds * 1000));
           const now = new Date();
           
