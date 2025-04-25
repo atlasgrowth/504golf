@@ -56,12 +56,14 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
 // Bays table
 export const bays = pgTable("bays", {
   id: smallint("id").primaryKey(), // Bay numbers from 1-100
+  number: smallint("number").notNull(), // Bay number (same as id for now)
   floor: smallint("floor").notNull(), // Floor number (1-3)
   status: text("status").notNull().default("empty"), // empty, occupied, active, flagged
 });
 
 export const insertBaySchema = createInsertSchema(bays).pick({
   id: true,
+  number: true,
   floor: true,
   status: true,
 });
@@ -69,16 +71,22 @@ export const insertBaySchema = createInsertSchema(bays).pick({
 // Orders table
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
+  orderNumber: text("order_number"),
   bayId: smallint("bay_id").notNull(),
   status: text("status").notNull().default("NEW"), // NEW, COOKING, READY, SERVED, LATE
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  estimatedCompletionTime: timestamp("estimated_completion_time"),
+  completedAt: timestamp("completed_at"),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
+  orderNumber: true,
   bayId: true,
   status: true,
+  estimatedCompletionTime: true,
+  completedAt: true,
   specialInstructions: true,
   orderType: true,
 });
@@ -134,11 +142,7 @@ export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type Bay = typeof bays.$inferSelect;
 export type InsertBay = z.infer<typeof insertBaySchema>;
 
-export type Order = typeof orders.$inferSelect & {
-  orderNumber?: string;
-  estimatedCompletionTime?: Date;
-  completedAt?: Date | null;
-};
+export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type OrderItem = typeof orderItems.$inferSelect;
@@ -152,7 +156,9 @@ export type OrderWithItems = Order & {
 
 export type OrderSummary = {
   id: string;
+  orderNumber?: string;
   bayId: number;
+  bayNumber?: number;
   floor: number;
   status: string;
   createdAt: Date;
@@ -164,8 +170,8 @@ export type OrderSummary = {
 export type CartItem = {
   menuItemId: string;
   name: string;
-  price: number;
-  quantity: number;
+  price_cents: number;
+  qty: number;
 };
 
 export type Cart = {
