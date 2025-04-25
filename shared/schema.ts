@@ -118,6 +118,7 @@ export const orderItems = pgTable("order_items", {
   station: text("station"), // The station responsible for preparing the item
   status: text("status").$type<OrderItemStatus>().default(OrderItemStatus.NEW), // Current status of the item
   cookSeconds: integer("cook_seconds").default(300), // Time in seconds it should take to cook
+  price_cents: integer("price_cents").default(0), // Price in cents
   firedAt: timestamp("fired_at", { withTimezone: true }), // When cooking started
   readyAt: timestamp("ready_at", { withTimezone: true }), // When item should be ready
   readyBy: timestamp("ready_by", { withTimezone: true }), // Legacy field - use readyAt instead

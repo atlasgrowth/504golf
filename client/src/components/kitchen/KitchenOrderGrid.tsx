@@ -77,14 +77,15 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
     });
   
   // Toggle item status between NEW -> COOKING -> READY
-  const toggleItemCompletion = async (orderItemId: string, completed: boolean, currentStatus?: string) => {
+  const toggleItemCompletion = async (orderItemId: string, completed: boolean, currentStatus?: string | null) => {
     try {
       let endpoint;
       let actionTitle;
       
-      // If checked true and status is NEW or undefined, call /fire
-      // If checked true and status is COOKING, call /ready  
-      // If unchecked, always call /fire to reset to cooking state
+      // If user checks box:
+      //   NEW   -> fire  ✅
+      //   COOKING -> ready ✅
+      // If user un-checks a READY item -> fire again (back to cooking)
       if (completed) {
         if (currentStatus === "COOKING") {
           endpoint = "/ready";
@@ -200,9 +201,15 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         )}
                       >
                         <div className="flex items-center">
-                          <Checkbox 
-                            checked={item.completed} 
-                            onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean, item.status || undefined)}
+                          <Checkbox
+                            checked={item.status === "READY"}
+                            onCheckedChange={(checked) =>
+                              toggleItemCompletion(
+                                item.id,
+                                checked as boolean,
+                                item.status
+                              )
+                            }
                             className="mr-2 h-4 w-4 text-primary"
                           />
                           <span className={item.completed ? "text-neutral-800 line-through" : "text-neutral-800"}>
@@ -211,7 +218,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         </div>
                         <div className="flex flex-col items-end">
                           <span className="text-xs font-medium text-neutral-800">
-                            ${item.menuItem?.price_cents ? (item.menuItem.price_cents / 100).toFixed(2) : '0.00'}
+                            ${((item.priceCents ?? 0) / 100).toFixed(2)}
                           </span>
                           <span className="text-xs text-neutral-500">
                             {item.menuItem?.station || item.station || 'Kitchen'}
