@@ -7,7 +7,7 @@ import OrderSummary from "./OrderSummary";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, GolfBall, Utensils } from "lucide-react";
+import { MapPin, Utensils, Trophy } from "lucide-react";
 import golfLogo from "@/assets/golf-logo.svg";
 
 interface CustomerViewProps {
@@ -98,7 +98,7 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
                 </p>
               </div>
               <div className="p-2 bg-white/20 backdrop-blur-sm rounded-full">
-                <GolfIcon className="h-8 w-8" />
+                <Trophy className="h-8 w-8" />
               </div>
             </div>
           </div>

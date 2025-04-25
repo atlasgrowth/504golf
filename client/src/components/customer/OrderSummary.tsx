@@ -121,7 +121,7 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
                     >
                       <div className="flex-1 mr-4">
                         <h3 className="font-medium">{item.name}</h3>
-                        <p className="text-sm text-muted-foreground">{formatPrice(item.priceCents)} each</p>
+                        <p className="text-sm text-muted-foreground">{formatPrice(item.priceCents || 0)} each</p>
                       </div>
                       
                       <div className="flex items-center space-x-2">
