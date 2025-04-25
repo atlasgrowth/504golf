@@ -320,24 +320,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedOrders = await storage.getActiveOrders();
       broadcastUpdate('ordersUpdate', updatedOrders);
       
+      // Prepare station map for created message
+      const stationMap: Record<string, { menuItemId: string, name: string, quantity: number }[]> = {};
+      
+      // Process each menu item for stations
+      for (const item of cart.items) {
+        const menuItem = await storage.getMenuItemById(item.menuItemId);
+        const station = menuItem?.station || 'main';
+        
+        if (!stationMap[station]) {
+          stationMap[station] = [];
+        }
+        
+        stationMap[station].push({
+          menuItemId: item.menuItemId,
+          name: menuItem?.name || 'Unknown Item',
+          quantity: item.quantity
+        });
+      }
+      
       // Create a properly typed order created message
       const orderCreatedMessage: OrderCreatedMessage = {
         type: 'order_created',
         data: {
           order: toOrderDTO(newOrder),
           estimatedCompletionTime: estimatedCompletionTime.toISOString(),
-          stations: cart.items.reduce((stationMap, item) => {
-            const station = item.station || 'main';
-            if (!stationMap[station]) {
-              stationMap[station] = [];
-            }
-            stationMap[station].push({
-              menuItemId: item.menuItemId,
-              name: item.name,
-              quantity: item.quantity
-            });
-            return stationMap;
-          }, {} as Record<string, { menuItemId: string, name: string, quantity: number }[]>)
+          stations: stationMap
         }
       };
       
