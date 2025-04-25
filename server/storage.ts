@@ -5,7 +5,8 @@ import {
   bays, type Bay, type InsertBay,
   orders, type Order, type InsertOrder, 
   orderItems, type OrderItem, type InsertOrderItem,
-  type OrderWithItems, type OrderSummary, type Cart
+  type OrderWithItems, type OrderSummary, type Cart,
+  OrderItemStatus, OrderStatus
 } from "../shared/schema";
 
 export interface IStorage {
@@ -369,7 +370,7 @@ export class DatabaseStorage implements IStorage {
       .set({ 
         completed,
         // Also update status based on completed flag for backward compatibility
-        status: completed ? "DELIVERED" : "NEW",
+        status: completed ? OrderItemStatus.DELIVERED : OrderItemStatus.NEW,
         // Set deliveredAt timestamp if completed=true
         deliveredAt: completed ? new Date() : null
       })
@@ -399,7 +400,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: "COOKING",
+        status: OrderItemStatus.COOKING,
         firedAt: now,
         readyAt: readyAt,
         completed: false // Reset completed flag in case it was set
@@ -417,7 +418,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: "READY",
+        status: OrderItemStatus.READY,
         readyAt: now // Update the actual ready time
       })
       .where(eq(orderItems.id, id))
@@ -433,7 +434,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: "DELIVERED",
+        status: OrderItemStatus.DELIVERED,
         deliveredAt: now,
         completed: true // Maintain backward compatibility
       })

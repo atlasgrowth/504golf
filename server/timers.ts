@@ -110,8 +110,8 @@ export async function checkCookingItems() {
               UPDATE order_items 
               SET status = 'READY',
                   ready_at = NOW()
-              WHERE id = ${item.id}
-            `);
+              WHERE id = $1
+            `, [item.id]);
             
             // Similar notification code as above would be here
             // (Omitted for brevity since it would be duplicate code)
