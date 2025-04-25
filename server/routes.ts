@@ -11,7 +11,7 @@ import {
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
   ClientRegistrationMessage, BayUpdatedMessage,
   ItemCookingMessage, ItemReadyMessage, ItemDeliveredMessage
-} from "../packages/shared/src/types";
+} from "../shared/types";
 import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
@@ -455,12 +455,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if all items are completed
         const allItemsCompleted = orderItems.every(item => item.completed);
         
-        // If all items are completed, update the order status to 'ready' if it's currently 'preparing'
+        // If all items are completed, update the order status to READY if it's currently COOKING
         let updatedOrderStatus = order.status;
-        if (allItemsCompleted && order.status === 'preparing') {
-          const readyOrder = await storage.updateOrderStatus(order.id, 'ready');
+        if (allItemsCompleted && (order.status === 'preparing' || order.status === OrderStatus.COOKING)) {
+          const readyOrder = await storage.updateOrderStatus(order.id, OrderStatus.READY);
           if (readyOrder) {
-            updatedOrderStatus = 'ready';
+            updatedOrderStatus = OrderStatus.READY;
           }
         }
         
@@ -534,7 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           readyAt: updatedItem.readyAt!.toISOString(),
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: 'COOKING'
+          status: OrderItemStatus.COOKING
         }
       };
       
@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           elapsedSeconds,
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: 'READY'
+          status: OrderItemStatus.READY
         }
       };
       
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalCookTime,
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: 'DELIVERED'
+          status: OrderItemStatus.DELIVERED
         }
       };
       
@@ -658,11 +658,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if all items for this order are delivered
       const orderItems = await storage.getOrderItems(order.id);
-      const allItemsDelivered = orderItems.every(item => item.status === 'DELIVERED' || item.completed);
+      const allItemsDelivered = orderItems.every(item => item.status === OrderItemStatus.DELIVERED || item.completed);
       
-      // If all items delivered, update order status to served
-      if (allItemsDelivered && order.status !== 'served') {
-        await storage.updateOrderStatus(order.id, 'served');
+      // If all items delivered, update order status to SERVED
+      if (allItemsDelivered && order.status !== OrderStatus.SERVED) {
+        await storage.updateOrderStatus(order.id, OrderStatus.SERVED);
         
         // Broadcast updated orders
         const updatedOrders = await storage.getActiveOrders();
