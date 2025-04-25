@@ -4,8 +4,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
 import { 
-  insertOrderSchema, type Cart, OrderItemStatus
-} from "../packages/shared/src/schema";
+  insertOrderSchema, type Cart, OrderItemStatus, OrderStatus
+} from "../shared/schema";
 import {
   WebSocketMessage, WebSocketMessageType, 
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
@@ -205,15 +205,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/orders/:status', async (req: Request, res: Response) => {
     try {
-      const status = req.params.status;
+      const statusParam = req.params.status;
       
-      if (!['pending', 'preparing', 'ready', 'served', 'cancelled'].includes(status)) {
-        return res.status(400).json({ message: 'Invalid order status' });
+      // Map the UI-friendly status names to OrderStatus enum values
+      let status: string;
+      switch (statusParam.toLowerCase()) {
+        case 'pending':
+          status = OrderStatus.NEW;
+          break;
+        case 'preparing':
+          status = OrderStatus.COOKING;
+          break;
+        case 'ready':
+          status = OrderStatus.READY;
+          break;
+        case 'served':
+          status = OrderStatus.SERVED;
+          break;
+        case 'cancelled':
+          status = OrderStatus.CANCELLED;
+          break;
+        default:
+          // Check if the status is a valid enum value directly
+          if (Object.values(OrderStatus).includes(statusParam as OrderStatus)) {
+            status = statusParam;
+          } else {
+            return res.status(400).json({ message: 'Invalid order status' });
+          }
       }
       
       const orders = await storage.getOrdersByStatus(status);
       res.json(orders);
     } catch (error) {
+      console.error('Error fetching orders by status:', error);
       res.status(500).json({ message: 'Failed to fetch orders' });
     }
   });
@@ -341,7 +365,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Update order status
   const updateOrderStatusSchema = z.object({
-    status: z.enum(['pending', 'preparing', 'ready', 'served', 'cancelled']),
+    status: z.enum([
+      OrderStatus.NEW, 
+      OrderStatus.COOKING, 
+      OrderStatus.READY, 
+      OrderStatus.SERVED, 
+      OrderStatus.CANCELLED
+    ]).or(z.enum(['pending', 'preparing', 'ready', 'served', 'cancelled'])),
   });
   
   app.put('/api/order/:id/status', async (req: Request, res: Response) => {

@@ -149,11 +149,11 @@ export enum OrderItemStatus {
 
 // Define order status enum
 export enum OrderStatus {
-  PENDING = "pending",
-  PREPARING = "preparing",
-  READY = "ready",
-  SERVED = "served",
-  CANCELLED = "cancelled"
+  NEW = "NEW",
+  COOKING = "COOKING",
+  READY = "READY",
+  SERVED = "SERVED",
+  CANCELLED = "CANCELLED"
 }
 
 // Types
