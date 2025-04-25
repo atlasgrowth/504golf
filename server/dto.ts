@@ -34,7 +34,7 @@ export const toOrderItemDTO = (row: OrderItem) => ({
   id: row.id,
   orderId: row.orderId,
   menuItemId: row.menuItemId,
-  quantity: row.qty,
+  quantity: row.quantity, // Updated from qty to quantity
   firedAt: row.firedAt,
   readyBy: row.readyBy,
   completed: row.completed,
