@@ -126,9 +126,18 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
     }));
   };
   
-  // Calculate total
-  const totalPrice = cart.items.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0);
+  // Calculate total price, items, and preparation time
+  const totalPrice = cart.items.reduce((sum, item) => sum + ((item.priceCents || 0) * item.quantity), 0);
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Calculate estimated preparation time based on menu items
+  const totalTime = cart.items.reduce((maxTime, cartItem) => {
+    const menuItem = menuData
+      .flatMap(category => category.items)
+      .find(item => item.id === cartItem.menuItemId);
+    const itemPrepTime = menuItem ? menuItem.prep_seconds : 300; // Default to 5 mins if not found
+    return Math.max(maxTime, itemPrepTime);
+  }, 0);
   
   // Format price from cents to dollars
   const formatPrice = (price: number) => {
@@ -425,7 +434,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     <div className="flex justify-between items-start mb-2">
                       <p className="font-medium text-neutral-800">{item.name}</p>
                       <div className="flex items-center ml-2 bg-primary/10 text-primary text-sm font-medium px-2 py-0.5 rounded">
-                        {formatPrice(item.priceCents)}
+                        {formatPrice(item.priceCents || 0)}
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
@@ -452,7 +461,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                         </button>
                       </div>
                       <div className="text-neutral-600 text-sm font-medium">
-                        Item total: {formatPrice(item.priceCents * item.quantity)}
+                        Item total: {formatPrice((item.priceCents || 0) * item.quantity)}
                       </div>
                     </div>
                   </div>
