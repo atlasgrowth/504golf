@@ -56,7 +56,7 @@ export default function ServerView() {
       return false;
     }
     
-    if (statusFilter === 'ALL') return true;
+    // Removed "ALL" filter since we only want the pipeline view
     if (statusFilter === 'DELAYED') return order.isDelayed;
     return order.status.toUpperCase() === statusFilter;
   });
