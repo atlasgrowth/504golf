@@ -262,7 +262,7 @@ export class DatabaseStorage implements IStorage {
           status: order.status,
           createdAt: order.createdAt,
           timeElapsed,
-          totalItems: items.reduce((sum, item) => sum + item.qty, 0),
+          totalItems: items.reduce((sum, item) => sum + (item.quantity || 0), 0),
           isDelayed,
         };
       })
@@ -300,7 +300,7 @@ export class DatabaseStorage implements IStorage {
           status: order.status,
           createdAt: order.createdAt,
           timeElapsed,
-          totalItems: items.reduce((sum, item) => sum + item.qty, 0),
+          totalItems: items.reduce((sum, item) => sum + (item.quantity || 0), 0),
           isDelayed,
         };
       })
@@ -321,7 +321,7 @@ export class DatabaseStorage implements IStorage {
       await this.createOrderItem({
         orderId: newOrder.id,
         menuItemId: item.menuItemId,
-        qty: item.quantity,
+        quantity: item.quantity,
         notes: cart.specialInstructions,
       });
     }

@@ -19,18 +19,30 @@ SwingEats is a comprehensive digital food ordering system designed for golf faci
 
 - **Frontend**: React, TypeScript, TailwindCSS, Shadcn UI components
 - **Backend**: Node.js, Express
-- **Data Storage**: In-memory storage with PostgreSQL support
+- **Database**: PostgreSQL with Drizzle ORM
 - **Real-time Updates**: WebSockets
+- **Docker**: For containerized database deployment
 
 ## Getting Started
 
-1. Clone the repository
-2. Install dependencies:
+1. Start the database:
+   ```bash
+   docker compose up -d
    ```
-   npm install
+2. Copy the environment file:
+   ```bash
+   cp .env.example .env
    ```
-3. Start the development server:
+3. Install dependencies:
+   ```bash
+   npm i
    ```
+4. Set up and seed the database:
+   ```bash
+   npm run db:push && npm run db:seed
+   ```
+5. Start the development server:
+   ```bash
    npm run dev
    ```
 
