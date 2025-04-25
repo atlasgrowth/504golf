@@ -69,7 +69,7 @@ export interface IStorage {
 
 // Import database instance and helpers
 import { db, pool } from "./db";
-import { eq, asc, desc, and, or, like } from "drizzle-orm";
+import { eq, asc, desc, and, or, isNotNull, isNull, lt } from "drizzle-orm";
 
 // Implement the Database Storage
 export class DatabaseStorage implements IStorage {
@@ -473,37 +473,28 @@ export class DatabaseStorage implements IStorage {
   async autoFlipReady(): Promise<OrderItem[]> {
     const now = new Date();
     
-    // Find items that are COOKING and have reached their readyAt time
-    const cookingItems = await db
-      .select()
-      .from(orderItems)
-      .where(
-        and(
-          eq(orderItems.status, OrderItemStatus.COOKING),
-          // Filter out nulls before comparing date
-          // @ts-ignore - drizzle ORM type issue
-          or(
-            eq(orderItems.readyAt, null),
-            // @ts-ignore - drizzle ORM type issue
-            like(orderItems.readyAt, "% %") // Any non-null value
-          )
-        )
-      );
+    // Use direct SQL query to avoid Drizzle ORM operator issues
+    const { rows: readyItems } = await pool.query(`
+      SELECT * FROM order_items 
+      WHERE status = 'COOKING' 
+      AND ready_at IS NOT NULL 
+      AND ready_at <= NOW()
+    `);
+    
+    console.log(`Found ${readyItems.length} items to mark as ready`);
     
     const results: OrderItem[] = [];
     
     // Process each item
-    for (const item of cookingItems) {
-      // Skip if no readyAt time set
-      if (!item.readyAt) continue;
-      
-      // Check if the item should be ready by now
-      if (new Date(item.readyAt) <= now) {
+    for (const item of readyItems) {
+      try {
         // Mark it as ready automatically
         const updatedItem = await this.markOrderItemReady(item.id);
         if (updatedItem) {
           results.push(updatedItem);
         }
+      } catch (error) {
+        console.error(`Error marking item ${item.id} as ready:`, error);
       }
     }
     
