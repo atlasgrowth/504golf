@@ -301,49 +301,106 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     <span className="ml-3 text-neutral-600">Loading menu items...</span>
                   </div>
                 ) : (
-                  <div className="space-y-4 mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {menuData.flatMap(category => category.items).map((item) => (
-                        <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full hover:shadow-md transition-shadow duration-200 bg-white">
-                          {item.image_url && (
-                            <img src={item.image_url} className="w-28 h-full object-cover" alt={item.name} />
-                          )}
-                          <div className="p-4 flex-1 flex flex-col">
-                            <div className="flex justify-between items-start mb-1">
-                              <h3 className="font-medium text-neutral-800 leading-tight">{item.name}</h3>
-                              <span className="font-semibold text-primary ml-2">{formatPrice(item.priceCents)}</span>
-                            </div>
-                            <p className="text-sm text-neutral-600 mb-3 flex-grow line-clamp-2">{item.description}</p>
-                            <div className="flex justify-between items-center mt-auto">
-                              <span className="text-xs flex items-center text-neutral-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                {Math.ceil(item.prepSeconds / 60)} min
-                              </span>
-                              <Button 
-                                size="sm"
-                                variant="outline"
-                                className="px-3 py-1 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
-                                onClick={() => addToCart({
-                                  menuItemId: item.id,
-                                  name: item.name,
-                                  priceCents: item.priceCents,
-                                  quantity: 1
-                                })}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
-                                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                Add
-                              </Button>
-                            </div>
+                  <div className="space-y-8 mb-8">
+                    {selectedTab === "all" ? (
+                      // Display items grouped by category
+                      menuData.map((categoryGroup) => (
+                        <div key={categoryGroup.category.id} className="space-y-4">
+                          <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-3">
+                            {categoryGroup.category.name}
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {categoryGroup.items.map((item) => (
+                              <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full hover:shadow-md transition-shadow duration-200 bg-white">
+                                {item.image_url && (
+                                  <img src={item.image_url} className="w-28 h-full object-cover" alt={item.name} />
+                                )}
+                                <div className="p-4 flex-1 flex flex-col">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-medium text-neutral-800 leading-tight">{item.name}</h3>
+                                    <span className="font-semibold text-primary ml-2">{formatPrice(item.priceCents)}</span>
+                                  </div>
+                                  <p className="text-sm text-neutral-600 mb-3 flex-grow line-clamp-2">{item.description}</p>
+                                  <div className="flex justify-between items-center mt-auto">
+                                    <span className="text-xs flex items-center text-neutral-500">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                      </svg>
+                                      {Math.ceil(item.prepSeconds / 60)} min
+                                    </span>
+                                    <Button 
+                                      size="sm"
+                                      variant="outline"
+                                      className="px-3 py-1 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                                      onClick={() => addToCart({
+                                        menuItemId: item.id,
+                                        name: item.name,
+                                        priceCents: item.priceCents,
+                                        quantity: 1
+                                      })}
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                      </svg>
+                                      Add
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      ))
+                    ) : (
+                      // Display filtered items based on selected category
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {menuData.flatMap(category => category.items).filter(item => {
+                          const categoryObject = menuData.find(cat => cat.category.slug === selectedTab);
+                          return categoryObject && item.category === categoryObject.category.name;
+                        }).map((item) => (
+                          <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm h-full hover:shadow-md transition-shadow duration-200 bg-white">
+                            {item.image_url && (
+                              <img src={item.image_url} className="w-28 h-full object-cover" alt={item.name} />
+                            )}
+                            <div className="p-4 flex-1 flex flex-col">
+                              <div className="flex justify-between items-start mb-1">
+                                <h3 className="font-medium text-neutral-800 leading-tight">{item.name}</h3>
+                                <span className="font-semibold text-primary ml-2">{formatPrice(item.priceCents)}</span>
+                              </div>
+                              <p className="text-sm text-neutral-600 mb-3 flex-grow line-clamp-2">{item.description}</p>
+                              <div className="flex justify-between items-center mt-auto">
+                                <span className="text-xs flex items-center text-neutral-500">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                  {Math.ceil(item.prepSeconds / 60)} min
+                                </span>
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  className="px-3 py-1 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                                  onClick={() => addToCart({
+                                    menuItemId: item.id,
+                                    name: item.name,
+                                    priceCents: item.priceCents,
+                                    quantity: 1
+                                  })}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  </svg>
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </TabsContent>
