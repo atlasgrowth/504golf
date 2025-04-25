@@ -110,7 +110,7 @@ export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderId: uuid("order_id").notNull().references(() => orders.id),
   menuItemId: uuid("menu_item_id").notNull().references(() => menuItems.id),
-  quantity: integer("quantity").notNull(),
+  quantity: integer("qty").notNull(), // Changed column name to match database
   station: text("station"), // The station responsible for preparing the item
   status: text("status").$type<OrderItemStatus>().default(OrderItemStatus.NEW), // Current status of the item
   cookSeconds: integer("cook_seconds").default(300), // Time in seconds it should take to cook

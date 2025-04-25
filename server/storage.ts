@@ -327,12 +327,18 @@ export class DatabaseStorage implements IStorage {
 
     // Then create order items from the cart
     for (const item of cart.items) {
-      await this.createOrderItem({
-        orderId: newOrder.id,
-        menuItemId: item.menuItemId,
-        quantity: item.quantity,
-        notes: cart.specialInstructions,
-      });
+      // Use a direct SQL approach with the pool to handle the column name difference
+      await pool.query(
+        `INSERT INTO order_items (order_id, menu_item_id, qty, notes, station) 
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          newOrder.id,
+          item.menuItemId,
+          item.quantity,
+          cart.specialInstructions || null,
+          item.station || null
+        ]
+      );
     }
 
     return newOrder;
