@@ -3,6 +3,11 @@ import { menuItems, bays } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// Convert ESM URL to file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function seedDatabase() {
   console.log('Starting database seeding...');
