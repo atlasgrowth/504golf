@@ -69,57 +69,15 @@
 @layer components {
   /* Five O Four Golf specific components */
   .fiveofour-card {
-    @apply bg-white rounded-lg border border-emerald-200 shadow-md overflow-hidden;
+    @apply bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-primary;
   }
 
   .fiveofour-card-header {
     @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white p-4 font-bold;
   }
-
-  .btn-modern {
-    @apply relative overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px];
-  }
-
-  .btn-modern::after {
-    @apply content-[''] absolute bottom-0 left-0 w-full h-0 bg-white opacity-20 transition-all duration-300;
-  }
-
-  .btn-modern:hover::after {
-    @apply h-full;
-  }
-
-  .hover-lift {
-    @apply transition-all duration-300 hover:translate-y-[-4px] hover:shadow-md;
-  }
-
-  .section-divider {
-    @apply flex items-center my-4;
-  }
-
-  .section-divider::before,
-  .section-divider::after {
-    @apply content-[''] block h-px bg-emerald-200 flex-1;
-  }
-
-  .section-divider::before {
-    @apply mr-3;
-  }
-
-  .section-divider::after {
-    @apply ml-3;
-  }
-
-  .section-divider span {
-    @apply text-sm text-emerald-600 font-medium;
-  }
-}
-
-.fiveofour-header {
+  
+  .fiveofour-header {
     @apply border-l-4 border-primary bg-white p-6 rounded-xl shadow-md;
-  }
-
-  .fiveofour-card {
-    @apply bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-primary;
   }
 
   .fiveofour-button {
@@ -139,6 +97,14 @@
   .btn-modern {
     @apply rounded-full font-medium shadow-md transition-all duration-300 
            hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px];
+  }
+
+  .btn-modern::after {
+    @apply content-[''] absolute bottom-0 left-0 w-full h-0 bg-white opacity-20 transition-all duration-300;
+  }
+
+  .btn-modern:hover::after {
+    @apply h-full;
   }
 
   /* Interactive hover effects */
@@ -171,6 +137,14 @@
   .section-divider::before,
   .section-divider::after {
     @apply flex-1 h-px bg-border content-[''];
+  }
+
+  .section-divider::before {
+    @apply mr-3;
+  }
+
+  .section-divider::after {
+    @apply ml-3;
   }
 
   .section-divider span {
