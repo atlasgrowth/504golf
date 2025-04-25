@@ -64,11 +64,8 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   
   // Add item to cart
   const addToCart = (item: { menuItemId: string; name: string; priceCents: number; quantity: number; station?: string }) => {
-    // Make sure priceCents is always included
-    const cartItem = {
-      ...item,
-      priceCents: item.priceCents || 0 // Ensure priceCents has a value
-    };
+    // Use the item directly without modifications to maintain original pricing logic
+    const cartItem = item;
     
     setCart(prevCart => {
       const existingItem = prevCart.items.find(i => i.menuItemId === cartItem.menuItemId);
@@ -126,18 +123,9 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
     }));
   };
   
-  // Calculate total price, items, and preparation time
-  const totalPrice = cart.items.reduce((sum, item) => sum + ((item.priceCents || 0) * item.quantity), 0);
+  // Calculate total
+  const totalPrice = cart.items.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0);
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  
-  // Calculate estimated preparation time based on menu items
-  const totalTime = cart.items.reduce((maxTime, cartItem) => {
-    const menuItem = menuData
-      .flatMap(category => category.items)
-      .find(item => item.id === cartItem.menuItemId);
-    const itemPrepTime = menuItem ? menuItem.prep_seconds : 300; // Default to 5 mins if not found
-    return Math.max(maxTime, itemPrepTime);
-  }, 0);
   
   // Format price from cents to dollars
   const formatPrice = (price: number) => {
@@ -434,7 +422,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     <div className="flex justify-between items-start mb-2">
                       <p className="font-medium text-neutral-800">{item.name}</p>
                       <div className="flex items-center ml-2 bg-primary/10 text-primary text-sm font-medium px-2 py-0.5 rounded">
-                        {formatPrice(item.priceCents || 0)}
+                        {formatPrice(item.priceCents)}
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
@@ -461,7 +449,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                         </button>
                       </div>
                       <div className="text-neutral-600 text-sm font-medium">
-                        Item total: {formatPrice((item.priceCents || 0) * item.quantity)}
+                        Item total: {formatPrice(item.priceCents * item.quantity)}
                       </div>
                     </div>
                   </div>
@@ -495,9 +483,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                 <span className="font-bold text-neutral-800">Total:</span>
                 <span className="font-bold text-primary">{formatPrice(totalPrice)}</span>
               </div>
-              <div className="text-xs text-neutral-500 text-right">
-                Estimated preparation time: {Math.ceil(totalTime / 60)} min
-              </div>
+
             </div>
           </div>
         </div>
