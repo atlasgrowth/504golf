@@ -1,0 +1,180 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TimerPill } from "@/components/ui/timer-badge";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { OrderSummary } from "@shared/schema";
+
+interface KitchenOrderGridProps {
+  orders: OrderSummary[];
+}
+
+export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Helper function to determine order card style
+  const getOrderCardStyle = (order: OrderSummary) => {
+    if (order.isDelayed) {
+      return "bg-danger bg-opacity-10 border-l-4 border-danger";
+    } else if (order.timeElapsed > 15) {
+      return "bg-warning bg-opacity-10 border-l-4 border-warning";
+    } else {
+      return "bg-white border-l-4 border-success";
+    }
+  };
+  
+  // Helper function to determine time status text
+  const getTimeStatusText = (order: OrderSummary) => {
+    if (order.isDelayed) {
+      return "Delayed!";
+    } else if (order.timeElapsed > 15) {
+      return "Running late";
+    } else {
+      return "On time";
+    }
+  };
+  
+  // Helper function to determine time status color
+  const getTimeStatusColor = (order: OrderSummary) => {
+    if (order.isDelayed) {
+      return "text-danger";
+    } else if (order.timeElapsed > 15) {
+      return "text-warning";
+    } else {
+      return "text-success";
+    }
+  };
+  
+  // Load full order details
+  const getOrderDetails = (orderId: number) => {
+    return useQuery({
+      queryKey: [`/api/order/${orderId}`],
+    });
+  };
+  
+  // Mark item as completed
+  const toggleItemCompletion = async (orderItemId: number, completed: boolean) => {
+    try {
+      await apiRequest('PUT', `/api/orderitem/${orderItemId}/status`, { completed });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      
+      toast({
+        title: completed ? "Item Completed" : "Item Marked Incomplete",
+        description: "Order has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update item status.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Mark order as ready
+  const markOrderAsReady = async (orderId: number) => {
+    try {
+      await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'ready' });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      
+      toast({
+        title: "Order Ready",
+        description: "Order has been marked as ready to serve.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {orders.length === 0 ? (
+        <div className="col-span-3 p-8 text-center text-neutral-500 bg-white rounded-md shadow-md">
+          No orders in this category
+        </div>
+      ) : (
+        orders.map((order) => {
+          const { data: orderDetails } = getOrderDetails(order.id);
+          
+          return (
+            <div 
+              key={order.id} 
+              className={cn(
+                "rounded-md shadow-md",
+                getOrderCardStyle(order)
+              )}
+            >
+              <div className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-sm font-medium text-neutral-600">Order #{order.orderNumber}</span>
+                    <h3 className="font-poppins font-bold text-lg">Bay {order.bayNumber} (Floor {order.floor})</h3>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <TimerPill minutes={order.timeElapsed} isDelayed={order.isDelayed} />
+                    <span className={cn("mt-1 text-xs", getTimeStatusColor(order))}>
+                      {getTimeStatusText(order)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="mt-4 space-y-2">
+                  {orderDetails?.items ? (
+                    orderDetails.items.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className={cn(
+                          "flex justify-between p-2 rounded-md",
+                          item.completed ? "bg-neutral-100" : "bg-white"
+                        )}
+                      >
+                        <div className="flex items-center">
+                          <Checkbox 
+                            checked={item.completed} 
+                            onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean)}
+                            className="mr-2 h-4 w-4 text-primary"
+                          />
+                          <span className={item.completed ? "text-neutral-800 line-through" : "text-neutral-800"}>
+                            {item.quantity}x {item.menuItem.name}
+                          </span>
+                        </div>
+                        <span className="text-xs text-neutral-500">{item.menuItem.prepTime} min prep</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2 bg-white rounded-md">
+                      <span className="text-neutral-800">{order.totalItems} items</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 flex justify-between">
+                  <div>
+                    <span className="text-xs text-neutral-600">Special instructions:</span>
+                    <p className="text-sm italic">{orderDetails?.specialInstructions || "None"}</p>
+                  </div>
+                  <button 
+                    className="bg-white border border-primary text-primary px-3 py-1 rounded-md text-sm font-medium"
+                    onClick={() => markOrderAsReady(order.id)}
+                  >
+                    Ready
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
