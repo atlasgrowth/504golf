@@ -5,6 +5,10 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertOrderSchema, type Cart } from "@shared/schema";
 import { 
+  WebSocketMessage, WebSocketMessageType, 
+  OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage
+} from "@swingeats/shared";
+import { 
   toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
 } from "./dto";
 
@@ -12,19 +16,21 @@ import {
 const clients = new Map<string, { ws: WebSocket, bayId?: number }>();
 
 // Send update to all connected clients
-function broadcastUpdate(type: string, data: any) {
+function broadcastUpdate(type: WebSocketMessageType, data: any) {
+  const message: WebSocketMessage = { type, data };
   clients.forEach(client => {
     if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify({ type, data }));
+      client.ws.send(JSON.stringify(message));
     }
   });
 }
 
 // Send update to clients for a specific bay
-function sendBayUpdate(bayId: number, type: string, data: any) {
+function sendBayUpdate(bayId: number, type: WebSocketMessageType, data: any) {
+  const message: WebSocketMessage = { type, data };
   clients.forEach(client => {
     if (client.ws.readyState === WebSocket.OPEN && client.bayId === bayId) {
-      client.ws.send(JSON.stringify({ type, data }));
+      client.ws.send(JSON.stringify(message));
     }
   });
 }
@@ -41,26 +47,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Send initial data
     storage.getActiveOrders().then(orders => {
-      ws.send(JSON.stringify({ type: 'ordersUpdate', data: orders }));
+      const message: WebSocketMessage = { 
+        type: 'ordersUpdate', 
+        data: orders 
+      };
+      ws.send(JSON.stringify(message));
     });
     
     ws.on('message', async (message) => {
       try {
-        const data = JSON.parse(message.toString());
+        const data = JSON.parse(message.toString()) as WebSocketMessage;
         
-        // Client subscribing to a specific bay
-        if (data.type === 'subscribeToBay' && data.bayId) {
-          clients.set(clientId, { ws, bayId: data.bayId });
+        // Handle client registration
+        if (data.type === 'register') {
+          const registerMessage = data as any; // Type casting to access data.clientType
+          const clientType = registerMessage.data.clientType;
+          const bayId = registerMessage.data.bayId;
           
-          // Send current bay orders
-          const bay = await storage.getBayById(data.bayId);
-          if (bay) {
-            const orders = await storage.getOrdersByBayId(data.bayId);
-            ws.send(JSON.stringify({ 
-              type: 'bayOrdersUpdate', 
-              data: { bay, orders } 
-            }));
+          // Store the client with its bay ID if provided
+          if (bayId) {
+            clients.set(clientId, { ws, bayId });
+            
+            // Send current bay orders
+            const bay = await storage.getBayById(bayId);
+            if (bay) {
+              const orders = await storage.getOrdersByBayId(bayId);
+              const bayMessage: WebSocketMessage = {
+                type: 'bay_updated',
+                data: { 
+                  bay: toBayDTO(bay), 
+                  orders: orders.map(toOrderDTO),
+                  status: bay.status
+                }
+              };
+              ws.send(JSON.stringify(bayMessage));
+            }
           }
+          
+          console.log(`Client registered as ${clientType}${bayId ? ` for bay ${bayId}` : ''}`);
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -218,15 +242,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createOrderSchema.parse(req.body);
       const { order, cart } = validatedData;
       
-      // Create the order
-      const newOrder = await storage.createOrder(order, cart);
+      // Calculate estimated completion time based on order items and their complexity
+      // A simple algorithm: 5 min base time + 2 min per item
+      const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      const estimatedMinutes = 5 + Math.ceil(totalItems * 2);
+      const estimatedCompletionTime = new Date();
+      estimatedCompletionTime.setMinutes(estimatedCompletionTime.getMinutes() + estimatedMinutes);
       
-      // Broadcast update
+      // Add estimatedCompletionTime to order data
+      const orderWithEstimatedTime = {
+        ...order,
+        estimatedCompletionTime
+      };
+      
+      // Create the order
+      const newOrder = await storage.createOrder(orderWithEstimatedTime, cart);
+      
+      // Broadcast update to all clients
       const updatedOrders = await storage.getActiveOrders();
       broadcastUpdate('ordersUpdate', updatedOrders);
       
+      // Create a properly typed order created message
+      const orderCreatedMessage: OrderCreatedMessage = {
+        type: 'order_created',
+        data: {
+          order: toOrderDTO(newOrder),
+          estimatedCompletionTime: estimatedCompletionTime.toISOString(),
+          stations: cart.items.reduce((stationMap, item) => {
+            const station = item.station || 'main';
+            if (!stationMap[station]) {
+              stationMap[station] = [];
+            }
+            stationMap[station].push({
+              menuItemId: item.menuItemId,
+              name: item.name,
+              quantity: item.quantity
+            });
+            return stationMap;
+          }, {} as Record<string, { menuItemId: string, name: string, quantity: number }[]>)
+        }
+      };
+      
       // Send update to the specific bay
-      sendBayUpdate(order.bayId, 'newOrder', toOrderDTO(newOrder));
+      sendBayUpdate(order.bayId, 'order_created', orderCreatedMessage.data);
       
       res.status(201).json(toOrderDTO(newOrder));
     } catch (error) {
@@ -256,12 +314,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Order not found' });
       }
       
-      // Broadcast update
+      // Get the full order with items
+      const fullOrder = await storage.getOrderWithItems(orderId);
+      
+      // Broadcast update to all connected clients
       const updatedOrders = await storage.getActiveOrders();
       broadcastUpdate('ordersUpdate', updatedOrders);
       
-      // Send update to the specific bay
-      sendBayUpdate(updatedOrder.bayId, 'orderStatusUpdate', toOrderDTO(updatedOrder));
+      if (fullOrder) {
+        // Create properly typed order updated message
+        const orderUpdatedMessage: OrderUpdatedMessage = {
+          type: 'order_updated',
+          data: {
+            order: toOrderDTO(updatedOrder),
+            items: fullOrder.items.map(item => toOrderItemDTO(item)),
+            status,
+            // Calculate time elapsed since order creation
+            timeElapsed: Math.round((Date.now() - new Date(fullOrder.createdAt).getTime()) / 60000), // in minutes
+            estimatedCompletionTime: fullOrder.estimatedCompletionTime 
+              ? new Date(fullOrder.estimatedCompletionTime).toISOString() 
+              : null,
+            // For 'ready' and 'served' statuses, include completion info
+            completionTime: ['ready', 'served'].includes(status) ? new Date().toISOString() : null,
+            isDelayed: fullOrder.estimatedCompletionTime 
+              ? new Date() > new Date(fullOrder.estimatedCompletionTime) 
+              : false
+          }
+        };
+        
+        // Send update to the specific bay
+        sendBayUpdate(updatedOrder.bayId, 'order_updated', orderUpdatedMessage.data);
+      }
       
       res.json(toOrderDTO(updatedOrder));
     } catch (error) {
@@ -295,16 +378,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const order = await storage.getOrderWithItems(updatedOrderItem.orderId);
       
       if (order) {
-        // Broadcast update if order status changed
+        // Get all order items for this order
+        const orderItems = await storage.getOrderItems(order.id);
+        
+        // Check if all items are completed
+        const allItemsCompleted = orderItems.every(item => item.completed);
+        
+        // If all items are completed, update the order status to 'ready' if it's currently 'preparing'
+        let updatedOrderStatus = order.status;
+        if (allItemsCompleted && order.status === 'preparing') {
+          const readyOrder = await storage.updateOrderStatus(order.id, 'ready');
+          if (readyOrder) {
+            updatedOrderStatus = 'ready';
+          }
+        }
+        
+        // Broadcast update to all clients
         const updatedOrders = await storage.getActiveOrders();
         broadcastUpdate('ordersUpdate', updatedOrders);
         
+        // Create a properly typed order item update message
+        const orderItemUpdateMessage: OrderItemUpdatedMessage = {
+          type: 'order_item_updated',
+          data: {
+            orderId: order.id,
+            orderItem: toOrderItemDTO(updatedOrderItem),
+            orderStatus: updatedOrderStatus,
+            allItemsCompleted,
+            // Calculate time elapsed since order creation
+            timeElapsed: Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000), // in minutes
+            estimatedCompletionTime: order.estimatedCompletionTime 
+              ? new Date(order.estimatedCompletionTime).toISOString() 
+              : null
+          }
+        };
+        
         // Send update to the specific bay
-        sendBayUpdate(order.bayId, 'orderItemUpdate', {
-          orderId: order.id,
-          orderItem: toOrderItemDTO(updatedOrderItem),
-          orderStatus: order.status
-        });
+        sendBayUpdate(order.bayId, 'order_item_updated', orderItemUpdateMessage.data);
       }
       
       res.json(toOrderItemDTO(updatedOrderItem));

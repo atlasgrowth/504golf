@@ -1,65 +1,88 @@
-import { Cart, OrderSummary, Order, OrderItem, MenuItem, Bay } from '../../shared/schema';
+import { Order, OrderItem, Bay } from "../../shared/schema";
 
-// WebSocket Message Types
+/**
+ * Possible WebSocket message types used by the application
+ */
 export type WebSocketMessageType = 
-  | 'register' 
-  | 'order_created' 
-  | 'order_updated' 
-  | 'order_item_updated'
-  | 'bay_updated';
+  | "connect"
+  | "register" 
+  | "ordersUpdate"
+  | "orderStatusUpdate"  
+  | "order_created"
+  | "order_updated"
+  | "order_item_updated"
+  | "bay_updated";
 
+/**
+ * Base WebSocket message interface
+ */
 export interface WebSocketMessage {
   type: WebSocketMessageType;
   data: any;
 }
 
-export interface OrderCreatedMessage {
-  type: 'order_created';
+/**
+ * Client registration message
+ */
+export interface ClientRegistrationMessage extends WebSocketMessage {
+  type: "register";
   data: {
-    order: Order;
-    bayNumber: number;
-    totalItems: number;
-    estimatedCompletionTime?: number; // In minutes
-    station?: string; // e.g., "grill", "bar", "kitchen"
+    clientType: "guest" | "server" | "kitchen";
+    bayId?: number;
   };
 }
 
-export interface OrderUpdatedMessage {
-  type: 'order_updated';
+/**
+ * Order created message with station information
+ */
+export interface OrderCreatedMessage extends WebSocketMessage {
+  type: "order_created";
   data: {
     order: Order;
-    bayNumber: number;
+    estimatedCompletionTime: string;
+    stations: Record<string, { menuItemId: string, name: string, quantity: number }[]>;
+  };
+}
+
+/**
+ * Order updated message with timing information
+ */
+export interface OrderUpdatedMessage extends WebSocketMessage {
+  type: "order_updated";
+  data: {
+    order: Order;
+    items: OrderItem[];
     status: string;
-    estimatedCompletionTime?: number; // In minutes
-    timeElapsed?: number; // Time since creation in minutes
-    isDelayed?: boolean;
+    timeElapsed: number;
+    estimatedCompletionTime: string | null;
+    completionTime: string | null;
+    isDelayed: boolean;
   };
 }
 
-export interface OrderItemUpdatedMessage {
-  type: 'order_item_updated';
+/**
+ * Order item updated message
+ */
+export interface OrderItemUpdatedMessage extends WebSocketMessage {
+  type: "order_item_updated";
   data: {
-    orderItem: OrderItem;
-    menuItem: MenuItem;
     orderId: string;
-    completed: boolean;
-    estimatedCompletionTime?: number; // In minutes
-    station?: string; // e.g., "grill", "bar", "kitchen"
+    orderItem: OrderItem;
+    orderStatus: string;
+    allItemsCompleted: boolean;
+    timeElapsed: number;
+    estimatedCompletionTime: string | null;
   };
 }
 
-export interface BayUpdatedMessage {
-  type: 'bay_updated';
+/**
+ * Bay updated message
+ */
+export interface BayUpdatedMessage extends WebSocketMessage {
+  type: "bay_updated";
   data: {
     bay: Bay;
+    orders: Order[];
     status: string;
-  };
-}
-
-export interface RegisterMessage {
-  type: 'register';
-  data: {
-    clientType: 'guest' | 'server' | 'kitchen';
-    bayId?: number;
   };
 }
