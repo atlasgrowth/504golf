@@ -266,8 +266,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="flex overflow-x-auto pb-2 border-b">
-                      {/* "All Items" first */}
+                    <div className="grid grid-flow-col auto-cols-max overflow-x-auto pb-3 gap-0 border-b">
                       <button 
                         key="all-items"
                         className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
@@ -280,28 +279,19 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                         All Items
                       </button>
                       
-                      {/* Categories sorted with food first, then desserts */}
-                      {(() => {
-                        // Create a copy of categories for sorting
-                        return [...categories].sort((a, b) => {
-                          // Put desserts at the end
-                          if (a.name.toLowerCase().includes('dessert')) return 1;
-                          if (b.name.toLowerCase().includes('dessert')) return -1;
-                          return a.name.localeCompare(b.name);
-                        }).map((category) => (
-                          <button
-                            key={category.id}
-                            className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
-                              selectedTab === category.slug 
-                                ? "border-primary text-primary font-medium" 
-                                : "border-transparent text-neutral-700 hover:text-neutral-900"
-                            }`}
-                            onClick={() => setSelectedTab(category.slug)}
-                          >
-                            {category.name}
-                          </button>
-                        ));
-                      })()}
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
+                            selectedTab === category.slug 
+                              ? "border-primary text-primary font-medium" 
+                              : "border-transparent text-neutral-700 hover:text-neutral-900"
+                          }`}
+                          onClick={() => setSelectedTab(category.slug)}
+                        >
+                          {category.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
