@@ -9,8 +9,8 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "rootDir": "."
+    "rootDir": "../.."
   },
-  "include": ["src/**/*", "../shared/schema.ts"],
+  "include": ["src/**/*", "../../shared/schema.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]
 }
