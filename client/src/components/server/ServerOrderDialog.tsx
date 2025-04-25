@@ -266,13 +266,13 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="flex overflow-x-auto pb-3 space-x-2 no-scrollbar">
+                    <div className="grid grid-flow-col auto-cols-max overflow-x-auto pb-3 gap-0 border-b">
                       <button 
                         key="all-items"
-                        className={`px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
+                        className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
                           selectedTab === "all" 
-                            ? "bg-primary text-white shadow-md" 
-                            : "bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                            ? "border-primary text-primary font-medium" 
+                            : "border-transparent text-neutral-700 hover:text-neutral-900"
                         }`}
                         onClick={() => setSelectedTab("all")}
                       >
@@ -282,10 +282,10 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                       {categories.map((category) => (
                         <button
                           key={category.id}
-                          className={`px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
+                          className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
                             selectedTab === category.slug 
-                              ? "bg-primary text-white shadow-md" 
-                              : "bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                              ? "border-primary text-primary font-medium" 
+                              : "border-transparent text-neutral-700 hover:text-neutral-900"
                           }`}
                           onClick={() => setSelectedTab(category.slug)}
                         >
