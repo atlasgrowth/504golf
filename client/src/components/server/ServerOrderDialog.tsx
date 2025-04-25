@@ -203,6 +203,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg w-[90%] max-w-4xl h-[80vh] flex flex-col p-4 overflow-hidden relative">
         <button 
+          key="close-button"
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
           onClick={() => onOpenChange(false)}
         >
@@ -254,6 +255,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   <div className="mb-6">
                     <div className="flex overflow-x-auto pb-2 space-x-2 no-scrollbar">
                       <button 
+                        key="all-items-button"
                         className={`px-4 py-2 rounded-full whitespace-nowrap ${
                           selectedTab === "all" 
                             ? "bg-primary text-white" 
@@ -351,13 +353,15 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
+                        key={`${item.menuItemId}-dec`}
                         className="px-2 py-1 bg-neutral-200 rounded-md"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
                       >
                         -
                       </button>
-                      <span>{item.quantity}</span>
+                      <span key={`${item.menuItemId}-qty`}>{item.quantity}</span>
                       <button 
+                        key={`${item.menuItemId}-inc`}
                         className="px-2 py-1 bg-neutral-200 rounded-md"
                         onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
                       >
@@ -397,12 +401,14 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
         
         <div className="mt-4 pt-4 border-t flex justify-end space-x-3">
           <button 
+            key="cancel-button"
             className="px-4 py-2 border border-neutral-300 rounded-md"
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </button>
           <button 
+            key="place-order-button"
             className="px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
             onClick={placeOrder}
             disabled={isSubmitting || cart.items.length === 0 || !selectedBay}
