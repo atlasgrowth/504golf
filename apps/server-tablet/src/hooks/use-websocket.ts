@@ -24,7 +24,7 @@ export const useWebSocket = (): WebSocketHook => {
       console.log('WebSocket connection established');
       setReadyState(WebSocket.OPEN);
       
-      // Register as server tablet
+      // Register as server
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ 
           type: "register", 

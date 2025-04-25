@@ -1,36 +1,26 @@
-// Shared types across applications
-import { z } from 'zod';
+import { 
+  User, InsertUser, 
+  Category, InsertCategory,
+  MenuItem, InsertMenuItem,
+  Bay, InsertBay,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
+  OrderWithItems, OrderSummary, Cart, CartItem
+} from '../../../shared/schema';
 
 // WebSocket message types
-export type WebSocketMessage = {
+export interface WebSocketMessage {
   type: string;
   data: any;
-};
+}
 
-// Cart related types
-export type CartItem = {
-  menuItemId: string;
-  name: string;
-  priceCents: number;
-  quantity: number;
-};
-
-export type Cart = {
-  items: CartItem[];
-  specialInstructions?: string;
-};
-
-// Order summary for display purposes
-export type OrderSummary = {
-  id: string;
-  bayId: number;
-  bayNumber?: number;
-  floor: number;
-  status: string;
-  createdAt: Date;
-  timeElapsed: number; // minutes since creation
-  totalItems: number;
-  isDelayed: boolean;
-  estimatedCompletionTime?: Date; // New field for P2
-  station?: string; // New field for P2
+// Re-export all schema types
+export type {
+  User, InsertUser,
+  Category, InsertCategory,
+  MenuItem, InsertMenuItem,
+  Bay, InsertBay,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
+  OrderWithItems, OrderSummary, Cart, CartItem
 };
