@@ -240,8 +240,8 @@ function App() {
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <header className="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg">
         <div className="flex items-center">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            SwingEats Kitchen Display
+          <h1 className="text-3xl font-bold text-green-500">
+            Five O Four Golf Kitchen Display
           </h1>
           {delayedCount > 0 && (
             <div className="ml-4 bg-red-600 px-3 py-1 rounded-full text-sm animate-pulse">

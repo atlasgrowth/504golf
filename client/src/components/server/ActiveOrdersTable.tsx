@@ -120,7 +120,7 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <div className="fiveofour-card p-4">
       <h2 className="font-poppins font-semibold text-lg mb-4">Active Orders</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-neutral-200">

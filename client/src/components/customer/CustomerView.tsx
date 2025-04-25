@@ -69,8 +69,8 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
             <div className="mr-3 bg-primary/10 p-2 rounded-full">
               <img src={golfLogo} alt="SwingEats Logo" className="w-6 h-6" />
             </div>
-            <h1 className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-              SwingEats
+            <h1 className="font-bold text-xl text-primary">
+              Five O Four Golf
             </h1>
           </div>
           

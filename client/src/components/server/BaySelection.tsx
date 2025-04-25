@@ -10,45 +10,45 @@ export default function BaySelection() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filteredBays, setFilteredBays] = useState<any[]>([]);
-  
+
   // Fetch all bays
   const { data: bays, isLoading } = useQuery({
     queryKey: ['/api/bays'],
   });
-  
+
   // Filter bays based on selected criteria
   useEffect(() => {
     if (!bays) return;
-    
+
     let filtered = [...bays];
-    
+
     // Filter by floor
     if (selectedFloor !== "all") {
       filtered = filtered.filter(bay => bay.floor === parseInt(selectedFloor));
     }
-    
+
     // Filter by status
     if (selectedStatus !== "all") {
       filtered = filtered.filter(bay => bay.status === selectedStatus);
     }
-    
+
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(bay => 
         bay.number.toString().includes(searchQuery)
       );
     }
-    
+
     setFilteredBays(filtered);
   }, [bays, selectedFloor, selectedStatus, searchQuery]);
-  
+
   // Format bay number to always be two digits
   const formatBayNumber = (number: number) => {
     return number.toString().padStart(2, '0');
   };
-  
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div className="mb-6 fiveofour-card p-4">
       <h2 className="font-poppins font-semibold text-lg mb-3">Bay Selection</h2>
       <div className="flex space-x-4 mb-4">
         <div className="flex-1">
@@ -90,7 +90,7 @@ export default function BaySelection() {
           />
         </div>
       </div>
-      
+
       {isLoading ? (
         <Skeleton className="h-24 w-full" />
       ) : (

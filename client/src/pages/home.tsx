@@ -32,7 +32,7 @@ export default function Home() {
           <CardTitle className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
             SwingEats
           </CardTitle>
-          <p className="text-muted-foreground mt-1">Next-Gen Golf Facility Dining</p>
+          <p className="text-muted-foreground mt-1">New Orleans Premier Golf Entertainment</p>
         </CardHeader>
         
         <CardContent className="pt-8 pb-6 space-y-8 relative z-10">

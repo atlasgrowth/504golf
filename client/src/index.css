@@ -19,12 +19,12 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   
-  /* Vibrant primary color - teal with blue undertones */
-  --primary: 196 100% 47%;
+  /* Five O Four Golf primary green */
+  --primary: 147 100% 35%;
   --primary-foreground: 0 0% 100%;
   
-  /* Secondary color - slightly purplish */
-  --secondary: 262 83% 58%;
+  /* Secondary color - dark blue for contrast */
+  --secondary: 210 100% 30%;
   --secondary-foreground: 210 40% 98%;
   
   /* Accent color - green */
@@ -105,13 +105,25 @@
 }
 
 @layer components {
-  /* Modern Card Styles */
+  /* Five O Four Golf Card Styles */
   .card-glass {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
   }
   
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+
+  .fiveofour-header {
+    @apply border-l-4 border-primary bg-white p-6 rounded-xl shadow-md;
+  }
+  
+  .fiveofour-card {
+    @apply bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-primary;
+  }
+  
+  .fiveofour-button {
+    @apply bg-primary text-white py-2.5 px-4 rounded-lg hover:brightness-110 transition-all shadow-md font-medium;
   }
   
   /* Glass morphism effects */

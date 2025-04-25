@@ -73,9 +73,9 @@ export default function ServerView() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-lg shadow-sm">
+      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-md border-l-4 border-primary">
         <div>
-          <h1 className="font-poppins font-bold text-3xl text-primary bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">Five O Four Golf</h1>
+          <h1 className="font-poppins font-bold text-3xl text-primary">Five O Four Golf</h1>
           <p className="text-neutral-600 mt-1">Server: <span className="font-semibold text-neutral-800">{serverName}</span></p>
         </div>
         <div className="flex items-center space-x-4">
@@ -90,7 +90,7 @@ export default function ServerView() {
             )}
           </button>
           <button 
-            className="px-4 py-2.5 bg-primary text-white rounded-lg flex items-center hover:bg-primary-dark transition-colors shadow-sm"
+            className="px-4 py-2.5 bg-primary text-white rounded-lg flex items-center hover:brightness-110 transition-all shadow-md"
             onClick={toggleNewOrderDialog}
           >
             <Plus className="h-4 w-4 mr-2" />
