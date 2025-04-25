@@ -12,41 +12,70 @@ export const useWebSocket = (bayId?: number): WebSocketHook => {
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Create WebSocket connection
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const socket = new WebSocket(wsUrl);
-    socketRef.current = socket;
-
-    socket.onopen = () => {
-      setReadyState(WebSocket.OPEN);
+    try {
+      // Create WebSocket connection
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/ws`;
       
-      // Subscribe to specific bay if provided
-      if (bayId) {
+      console.log("Connecting to WebSocket at:", wsUrl);
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        console.log("WebSocket connection established");
+        setReadyState(WebSocket.OPEN);
+        
+        // Register client type
         socket.send(JSON.stringify({
-          type: 'subscribeToBay',
-          bayId
+          type: 'register',
+          data: { 
+            clientType: "client",
+            ...(bayId !== undefined && { bayId })
+          }
         }));
-      }
-    };
+        
+        // Subscribe to specific bay if provided
+        if (bayId) {
+          socket.send(JSON.stringify({
+            type: 'subscribeToBay',
+            bayId
+          }));
+        }
+      };
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setLastMessage(data);
-    };
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setLastMessage(data);
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
+      };
 
-    socket.onclose = () => {
-      setReadyState(WebSocket.CLOSED);
-    };
+      socket.onclose = () => {
+        console.log("WebSocket connection closed");
+        setReadyState(WebSocket.CLOSED);
+      };
+      
+      socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
 
-    return () => {
-      socket.close();
-    };
+      return () => {
+        socket.close();
+      };
+    } catch (error) {
+      console.error("Failed to establish WebSocket connection:", error);
+      return () => {};
+    }
   }, [bayId]);
 
   const sendMessage = useCallback((data: any) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(data));
+    } else {
+      console.error("WebSocket is not connected");
     }
   }, []);
 

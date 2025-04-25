@@ -63,26 +63,34 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
   }, [open]);
   
   // Add item to cart
-  const addToCart = (item: { menuItemId: string; name: string; priceCents: number; quantity: number }) => {
+  const addToCart = (item: { menuItemId: string; name: string; priceCents: number; quantity: number; station?: string }) => {
+    // Make sure priceCents is always included
+    const cartItem = {
+      ...item,
+      priceCents: item.priceCents || 0 // Ensure priceCents has a value
+    };
+    
     setCart(prevCart => {
-      const existingItem = prevCart.items.find(i => i.menuItemId === item.menuItemId);
+      const existingItem = prevCart.items.find(i => i.menuItemId === cartItem.menuItemId);
       
       if (existingItem) {
         return {
           ...prevCart,
           items: prevCart.items.map(i => 
-            i.menuItemId === item.menuItemId 
-              ? { ...i, quantity: i.quantity + item.quantity } 
+            i.menuItemId === cartItem.menuItemId 
+              ? { ...i, quantity: i.quantity + cartItem.quantity } 
               : i
           )
         };
       } else {
         return {
           ...prevCart,
-          items: [...prevCart.items, item]
+          items: [...prevCart.items, cartItem]
         };
       }
     });
+    
+    console.log('Added item to cart:', cartItem);
   };
   
   // Remove item from cart
