@@ -1,9 +1,12 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage-adapter";
+import { storage } from "./storage";
 import { z } from "zod";
 import { insertOrderSchema, type Cart } from "@shared/schema";
+import { 
+  toMenuItemDTO, toOrderDTO, toOrderItemDTO, toBayDTO, toCategoryDTO 
+} from "./dto";
 
 // WebSocket clients
 const clients = new Map<string, { ws: WebSocket, bayId?: number }>();
@@ -77,8 +80,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Group menu items by category
       const menu = categories.map(category => {
-        const items = menuItems.filter(item => item.categoryId === category.id);
-        return { category, items };
+        const items = menuItems
+          .filter(item => item.category === category.name)
+          .map(toMenuItemDTO);
+        return { 
+          category: toCategoryDTO(category), 
+          items 
+        };
       });
       
       res.json(menu);
@@ -118,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bays = bays.filter(bay => bay.status === status);
       }
       
-      res.json(bays);
+      res.json(bays.map(toBayDTO));
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch bays' });
     }
