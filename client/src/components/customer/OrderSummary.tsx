@@ -90,7 +90,7 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
                 <div key={item.menuItemId} className="flex justify-between items-center border-b pb-2">
                   <div className="flex-1">
                     <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-neutral-600">{formatPrice(item.price)} each</p>
+                    <p className="text-sm text-neutral-600">{formatPrice(item.priceCents)} each</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button 

@@ -5,8 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 interface OrderContextType {
   cart: Cart;
   addToCart: (item: CartItem) => void;
-  removeFromCart: (menuItemId: number) => void;
-  updateQuantity: (menuItemId: number, quantity: number) => void;
+  removeFromCart: (menuItemId: string) => void;
+  updateQuantity: (menuItemId: string, quantity: number) => void;
   clearCart: () => void;
   updateSpecialInstructions: (instructions: string) => void;
   totalItems: number;
@@ -55,7 +55,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
   };
 
-  const removeFromCart = (menuItemId: number) => {
+  const removeFromCart = (menuItemId: string) => {
     setCart(prevCart => {
       const item = prevCart.items.find(i => i.menuItemId === menuItemId);
       
@@ -111,7 +111,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Calculate total items and price
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalPrice = cart.items.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0);
 
   return (
     <OrderContext.Provider value={{

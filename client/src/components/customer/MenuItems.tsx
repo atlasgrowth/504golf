@@ -24,7 +24,7 @@ export default function MenuItems({ menuData }: MenuItemsProps) {
     addToCart({
       menuItemId: item.id,
       name: item.name,
-      price: item.price,
+      priceCents: item.price_cents,
       quantity: 1
     });
   };
@@ -38,13 +38,13 @@ export default function MenuItems({ menuData }: MenuItemsProps) {
     <div className="space-y-4 mb-8">
       {displayItems.map((item) => (
         <div key={item.id} className="flex border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-          {item.imageUrl && (
-            <img src={item.imageUrl} className="w-24 h-24 object-cover" alt={item.name} />
+          {item.image_url && (
+            <img src={item.image_url} className="w-24 h-24 object-cover" alt={item.name} />
           )}
           <div className="p-3 flex-1">
             <div className="flex justify-between">
               <h3 className="font-poppins font-medium text-neutral-800">{item.name}</h3>
-              <span className="font-medium text-primary">{formatPrice(item.price)}</span>
+              <span className="font-medium text-primary">{formatPrice(item.price_cents)}</span>
             </div>
             <p className="text-sm text-neutral-600 mb-2">{item.description}</p>
             <button 
