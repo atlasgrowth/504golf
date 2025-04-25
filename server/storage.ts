@@ -8,6 +8,7 @@ import {
   type OrderWithItems, type OrderSummary, type Cart,
   OrderItemStatus, OrderStatus
 } from "../shared/schema";
+import { pool } from "./db";
 
 export interface IStorage {
   // Users
@@ -62,7 +63,7 @@ export interface IStorage {
 }
 
 // Import database instance and helpers
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, asc, desc, and, or, like } from "drizzle-orm";
 
 // Implement the Database Storage
