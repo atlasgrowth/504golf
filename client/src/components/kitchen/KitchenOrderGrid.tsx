@@ -49,16 +49,29 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   
   // Load full order details
   const getOrderDetails = (orderId: string) =>
-    useQuery<OrderWithItems>({
+    useQuery<OrderWithItems | null>({
       // API route is /api/order/:id  (singular)
       queryKey: ["/api/order", orderId],
       queryFn: async () => {
-        console.log(`Fetching order details for order ${orderId}`);
-        const response = await apiRequest("GET", `/api/order/${orderId}`);
-        console.log(`Order details response for ${orderId}:`, response);
-        return response;
+        try {
+          console.log(`Fetching order details for order ${orderId}`);
+          const response = await apiRequest("GET", `/api/order/${orderId}`);
+          console.log(`Order details response for ${orderId}:`, response);
+          
+          if (!response || !response.id) {
+            console.error(`Order details response invalid for ${orderId}:`, response);
+            return null;
+          }
+          
+          return response;
+        } catch (error) {
+          console.error(`Error fetching order details for ${orderId}:`, error);
+          return null;
+        }
       },
       staleTime: 10_000,
+      refetchOnWindowFocus: false,
+      retry: 1, // Only retry once to avoid flooding the server with requests
     });
   
   // Mark item as completed
@@ -177,9 +190,14 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                             {item.quantity}x {item.menuItem?.name || 'Unknown Item'}
                           </span>
                         </div>
-                        <span className="text-xs text-neutral-500">
-                          {item.menuItem?.prep_seconds ? `${Math.round(item.menuItem.prep_seconds / 60)} min prep` : 'Standard prep'}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-medium text-neutral-800">
+                            ${item.menuItem?.price ? (item.menuItem.price / 100).toFixed(2) : (item.menuItem?.price_cents ? (item.menuItem.price_cents / 100).toFixed(2) : '0.00')}
+                          </span>
+                          <span className="text-xs text-neutral-500">
+                            {item.menuItem?.station || item.station || 'Kitchen'}
+                          </span>
+                        </div>
                       </div>
                     ))
                   ) : (
