@@ -18,7 +18,7 @@ export default function ServerView() {
   const { lastMessage } = useWebSocket();
   const [serverName, setServerName] = useState("Alex Johnson");
   const [newOrderDialogOpen, setNewOrderDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("READY"); // Default to READY tab
+  const [statusFilter, setStatusFilter] = useState("PENDING"); // Default to PENDING tab to see new orders
 
   // Get active orders
   const { data: orders = [], isLoading: ordersLoading } = useQuery<OrderSummary[]>({
@@ -62,6 +62,13 @@ export default function ServerView() {
     }
     
     if (statusFilter === 'DELAYED') return order.isDelayed;
+    
+    // For PENDING tab, show both NEW and PENDING orders
+    if (statusFilter === 'PENDING') {
+      return order.status.toUpperCase() === 'PENDING' || order.status.toUpperCase() === 'NEW' || 
+             order.status === 'pending' || order.status === 'new';
+    }
+    
     return order.status.toUpperCase() === statusFilter;
   });
 

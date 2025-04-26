@@ -8,8 +8,8 @@ interface BayTabsProps {
 }
 
 export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
-  // Set initial tab to READY by default
-  const [activeTab, setActiveTab] = useState("READY");
+  // Set initial tab to PENDING by default
+  const [activeTab, setActiveTab] = useState("PENDING");
   
   // Filter out SERVED orders first
   const activeOrders = orders.filter(o => 
