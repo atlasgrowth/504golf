@@ -140,9 +140,28 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
     }
   };
   
-  // Mark order as ready
+  // Mark order as ready - but only if all items are completed
   const markOrderAsReady = async (orderId: string) => {
     try {
+      // First fetch the order to check if all items are completed
+      const response = await apiRequest("GET", `/api/order/${orderId}`);
+      const orderData = await response.json() as OrderWithItems;
+      
+      // Check if any items are not completed
+      const hasUncompletedItems = orderData.items.some(
+        item => !item.completed && item.status !== "READY"
+      );
+      
+      if (hasUncompletedItems) {
+        toast({
+          title: "Cannot mark as ready",
+          description: "All items must be completed before marking the order as ready.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // If all items are complete, mark the order as ready
       await apiRequest("POST", `/api/order/${orderId}/ready`);
       
       // Invalidate queries to refresh data
@@ -204,7 +223,27 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
             No orders in this category
           </div>
         ) : (
-          orders.map((order) => (
+          // Sort orders: COOKING/PENDING first, then READY, then SERVED/DINING/PAID
+          [...orders].sort((a, b) => {
+            // Define status priority (lower number = appears more to the left)
+            const statusPriority: Record<string, number> = {
+              "NEW": 0,
+              "PENDING": 1,
+              "COOKING": 2,
+              "READY": 10,
+              "SERVED": 20,
+              "DINING": 30,
+              "PAID": 40,
+              "CANCELLED": 50
+            };
+            
+            // Get priority values (default to high number if not found)
+            const aPriority = statusPriority[a.status] ?? 100;
+            const bPriority = statusPriority[b.status] ?? 100;
+            
+            // Sort by priority
+            return aPriority - bPriority;
+          }).map((order) => (
             <div key={order.id} className="flex-shrink-0 w-80 snap-start">
               <OrderCard 
                 order={order}
