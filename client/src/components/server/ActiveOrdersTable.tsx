@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Utensils } from "lucide-react";
+import { Utensils, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ActiveOrdersTableProps {
@@ -58,7 +58,7 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
   
   const markAsServed = async (orderId: string) => {
     try {
-      await apiRequest('PUT', `/api/order/${orderId}/status`, { status: 'served' });
+      await changeStatus(orderId, 'SERVED');
       
       toast({
         title: "Delivered!",
@@ -89,6 +89,38 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
         description: "Failed to send alert.",
         variant: "destructive",
       });
+    }
+  };
+  
+  // Generic function to change order status
+  const changeStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await apiRequest('PUT', `/api/order/${orderId}/status`, { status: newStatus.toLowerCase() });
+      
+      // Status-specific toasts
+      if (newStatus === 'DINING') {
+        toast({
+          title: "Status Updated",
+          description: "Order has been marked as dining.",
+          className: "bg-purple-100 border-purple-500"
+        });
+      } else if (newStatus === 'PAID') {
+        toast({
+          title: "Payment Complete",
+          description: "Order has been marked as paid.",
+          className: "bg-teal-100 border-teal-500"
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error changing status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to update order to ${newStatus.toLowerCase()} status.`,
+      });
+      return false;
     }
   };
   
@@ -343,12 +375,28 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
                 <Button variant="outline" onClick={() => setDetailsOpen(false)}>
                   Close
                 </Button>
-                <Button 
-                  onClick={() => markAsServed(selectedOrder.id)}
-                  className="bg-primary hover:bg-primary-dark"
-                >
-                  Mark as Served
-                </Button>
+                {selectedOrder.status.toUpperCase() === 'READY' ? (
+                  <Button 
+                    onClick={() => markAsServed(selectedOrder.id)}
+                    className="bg-primary hover:bg-primary-dark"
+                  >
+                    Mark as Served
+                  </Button>
+                ) : selectedOrder.status.toUpperCase() === 'SERVED' ? (
+                  <Button 
+                    onClick={() => changeStatus(selectedOrder.id, 'DINING')}
+                    className="bg-purple-500 hover:bg-purple-600"
+                  >
+                    Mark as Dining
+                  </Button>
+                ) : selectedOrder.status.toUpperCase() === 'DINING' ? (
+                  <Button 
+                    onClick={() => changeStatus(selectedOrder.id, 'PAID')}
+                    className="bg-teal-500 hover:bg-teal-600"
+                  >
+                    Mark as Paid
+                  </Button>
+                ) : null}
               </DialogFooter>
             </div>
           )}
