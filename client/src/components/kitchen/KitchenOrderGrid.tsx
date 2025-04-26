@@ -386,9 +386,78 @@ function OrderCard({
                   orderDetails.items
                     .filter(i => i.status === "NEW")
                     .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id && (
-                      <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
-                        NEXT UP
-                      </div>
+                      <>
+                        <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                          NEXT UP
+                        </div>
+                        
+                        {/* Add a "Start In" timer that calculates when to start this item */}
+                        {(() => {
+                          // Find currently cooking items in this order
+                          const cookingItems = orderDetails.items.filter(i => i.status === "COOKING" && i.firedAt);
+                          
+                          // If no cooking items, show "START NOW"
+                          if (cookingItems.length === 0) {
+                            return (
+                              <div className="absolute -top-2 right-2 bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
+                                START NOW
+                              </div>
+                            );
+                          }
+                          
+                          // Calculate the soonest an item will be done cooking
+                          let earliestReadyTime = Infinity;
+                          cookingItems.forEach(cookingItem => {
+                            if (cookingItem.firedAt) {
+                              const cookingItemTotal = cookingItem.menuItem?.prepSeconds || 0;
+                              const firedTime = new Date(cookingItem.firedAt).getTime();
+                              const currentTime = new Date().getTime();
+                              const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
+                              const remainingSeconds = Math.max(0, cookingItemTotal - elapsedSeconds);
+                              
+                              // Update earliestReadyTime if this item will be ready sooner
+                              if (remainingSeconds < earliestReadyTime) {
+                                earliestReadyTime = remainingSeconds;
+                              }
+                            }
+                          });
+                          
+                          // Calculate when we should start cooking the next item
+                          const nextItemPrepSeconds = item.menuItem?.prepSeconds || 0;
+                          
+                          // Determine if we should start now or wait
+                          // If the next item takes longer than the current cooking items, start now
+                          // Otherwise, wait until [earliestReadyTime - nextItemPrepSeconds]
+                          const startInSeconds = Math.max(0, earliestReadyTime - nextItemPrepSeconds);
+                          
+                          // Format the start time
+                          const minutes = Math.floor(startInSeconds / 60);
+                          const seconds = startInSeconds % 60;
+                          
+                          if (startInSeconds <= 0) {
+                            // Should start now
+                            return (
+                              <div className="absolute -top-2 right-2 bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
+                                START NOW
+                              </div>
+                            );
+                          } else if (startInSeconds < 60) {
+                            // Start soon (less than a minute)
+                            return (
+                              <div className="absolute -top-2 right-2 bg-amber-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                                START IN {seconds}s
+                              </div>
+                            );
+                          } else {
+                            // Start later
+                            return (
+                              <div className="absolute -top-2 right-2 bg-green-600 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                                START IN {minutes}:{seconds.toString().padStart(2, '0')}
+                              </div>
+                            );
+                          }
+                        })()}
+                      </>
                 )}
                 
                 <div className="flex items-center flex-1">
