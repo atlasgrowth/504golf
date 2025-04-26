@@ -121,6 +121,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
                   "flex-1 flex items-center justify-center whitespace-nowrap py-2.5 px-3 text-sm font-medium rounded-md transition-all",
                   text,
                   bg,
+                  border,
                   tab.id === "delayed" && tab.count > 0 && "border border-red-200"
                 )}
                 onClick={() => setActiveTab(tab.id)}

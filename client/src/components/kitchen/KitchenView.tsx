@@ -77,11 +77,13 @@ export default function KitchenView() {
   // Filter orders based on active tab
   const filteredOrders = orders?.filter((order: OrderSummary) => {
     if (activeTab === 'all') return order.status !== 'SERVED' && order.status !== 'CANCELLED';
+    if (activeTab === 'served') return order.status === 'SERVED';
     if (activeTab === 'delayed') return order.isDelayed && order.status !== 'SERVED' && order.status !== 'CANCELLED';
     if (activeTab === 'pending') return (order.status === 'PENDING' || order.status === 'NEW');
     if (activeTab === 'inProgress') return order.status === 'COOKING';
     if (activeTab === 'readyToServe') return order.status === 'READY';
-    return false;
+    // Default case - show all active orders
+    return order.status !== 'SERVED' && order.status !== 'CANCELLED';
   }) || [];
   
   return (
