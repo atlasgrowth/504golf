@@ -561,9 +561,9 @@ function OrderCard({
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center text-sm font-medium">
-                      <span className="inline-block mr-1.5 truncate">{item.menuItem?.name || "Unknown Item"}</span>
+                      <span className="inline-block mr-1.5 truncate max-w-[180px]">{item.menuItem?.name || "Unknown Item"}</span>
                       {item.quantity > 1 && (
-                        <span className="bg-neutral-100 px-1.5 py-0.5 text-xs rounded-full">
+                        <span className="bg-neutral-100 px-1.5 py-0.5 text-xs rounded-full text-neutral-700 flex-shrink-0">
                           x{item.quantity}
                         </span>
                       )}
@@ -598,10 +598,10 @@ function OrderCard({
                   
                   <div className="ml-2 flex flex-col items-end">
                     <div className={cn(
-                      "px-2 py-0.5 rounded text-xs font-medium",
-                      item.status === "READY" ? "bg-green-100 text-green-700" :
-                      item.status === "COOKING" ? "bg-amber-100 text-amber-700" :
-                      "bg-blue-100 text-blue-700"
+                      "px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 whitespace-nowrap",
+                      item.status === "READY" ? "bg-green-100 text-green-700 border border-green-200" :
+                      item.status === "COOKING" ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                      "bg-blue-100 text-blue-700 border border-blue-200"
                     )}>
                       {item.status === "READY" ? "READY" : 
                        item.status === "COOKING" ? "COOKING" : "PENDING"}
@@ -684,8 +684,8 @@ function OrderCard({
                 className={cn(
                   "px-4 py-2 rounded-md text-sm font-medium flex items-center shadow-sm transition-all",
                   order.isDelayed
-                    ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "bg-green-500 hover:bg-green-600 text-white"
+                    ? "bg-red-500 hover:bg-red-600 text-white border border-red-600" 
+                    : "bg-green-500 hover:bg-green-600 text-white border border-green-600"
                 )}
                 onClick={() => markOrderAsReady(order.id)}
               >
