@@ -11,29 +11,35 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   // Set initial tab to PENDING by default
   const [activeTab, setActiveTab] = useState("PENDING");
   
-  // Filter out SERVED orders first
-  const activeOrders = orders.filter(o => 
-    o.status.toUpperCase() !== "SERVED" && o.status !== "served"
-  );
+  // Filter out all completed orders first (SERVED, DINING, PAID)
+  const activeOrders = orders.filter(o => {
+    const status = o.status.toUpperCase();
+    return !["SERVED", "DINING", "PAID"].includes(status);
+  });
   
   // Compute counts for each status
-  const pending = activeOrders.filter(o => o.status === "PENDING" || o.status === "NEW" || o.status === "pending" || o.status === "new").length;
-  const cooking = activeOrders.filter(o => o.status === "COOKING" || o.status === "cooking").length;
-  const ready = activeOrders.filter(o => o.status === "READY" || o.status === "ready").length;
+  const pending = activeOrders.filter(o => ["PENDING", "NEW"].includes(o.status.toUpperCase())).length;
+  const cooking = activeOrders.filter(o => o.status.toUpperCase() === "COOKING").length;
+  const ready = activeOrders.filter(o => o.status.toUpperCase() === "READY").length;
   const delayed = activeOrders.filter(o => o.isDelayed).length;
   
-  // Get count of served orders (for today)
-  const served = orders.filter(o => 
-    o.status.toUpperCase() === "SERVED" || o.status === "served"
-  ).length;
+  // Get count of completed orders by status
+  const served = orders.filter(o => o.status.toUpperCase() === "SERVED").length;
+  const dining = orders.filter(o => o.status.toUpperCase() === "DINING").length;
+  const paid = orders.filter(o => o.status.toUpperCase() === "PAID").length;
+  const completed = served + dining + paid;
   
-  // Main pipeline tabs + Past Orders for the day
+  // Main pipeline tabs + Completed Orders submenu
   const tabs = [
+    { id: "ALL", label: "All Active", count: activeOrders.length },
     { id: "PENDING", label: "Pending", count: pending },
     { id: "COOKING", label: "Cooking", count: cooking },
     { id: "READY", label: "Ready", count: ready },
     { id: "DELAYED", label: "Delayed", count: delayed },
-    { id: "SERVED", label: "Past Orders", count: served }
+    { id: "COMPLETE", label: "Completed", count: completed },
+    { id: "SERVED", label: "Served", count: served },
+    { id: "DINING", label: "Dining", count: dining },
+    { id: "PAID", label: "Paid", count: paid }
   ];
   
   // When tab changes, notify parent
@@ -45,27 +51,68 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
     setActiveTab(tabId);
   };
   
+  // Group tabs for better organization
+  const activeTabs = tabs.slice(0, 5); // ALL, PENDING, COOKING, READY, DELAYED
+  const completedTabs = tabs.slice(5); // COMPLETE and the individual completed statuses
+  
   return (
-    <div className="flex border-b border-neutral-200 mb-4">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => handleTabChange(tab.id)}
-          className={cn(
-            "px-4 py-2 font-medium text-sm",
-            activeTab === tab.id
-              ? "border-b-2 border-primary text-primary"
-              : "text-neutral-600 hover:text-neutral-900"
-          )}
-        >
-          {tab.label}
-          {tab.count !== undefined && tab.count > 0 && (
-            <span className="ml-1 rounded bg-neutral-200 px-1.5 py-0.5 text-xs">
-              {tab.count}
-            </span>
-          )}
-        </button>
-      ))}
+    <div className="mb-4">
+      {/* Main flow tabs */}
+      <div className="flex border-b border-neutral-200">
+        {activeTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => handleTabChange(tab.id)}
+            className={cn(
+              "px-4 py-2 font-medium text-sm",
+              activeTab === tab.id
+                ? "border-b-2 border-primary text-primary"
+                : "text-neutral-600 hover:text-neutral-900"
+            )}
+          >
+            {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span className="ml-1 rounded bg-neutral-200 px-1.5 py-0.5 text-xs">
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      
+      {/* Completed order tabs - only show if COMPLETE tab is active */}
+      {(activeTab === "COMPLETE" || activeTab === "SERVED" || activeTab === "DINING" || activeTab === "PAID") && (
+        <div className="flex pt-2 px-2 bg-gray-50 rounded-b-md">
+          {completedTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={cn(
+                "px-3 py-1 mr-1 text-xs font-medium rounded-full",
+                activeTab === tab.id
+                  ? tab.id === "COMPLETE" 
+                      ? "bg-gray-700 text-white" 
+                      : tab.id === "SERVED" 
+                          ? "bg-primary text-white"
+                          : tab.id === "DINING"
+                              ? "bg-purple-500 text-white"
+                              : "bg-teal-500 text-white"
+                  : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
+              )}
+            >
+              {tab.label}
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className={cn(
+                  "ml-1 px-1.5 py-0.5 text-xs rounded-full",
+                  activeTab === tab.id ? "bg-white bg-opacity-20" : "bg-gray-200"
+                )}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

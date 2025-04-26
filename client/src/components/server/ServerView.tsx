@@ -51,25 +51,48 @@ export default function ServerView() {
 
   // Filter orders based on the selected tab
   const filteredOrders = orders.filter(order => {
-    // For the SERVED tab, show only served orders
-    if (statusFilter === 'SERVED') {
-      return order.status.toUpperCase() === 'SERVED' || order.status === 'served';
+    const orderStatus = order.status.toUpperCase();
+    
+    // For the COMPLETE tab, show completed orders (SERVED, DINING, PAID)
+    if (statusFilter === 'COMPLETE') {
+      return ['SERVED', 'DINING', 'PAID'].includes(orderStatus);
     }
     
-    // For all other tabs, exclude served orders
-    if (order.status.toUpperCase() === 'SERVED' || order.status === 'served') {
+    // For specific tabs for completed statuses
+    if (statusFilter === 'SERVED') {
+      return orderStatus === 'SERVED';
+    }
+    
+    if (statusFilter === 'DINING') {
+      return orderStatus === 'DINING';
+    }
+    
+    if (statusFilter === 'PAID') {
+      return orderStatus === 'PAID';
+    }
+    
+    // For all other tabs, exclude completed orders
+    if (['SERVED', 'DINING', 'PAID'].includes(orderStatus)) {
       return false;
     }
     
-    if (statusFilter === 'DELAYED') return order.isDelayed;
+    // Special filter for delayed orders
+    if (statusFilter === 'DELAYED') {
+      return order.isDelayed;
+    }
     
     // For PENDING tab, show both NEW and PENDING orders
     if (statusFilter === 'PENDING') {
-      return order.status.toUpperCase() === 'PENDING' || order.status.toUpperCase() === 'NEW' || 
-             order.status === 'pending' || order.status === 'new';
+      return orderStatus === 'PENDING' || orderStatus === 'NEW';
     }
     
-    return order.status.toUpperCase() === statusFilter;
+    // For ALL tab, show all active orders except completed ones
+    if (statusFilter === 'ALL') {
+      return !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(orderStatus);
+    }
+    
+    // Default: match by status
+    return orderStatus === statusFilter;
   });
 
   const toggleNewOrderDrawer = () => {
