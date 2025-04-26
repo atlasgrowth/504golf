@@ -37,6 +37,7 @@ export const menuItems = pgTable("menu_items", {
   price_cents: integer("price_cents").notNull(), // Price in cents
   station: text("station").notNull(),   // Fry, Cold, FlatTop, etc.
   prep_seconds: integer("prep_seconds").notNull(), // Prep time in seconds
+  cook_time_sec: integer("cook_time_sec").notNull().default(600), // Time to cook in seconds
   description: text("description"), // Optional description
   image_url: text("image_url"), // Optional image URL
   active: boolean("active").notNull().default(true),
@@ -48,6 +49,7 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
   price_cents: true,
   station: true,
   prep_seconds: true,
+  cook_time_sec: true,
   description: true,
   image_url: true,
   active: true,
@@ -76,7 +78,8 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
-  estimatedCompletionTime: timestamp("estimated_completion_time"), // New field for P2
+  estimatedCompletionTime: timestamp("estimated_completion_time"), // Legacy field
+  expected_ready_at: timestamp("expected_ready_at", { withTimezone: true }), // When the order should be ready
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
@@ -91,26 +94,13 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   status: data.status === "pending" ? OrderStatus.PENDING : (data.status || OrderStatus.PENDING)
 }));
 
-// Order item status enum
-export enum OrderItemStatus {
-  NEW = "NEW",
-  COOKING = "COOKING",
-  READY = "READY",
-  DELIVERED = "DELIVERED",
-  VOIDED = "VOIDED"
-}
+// Order item status enum using zod
+export const ItemStatus = z.enum(['QUEUED', 'COOKING', 'READY']);
+export type ItemStatus = z.infer<typeof ItemStatus>;
 
-// Order status enum
-export enum OrderStatus {
-  PENDING = "PENDING", // Order placed but not started
-  NEW = "NEW",         // Legacy status, similar to PENDING
-  COOKING = "COOKING", // Kitchen is preparing the order
-  READY = "READY",     // Order is ready for pickup/delivery
-  SERVED = "SERVED",   // Food delivered to the customer
-  DINING = "DINING",   // Customer is still eating
-  PAID = "PAID",       // Bill has been settled, order complete
-  CANCELLED = "CANCELLED" // Order was cancelled
-}
+// Order status enum using zod
+export const OrderStatus = z.enum(['PENDING', 'COOKING', 'READY', 'SERVED', 'DELAYED']);
+export type OrderStatus = z.infer<typeof OrderStatus>;
 
 // Order items table
 export const orderItems = pgTable("order_items", {
@@ -119,7 +109,7 @@ export const orderItems = pgTable("order_items", {
   menuItemId: uuid("menu_item_id").notNull().references(() => menuItems.id),
   quantity: integer("qty").notNull(), // Changed column name to match database
   station: text("station"), // The station responsible for preparing the item
-  status: text("status").$type<OrderItemStatus>().default(OrderItemStatus.NEW), // Current status of the item
+  status: text("status").$type<ItemStatus>().default('QUEUED'), // Current status of the item
   cookSeconds: integer("cook_seconds").default(300), // Time in seconds it should take to cook
   price_cents: integer("price_cents").default(0), // Price in cents
   firedAt: timestamp("fired_at", { withTimezone: true }), // When cooking started
