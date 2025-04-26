@@ -216,6 +216,38 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                 </div>
                 
                 <div className="mt-4 space-y-2">
+                  {/* Order Sequence Timer */}
+                  {!isLoading && !error && orderDetails?.items && orderDetails.items.some(i => i.status !== "READY") && (
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-md">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium text-blue-700">Cook Time Priority:</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {orderDetails.items
+                            .filter(i => i.status !== "READY")
+                            .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))
+                            .slice(0, 3)
+                            .map((item, idx) => (
+                              <div key={item.id} className={cn(
+                                "px-2 py-1 rounded text-xs font-medium",
+                                idx === 0 ? "bg-blue-500 text-white" : 
+                                idx === 1 ? "bg-blue-100 text-blue-800" : 
+                                "bg-gray-100 text-gray-700"
+                              )}>
+                                {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({Math.floor((item.menuItem?.prep_seconds || 0) / 60)}m)
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {isLoading ? (
                     <div className="p-2 bg-white rounded-md flex items-center justify-center">
                       <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -247,15 +279,31 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                       <div 
                         key={item.id} 
                         className={cn(
-                          "flex justify-between p-3 rounded-md mb-2 border",
+                          "flex justify-between p-3 rounded-md mb-2 border relative",
                           item.status === "READY" 
                             ? "bg-green-50 border-green-200" 
                             : item.status === "COOKING" 
                               ? "bg-amber-50 border-amber-200" 
                               : "bg-white border-gray-200",
-                          item.status === "READY" && "border-l-4 border-l-green-500"
+                          item.status === "READY" && "border-l-4 border-l-green-500",
+                          // Add a highlighted border for the next item to cook (the pending item with longest prep time)
+                          item.status === "PENDING" && 
+                          orderDetails.items
+                            .filter(i => i.status === "PENDING")
+                            .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id &&
+                            "border-2 border-blue-500 shadow-md"
                         )}
                       >
+                        {/* Next Up Badge */}
+                        {item.status === "PENDING" && 
+                          orderDetails.items
+                            .filter(i => i.status === "PENDING")
+                            .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id && (
+                              <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                                NEXT UP
+                              </div>
+                        )}
+                        
                         <div className="flex items-center flex-1">
                           <div className="mr-2 flex-shrink-0">
                             {item.status === "READY" ? (
