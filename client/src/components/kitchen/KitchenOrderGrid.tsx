@@ -307,7 +307,7 @@ function OrderCard({
                 <div className="flex flex-wrap items-center gap-1.5">
                   {orderDetails.items
                     .filter(i => i.status === "NEW" || i.status === "COOKING")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))
                     .slice(0, 3)
                     .map((item, idx) => (
                       <div key={item.id} className={cn(
@@ -317,7 +317,7 @@ function OrderCard({
                         "bg-gray-100 text-gray-700"
                       )}>
                         {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({(() => {
-                          const totalSeconds = item.menuItem?.prep_seconds || 0;
+                          const totalSeconds = item.menuItem?.prepSeconds || 0;
                           const minutes = Math.floor(totalSeconds / 60);
                           return minutes === 0 && totalSeconds > 0 ? 1 : minutes;
                         })()}m)
@@ -353,8 +353,8 @@ function OrderCard({
                 if (statusDiff !== 0) return statusDiff;
                 
                 // Then sort by cook time (descending)
-                const aCookTime = a.menuItem?.prep_seconds || 0;
-                const bCookTime = b.menuItem?.prep_seconds || 0;
+                const aCookTime = a.menuItem?.prepSeconds || 0;
+                const bCookTime = b.menuItem?.prepSeconds || 0;
                 return bCookTime - aCookTime;
               })
               .map((item) => (
@@ -423,7 +423,7 @@ function OrderCard({
                       <div className="flex items-center">
                         {/* Calculate prep time minutes - add 1 if there are remaining seconds */}
                         {(() => {
-                          const totalSeconds = item.menuItem?.prep_seconds || 0;
+                          const totalSeconds = item.menuItem?.prepSeconds || 0;
                           const minutes = Math.floor(totalSeconds / 60);
                           const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
                           return (
