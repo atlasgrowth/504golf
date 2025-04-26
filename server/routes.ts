@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let status: string;
       switch (statusParam.toLowerCase()) {
         case 'pending':
-          status = OrderStatus.NEW;
+          status = OrderStatus.PENDING;
           break;
         case 'preparing':
           status = OrderStatus.COOKING;

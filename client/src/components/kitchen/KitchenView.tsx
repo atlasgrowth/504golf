@@ -56,8 +56,9 @@ export default function KitchenView() {
   // Count orders by status
   const countByStatus = {
     all: orders?.length || 0,
-    preparing: orders?.filter((o: OrderSummary) => o.status === 'preparing').length || 0,
-    ready: orders?.filter((o: OrderSummary) => o.status === 'ready').length || 0,
+    pending: orders?.filter((o: OrderSummary) => o.status === 'PENDING').length || 0,
+    preparing: orders?.filter((o: OrderSummary) => o.status === 'COOKING').length || 0,
+    ready: orders?.filter((o: OrderSummary) => o.status === 'READY').length || 0,
     delayed: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
   
@@ -65,7 +66,10 @@ export default function KitchenView() {
   const filteredOrders = orders?.filter((order: OrderSummary) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'delayed') return order.isDelayed;
-    return order.status === activeTab;
+    if (activeTab === 'pending') return order.status === 'PENDING';
+    if (activeTab === 'preparing') return order.status === 'COOKING';
+    if (activeTab === 'ready') return order.status === 'READY';
+    return false;
   }) || [];
   
   return (
