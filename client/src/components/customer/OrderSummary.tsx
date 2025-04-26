@@ -53,9 +53,11 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
       clearCart();
       setOrderDialogOpen(false);
       
+      // Use order's formatted ID (first 6 characters) if orderNumber is not available
+      const orderDisplayNumber = newOrder.orderNumber || (newOrder.id ? `#${newOrder.id.substring(0, 6)}` : 'unknown');
       toast({
         title: "Order Placed",
-        description: `Your order #${newOrder.id || 'unknown'} has been placed successfully!`,
+        description: `Your order ${orderDisplayNumber} has been placed successfully!`,
       });
     } catch (error) {
       console.error("Failed to place order:", error);

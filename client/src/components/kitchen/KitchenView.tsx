@@ -69,6 +69,7 @@ export default function KitchenView() {
     if (activeTab === 'pending') return order.status === 'PENDING' || order.status === 'NEW';
     if (activeTab === 'preparing') return order.status === 'COOKING';
     if (activeTab === 'ready') return order.status === 'READY';
+    if (activeTab === 'served') return order.status === 'SERVED';
     return false;
   }) || [];
   

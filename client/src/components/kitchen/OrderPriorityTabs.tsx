@@ -8,6 +8,7 @@ interface OrderPriorityTabsProps {
     pending: number;
     preparing: number;
     ready: number;
+    served: number;
     delayed: number;
   };
 }
@@ -18,6 +19,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
     { id: "pending", label: "Pending", count: counts.pending },
     { id: "preparing", label: "In Progress", count: counts.preparing },
     { id: "ready", label: "Ready to Serve", count: counts.ready },
+    { id: "served", label: "Served", count: counts.served },
     { id: "delayed", label: "Delayed", count: counts.delayed, danger: true },
   ];
 
