@@ -193,7 +193,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
       
       toast({
         title: "Order Placed",
-        description: `Order #${newOrder.orderNumber} has been placed successfully!`,
+        description: `Order #${newOrder.id || 'unknown'} has been placed successfully!`,
       });
     } catch (error) {
       console.error("Failed to place order:", error);
