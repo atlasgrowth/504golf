@@ -72,7 +72,7 @@ export const insertBaySchema = createInsertSchema(bays).pick({
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   bayId: smallint("bay_id").notNull().references(() => bays.id),
-  status: text("status").notNull().default("NEW"), // Use OrderStatus.NEW as default
+  status: text("status").notNull().default("PENDING"), // Use OrderStatus.PENDING as default
   createdAt: timestamp("created_at").notNull().defaultNow(),
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
@@ -87,8 +87,8 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   estimatedCompletionTime: true,
 }).transform(data => ({
   ...data,
-  // Convert any "pending" status to "NEW" to match OrderStatus enum
-  status: data.status === "pending" ? OrderStatus.NEW : data.status
+  // Use PENDING as default if status is not specified
+  status: data.status === "pending" ? OrderStatus.PENDING : (data.status || OrderStatus.PENDING)
 }));
 
 // Order item status enum
@@ -102,6 +102,7 @@ export enum OrderItemStatus {
 
 // Order status enum
 export enum OrderStatus {
+  PENDING = "PENDING", // New status: order placed but not started
   NEW = "NEW",
   COOKING = "COOKING",
   READY = "READY",
