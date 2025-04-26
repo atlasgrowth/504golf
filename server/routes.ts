@@ -388,9 +388,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       OrderStatus.NEW, 
       OrderStatus.COOKING, 
       OrderStatus.READY, 
-      OrderStatus.SERVED, 
+      OrderStatus.SERVED,
+      OrderStatus.DINING,
+      OrderStatus.PAID,
       OrderStatus.CANCELLED
-    ]).or(z.enum(['pending', 'preparing', 'ready', 'served', 'cancelled'])),
+    ]).or(z.enum(['pending', 'preparing', 'ready', 'served', 'dining', 'paid', 'cancelled'])),
   });
   
   // Add endpoint for quickly marking an order as ready
@@ -480,8 +482,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             estimatedCompletionTime: fullOrder.estimatedCompletionTime 
               ? new Date(fullOrder.estimatedCompletionTime).toISOString() 
               : null,
-            // For 'ready' and 'served' statuses, include completion info
-            completionTime: ['ready', 'served'].includes(status) ? new Date().toISOString() : null,
+            // For 'ready', 'served', 'dining', and 'paid' statuses, include completion info
+            completionTime: ['ready', 'served', 'dining', 'paid'].includes(status.toLowerCase()) ? new Date().toISOString() : null,
             isDelayed: fullOrder.estimatedCompletionTime 
               ? new Date() > new Date(fullOrder.estimatedCompletionTime) 
               : false

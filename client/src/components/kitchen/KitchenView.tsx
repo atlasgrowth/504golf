@@ -53,9 +53,9 @@ export default function KitchenView() {
     }
   }, [lastMessage, queryClient, orders, toast]);
   
-  // Get only active orders (not served or cancelled)
+  // Get only active orders (not served, dining, paid or cancelled)
   const activeOrders = orders?.filter(
-    (o: OrderSummary) => o.status !== 'SERVED' && o.status !== 'CANCELLED'
+    (o: OrderSummary) => !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(o.status)
   ) || [];
   
   // Count orders by status
@@ -76,14 +76,14 @@ export default function KitchenView() {
   
   // Filter orders based on active tab
   const filteredOrders = orders?.filter((order: OrderSummary) => {
-    if (activeTab === 'all') return order.status !== 'SERVED' && order.status !== 'CANCELLED';
-    if (activeTab === 'served') return order.status === 'SERVED';
-    if (activeTab === 'delayed') return order.isDelayed && order.status !== 'SERVED' && order.status !== 'CANCELLED';
+    if (activeTab === 'all') return !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(order.status);
+    if (activeTab === 'served') return ['SERVED', 'DINING', 'PAID'].includes(order.status);
+    if (activeTab === 'delayed') return order.isDelayed && !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(order.status);
     if (activeTab === 'pending') return (order.status === 'PENDING' || order.status === 'NEW');
     if (activeTab === 'inProgress') return order.status === 'COOKING';
     if (activeTab === 'readyToServe') return order.status === 'READY';
     // Default case - show all active orders
-    return order.status !== 'SERVED' && order.status !== 'CANCELLED';
+    return !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(order.status);
   }) || [];
   
   return (

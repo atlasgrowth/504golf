@@ -102,12 +102,14 @@ export enum OrderItemStatus {
 
 // Order status enum
 export enum OrderStatus {
-  PENDING = "PENDING", // New status: order placed but not started
-  NEW = "NEW",
-  COOKING = "COOKING",
-  READY = "READY",
-  SERVED = "SERVED",
-  CANCELLED = "CANCELLED"
+  PENDING = "PENDING", // Order placed but not started
+  NEW = "NEW",         // Legacy status, similar to PENDING
+  COOKING = "COOKING", // Kitchen is preparing the order
+  READY = "READY",     // Order is ready for pickup/delivery
+  SERVED = "SERVED",   // Food delivered to the customer
+  DINING = "DINING",   // Customer is still eating
+  PAID = "PAID",       // Bill has been settled, order complete
+  CANCELLED = "CANCELLED" // Order was cancelled
 }
 
 // Order items table
