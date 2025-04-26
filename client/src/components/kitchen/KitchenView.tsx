@@ -14,10 +14,9 @@ export default function KitchenView() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState<string>("");
   
-  // Get active orders based on selected tab
-  const endpoint = activeTab === "all" ? "/api/orders" : `/api/orders/${activeTab}`;
+  // Get all active orders and filter client-side
   const { data: orders, isLoading: ordersLoading } = useQuery<OrderSummary[]>({
-    queryKey: [endpoint],
+    queryKey: ['/api/orders'],
   });
   
   // Update time every minute
