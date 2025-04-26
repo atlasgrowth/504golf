@@ -8,30 +8,38 @@ interface TimerDisplayProps {
 }
 
 export function TimerDisplay({ createdAt, isDelayed = false, className }: TimerDisplayProps) {
-  const [elapsedMinutes, setElapsedMinutes] = useState<number>(0);
+  const [elapsed, setElapsed] = useState<{ minutes: number, seconds: number }>({ minutes: 0, seconds: 0 });
   
   useEffect(() => {
-    // Calculate initial elapsed time
-    const createdTime = new Date(createdAt).getTime();
-    const initialElapsedMinutes = Math.floor((Date.now() - createdTime) / (1000 * 60));
-    setElapsedMinutes(initialElapsedMinutes);
+    // Function to calculate elapsed time
+    const calculateElapsed = () => {
+      const createdTime = new Date(createdAt).getTime();
+      const now = Date.now();
+      const diffMs = now - createdTime;
+      const minutes = Math.floor(diffMs / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+      return { minutes, seconds };
+    };
     
-    // Update elapsed time every 10 seconds
+    // Calculate initial time
+    setElapsed(calculateElapsed());
+    
+    // Update time every second
     const interval = setInterval(() => {
-      const updatedElapsedMinutes = Math.floor((Date.now() - createdTime) / (1000 * 60));
-      setElapsedMinutes(updatedElapsedMinutes);
-    }, 10000);
+      setElapsed(calculateElapsed());
+    }, 1000); // Update every second for smooth countdown
     
+    // Clean up on unmount
     return () => clearInterval(interval);
-  }, [createdAt]);
+  }, [createdAt]); // Re-run effect if createdAt changes
   
   // Determine color based on elapsed time
   let bgColor = 'bg-green-500';
   let textColor = 'text-white';
   
-  if (isDelayed || elapsedMinutes > 20) {
+  if (isDelayed || elapsed.minutes > 20) {
     bgColor = 'bg-red-500';
-  } else if (elapsedMinutes > 15) {
+  } else if (elapsed.minutes > 15) {
     bgColor = 'bg-amber-500';
   }
   
@@ -42,7 +50,7 @@ export function TimerDisplay({ createdAt, isDelayed = false, className }: TimerD
       textColor,
       className
     )}>
-      {elapsedMinutes > 0 ? `${elapsedMinutes}:00` : '0:00'}
+      {`${elapsed.minutes}:${elapsed.seconds.toString().padStart(2, '0')}`}
     </span>
   );
 }
