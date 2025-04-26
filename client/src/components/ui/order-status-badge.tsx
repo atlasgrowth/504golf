@@ -16,6 +16,11 @@ const statusConfig = {
     text: 'text-success',
     label: 'In Progress'
   },
+  cooking: {
+    background: 'bg-amber-100',
+    text: 'text-amber-700',
+    label: 'Cooking'
+  },
   ready: {
     background: 'bg-warning bg-opacity-10',
     text: 'text-warning',
@@ -25,6 +30,16 @@ const statusConfig = {
     background: 'bg-primary bg-opacity-10',
     text: 'text-primary',
     label: 'Served'
+  },
+  dining: {
+    background: 'bg-purple-100',
+    text: 'text-purple-700',
+    label: 'Dining'
+  },
+  paid: {
+    background: 'bg-teal-100',
+    text: 'text-teal-700',
+    label: 'Paid'
   },
   cancelled: {
     background: 'bg-neutral-200 bg-opacity-60',

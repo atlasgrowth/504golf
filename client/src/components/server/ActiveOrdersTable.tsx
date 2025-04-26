@@ -95,7 +95,20 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
   // Helper to determine status display
   const getOrderStatus = (order: OrderSummary) => {
     if (order.isDelayed) return "delayed";
-    return order.status;
+    
+    // Convert status to lowercase to match our statusConfig keys
+    const status = order.status.toLowerCase();
+    
+    // Map to our known statuses
+    if (status === 'new' || status === 'pending') return 'pending';
+    if (status === 'cooking' || status === 'preparing') return 'cooking';
+    if (status === 'ready') return 'ready';
+    if (status === 'served') return 'served';
+    if (status === 'dining') return 'dining';
+    if (status === 'paid') return 'paid';
+    if (status === 'cancelled') return 'cancelled';
+    
+    return status;
   };
   
   // Helper to determine row styling based on order status
@@ -103,7 +116,11 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
     const status = order.status.toUpperCase();
     
     if (status === "SERVED") {
-      return "border-l-4 border-neutral-400 opacity-70"; // Past orders are dimmed
+      return "border-l-4 border-gray-400 opacity-70"; // Served orders are dimmed
+    } else if (status === "DINING") {
+      return "border-l-4 border-purple-400"; // Dining orders have purple border
+    } else if (status === "PAID") {
+      return "border-l-4 border-teal-400 opacity-70"; // Paid orders are dimmed with teal border
     }
     
     if (order.isDelayed) {
