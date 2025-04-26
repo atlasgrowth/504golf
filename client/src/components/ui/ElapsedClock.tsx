@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface ElapsedClockProps {
-  createdAt: string;
+  createdAt: string | Date;
   className?: string;
 }
 

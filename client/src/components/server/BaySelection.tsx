@@ -22,7 +22,7 @@ export default function BaySelection({ onBayClick }: BaySelectionProps) {
 
   // Filter bays based on selected criteria
   useEffect(() => {
-    if (!bays) return;
+    if (!bays || !Array.isArray(bays)) return;
 
     let filtered = [...bays];
 

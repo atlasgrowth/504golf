@@ -71,20 +71,44 @@ export default function ServerOrderDrawer({ open, onOpenChange, bayId }: ServerO
     }
   }, [open, bayId]);
 
+  interface Bay {
+    id: number;
+    number: number;
+    floor: number;
+    status: string;
+  }
+
+  interface Category {
+    id: number;
+    name: string;
+    slug: string;
+  }
+
+  interface MenuItem {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string;
+    priceCents: number;
+    station: string;
+    imageUrl: string | null;
+    active: boolean;
+  }
+
   // Get bays for selection
-  const { data: bays = [], isLoading: baysLoading } = useQuery({
+  const { data: bays = [], isLoading: baysLoading } = useQuery<Bay[]>({
     queryKey: ['/api/bays'],
     enabled: open && bayId === null,
   });
 
   // Get categories
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ['/api/menu'],
     enabled: open,
   });
   
   // Get menu items for selected category
-  const { data: menuItems = [], isLoading: menuItemsLoading } = useQuery({
+  const { data: menuItems = [], isLoading: menuItemsLoading } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu', selectedCategoryId],
     enabled: !!selectedCategoryId,
   });
