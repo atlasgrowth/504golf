@@ -8,8 +8,8 @@ interface BayTabsProps {
 }
 
 export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
-  // Set initial tab to PENDING by default
-  const [activeTab, setActiveTab] = useState("PENDING");
+  // Set initial tab to COMPLETE by default
+  const [activeTab, setActiveTab] = useState("COMPLETE");
   
   // Filter out all completed orders first (SERVED, DINING, PAID)
   const activeOrders = orders.filter(o => {
@@ -80,10 +80,9 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
         ))}
       </div>
       
-      {/* Completed order tabs - only show if COMPLETE tab is active */}
-      {(activeTab === "COMPLETE" || activeTab === "SERVED" || activeTab === "DINING" || activeTab === "PAID") && (
-        <div className="flex pt-2 px-2 bg-gray-50 rounded-b-md">
-          {completedTabs.map((tab) => (
+      {/* Completed order tabs - always show them */}
+      <div className="flex pt-2 px-2 bg-gray-50 rounded-b-md mt-1">
+        {completedTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
@@ -112,7 +111,6 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
             </button>
           ))}
         </div>
-      )}
     </div>
   );
 }

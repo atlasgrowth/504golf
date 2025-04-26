@@ -136,9 +136,17 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
     return "";
   };
   
+  // Determine the title based on the status filter
+  const getTableTitle = (): string => {
+    if (statusFilter === "COMPLETE" || statusFilter === "SERVED" || statusFilter === "DINING" || statusFilter === "PAID") {
+      return "Completed Orders";
+    }
+    return "Active Orders";
+  };
+
   return (
     <div className="fiveofour-card p-4">
-      <h2 className="font-poppins font-semibold text-lg mb-4">Active Orders</h2>
+      <h2 className="font-poppins font-semibold text-lg mb-4">{getTableTitle()}</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-neutral-200">
           <thead>
@@ -189,8 +197,8 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
                           <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                       </button>
-                      {/* Only show serve button for orders that are in READY status */}
-                      {order.status === 'READY' || order.status === 'ready' ? (
+                      {/* Contextual action buttons based on order status */}
+                      {order.status.toUpperCase() === 'READY' ? (
                         <button 
                           className="p-1 text-success hover:text-primary"
                           onClick={() => markAsServed(order.id)}
@@ -198,8 +206,30 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
                         >
                           <Utensils size={16} />
                         </button>
+                      ) : order.status.toUpperCase() === 'SERVED' ? (
+                        <button 
+                          className="p-1 text-purple-500 hover:text-primary"
+                          onClick={() => changeStatus(order.id, 'DINING')}
+                          title="Mark as Dining"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                            <line x1="6" y1="1" x2="6" y2="4"></line>
+                            <line x1="10" y1="1" x2="10" y2="4"></line>
+                            <line x1="14" y1="1" x2="14" y2="4"></line>
+                          </svg>
+                        </button>
+                      ) : order.status.toUpperCase() === 'DINING' ? (
+                        <button 
+                          className="p-1 text-teal-500 hover:text-primary"
+                          onClick={() => changeStatus(order.id, 'PAID')}
+                          title="Mark as Paid"
+                        >
+                          <DollarSign size={16} />
+                        </button>
                       ) : (
-                        <button className="p-1 text-neutral-400 cursor-not-allowed" title="Cannot serve - not ready">
+                        <button className="p-1 text-neutral-400 cursor-not-allowed" title={`Cannot progress - ${order.status} state`}>
                           <Utensils size={16} />
                         </button>
                       )}

@@ -18,7 +18,7 @@ export default function ServerView() {
   const { lastMessage } = useWebSocket();
   const [serverName, setServerName] = useState("Alex Johnson");
   const [drawer, setDrawer] = useState<{ open: boolean, bayId: number | null }>({ open: false, bayId: null });
-  const [statusFilter, setStatusFilter] = useState("PENDING"); // Default to PENDING tab to see new orders
+  const [statusFilter, setStatusFilter] = useState("COMPLETE"); // Default to COMPLETE tab to see past orders
 
   // Get active orders
   const { data: orders = [], isLoading: ordersLoading } = useQuery<OrderSummary[]>({
