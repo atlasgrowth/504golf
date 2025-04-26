@@ -44,15 +44,29 @@ export function TimerBadge({ minutes, isDelayed = false, className }: TimerBadge
 }
 
 export function TimerPill({ minutes, isDelayed = false, className }: TimerBadgeProps) {
-  // Determine color based on time
-  let bgColor = 'bg-neutral-200';
+  // Determine styles based on time and delay status
+  let bgColor = 'bg-gray-200';
+  let textColor = 'text-gray-700';
+  let animationClass = '';
+  let iconClass = '';
   
-  if (isDelayed || minutes > 20) {
-    bgColor = 'bg-danger';
+  if (isDelayed) {
+    bgColor = 'bg-red-500';
+    textColor = 'text-white';
+    animationClass = 'animate-pulse';
+    iconClass = 'inline-block mr-1';
+  } else if (minutes > 20) {
+    bgColor = 'bg-red-500';
+    textColor = 'text-white';
   } else if (minutes > 15) {
-    bgColor = 'bg-warning';
+    bgColor = 'bg-amber-500';
+    textColor = 'text-white';
+  } else if (minutes > 10) {
+    bgColor = 'bg-amber-400';
+    textColor = 'text-amber-900';
   } else {
-    bgColor = 'bg-success';
+    bgColor = 'bg-green-500';
+    textColor = 'text-white';
   }
   
   // Format minutes
@@ -62,15 +76,24 @@ export function TimerPill({ minutes, isDelayed = false, className }: TimerBadgeP
     if (hours > 0) {
       return `${hours}:${remainingMins.toString().padStart(2, '0')}`;
     }
-    return `${mins}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`;
+    
+    // Show fixed minutes with seconds (00) to make it look like a timer
+    return `${mins}:00`;
   };
 
   return (
     <span className={cn(
-      "text-xs px-2 py-1 rounded-full text-white",
+      "text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center",
       bgColor,
+      textColor,
+      animationClass,
       className
     )}>
+      {isDelayed && (
+        <svg xmlns="http://www.w3.org/2000/svg" className={iconClass} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      )}
       {formatTime(minutes)}
     </span>
   );
