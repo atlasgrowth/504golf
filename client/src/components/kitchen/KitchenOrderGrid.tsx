@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TimerPill } from "@/components/ui/timer-badge";
+import { TimerDisplay } from "@/components/ui/timer-display";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -260,7 +261,7 @@ function OrderCard({
             </p>
           </div>
           <div className="flex flex-col items-end">
-            <TimerPill minutes={order.timeElapsed} isDelayed={order.isDelayed} />
+            <TimerDisplay createdAt={order.createdAt} isDelayed={order.isDelayed} />
             <span className={cn(
               "mt-1 text-xs font-medium px-2 py-0.5 rounded-full",
               order.isDelayed 
