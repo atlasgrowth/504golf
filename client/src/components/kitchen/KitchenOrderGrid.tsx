@@ -293,26 +293,50 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                                 {item.menuItem?.station || item.station || 'Kitchen'}
                               </span>
                               
-                              {/* Cook time indicator */}
+                              {/* Cook time indicator with visual complexity badge */}
                               <div className="flex items-center ml-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                </svg>
+                                <div className={cn(
+                                  "h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] font-medium mr-1",
+                                  (item.menuItem?.prep_seconds || 0) > 600 ? "bg-red-100 text-red-700 border border-red-200" :
+                                  (item.menuItem?.prep_seconds || 0) > 300 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
+                                  "bg-green-100 text-green-700 border border-green-200"
+                                )}>
+                                  <span className="px-1">{Math.floor((item.menuItem?.prep_seconds || 0) / 60)}</span>
+                                </div>
                                 <span className={cn(
-                                  "ml-1 font-medium",
+                                  "font-medium text-[10px]",
                                   (item.menuItem?.prep_seconds || 0) > 600 ? "text-red-600" :
                                   (item.menuItem?.prep_seconds || 0) > 300 ? "text-amber-600" : 
                                   "text-green-600"
                                 )}>
-                                  {Math.floor((item.menuItem?.prep_seconds || 0) / 60)}m cook
+                                  min cook time
                                 </span>
                               </div>
                               
                               {/* For cooking items, show elapsed cooking time */}
                               {item.status === "COOKING" && item.firedAt && (
-                                <span className="ml-2 bg-amber-100 text-amber-700 px-1 py-0.5 rounded text-[10px] font-medium">
-                                  {Math.floor((Date.now() - new Date(item.firedAt).getTime()) / 60000)} min elapsed
-                                </span>
+                                <>
+                                  <span className="ml-2 bg-amber-100 text-amber-700 px-1 py-0.5 rounded text-[10px] font-medium">
+                                    {Math.floor((Date.now() - new Date(item.firedAt).getTime()) / 60000)} min elapsed
+                                  </span>
+                                  
+                                  {/* Progress bar */}
+                                  {item.menuItem?.prep_seconds && (
+                                    <div className="ml-2 w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                      <div 
+                                        className={cn(
+                                          "h-full rounded-full",
+                                          ((Date.now() - new Date(item.firedAt).getTime()) / 1000) > item.menuItem.prep_seconds
+                                            ? "bg-red-500" // Overdue
+                                            : "bg-green-500" // On time
+                                        )}
+                                        style={{
+                                          width: `${Math.min(100, ((Date.now() - new Date(item.firedAt).getTime()) / 1000 / item.menuItem.prep_seconds) * 100)}%`
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>

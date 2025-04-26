@@ -69,8 +69,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
         </svg>
       ),
       color: "red",
-      danger: true,
-      animate: true
+      danger: true
     },
   ];
 
@@ -122,7 +121,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
                   "flex-1 flex items-center justify-center whitespace-nowrap py-2.5 px-3 text-sm font-medium rounded-md transition-all",
                   text,
                   bg,
-                  tab.animate && tab.count > 0 && "animate-pulse"
+                  tab.id === "delayed" && tab.count > 0 && "border border-red-200"
                 )}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -149,19 +148,48 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
         </nav>
       </div>
 
-      {/* Optional: Add an indicator for status color meaning */}
-      <div className="flex items-center justify-end space-x-2 text-xs text-gray-500 mb-3">
-        <div className="flex items-center">
-          <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
-          <span>Delayed</span>
+      {/* Status and cook time legend */}
+      <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 mb-3">
+        <div className="flex flex-wrap items-center space-x-2 mb-1 sm:mb-0">
+          <div className="font-medium text-gray-700 mr-1">Status:</div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
+            <span>Pending</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-amber-500 mr-1"></div>
+            <span>Cooking</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+            <span>Ready</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
+            <span>Delayed</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <div className="w-2 h-2 rounded-full bg-amber-500 mr-1"></div>
-          <span>Cooking</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-          <span>Ready</span>
+        
+        <div className="flex flex-wrap items-center space-x-2">
+          <div className="font-medium text-gray-700 mr-1">Cook Time:</div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-green-100 text-green-700 border border-green-200 mr-1">
+              <span>&lt;5</span>
+            </div>
+            <span>Fast</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200 mr-1">
+              <span>5-10</span>
+            </div>
+            <span>Medium</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-red-100 text-red-700 border border-red-200 mr-1">
+              <span>&gt;10</span>
+            </div>
+            <span>Slow</span>
+          </div>
         </div>
       </div>
     </div>
