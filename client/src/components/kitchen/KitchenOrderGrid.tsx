@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 import { OrderSummary, OrderWithItems } from "@shared/schema";
 
 interface KitchenOrderGridProps {
@@ -13,6 +14,19 @@ interface KitchenOrderGridProps {
 export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Clock state for live updates to timer displays
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  
+  // Update the clock every second to keep timers refreshed
+  useEffect(() => {
+    const timerInterval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(timerInterval);
+  }, []);
   
   // Helper function to determine order card style
   const getOrderCardStyle = (order: OrderSummary) => {
@@ -239,7 +253,11 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                                 idx === 1 ? "bg-blue-100 text-blue-800" : 
                                 "bg-gray-100 text-gray-700"
                               )}>
-                                {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({Math.floor((item.menuItem?.prep_seconds || 0) / 60)}m)
+                                {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({(() => {
+                                  const totalSeconds = item.menuItem?.prep_seconds || 0;
+                                  const minutes = Math.floor(totalSeconds / 60);
+                                  return minutes === 0 && totalSeconds > 0 ? 1 : minutes;
+                                })()}m)
                               </div>
                             ))
                           }
@@ -343,29 +361,39 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                               
                               {/* Cook time indicator with visual complexity badge */}
                               <div className="flex items-center ml-2">
-                                <div className={cn(
-                                  "h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] font-medium mr-1",
-                                  (item.menuItem?.prep_seconds || 0) > 600 ? "bg-red-100 text-red-700 border border-red-200" :
-                                  (item.menuItem?.prep_seconds || 0) > 300 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
-                                  "bg-green-100 text-green-700 border border-green-200"
-                                )}>
-                                  <span className="px-1">{Math.floor((item.menuItem?.prep_seconds || 0) / 60)}</span>
-                                </div>
-                                <span className={cn(
-                                  "font-medium text-[10px]",
-                                  (item.menuItem?.prep_seconds || 0) > 600 ? "text-red-600" :
-                                  (item.menuItem?.prep_seconds || 0) > 300 ? "text-amber-600" : 
-                                  "text-green-600"
-                                )}>
-                                  min cook time
-                                </span>
+                                {/* Calculate prep time minutes - add 1 if there are remaining seconds */}
+                                {(() => {
+                                  const totalSeconds = item.menuItem?.prep_seconds || 0;
+                                  const minutes = Math.floor(totalSeconds / 60);
+                                  const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
+                                  return (
+                                    <>
+                                      <div className={cn(
+                                        "h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] font-medium mr-1",
+                                        totalSeconds > 600 ? "bg-red-100 text-red-700 border border-red-200" :
+                                        totalSeconds > 300 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
+                                        "bg-green-100 text-green-700 border border-green-200"
+                                      )}>
+                                        <span className="px-1">{displayMinutes}</span>
+                                      </div>
+                                      <span className={cn(
+                                        "font-medium text-[10px]",
+                                        totalSeconds > 600 ? "text-red-600" :
+                                        totalSeconds > 300 ? "text-amber-600" : 
+                                        "text-green-600"
+                                      )}>
+                                        min cook time
+                                      </span>
+                                    </>
+                                  )
+                                })()}
                               </div>
                               
                               {/* For cooking items, show elapsed cooking time */}
                               {item.status === "COOKING" && item.firedAt && (
                                 <>
                                   <span className="ml-2 bg-amber-100 text-amber-700 px-1 py-0.5 rounded text-[10px] font-medium">
-                                    {Math.floor((Date.now() - new Date(item.firedAt).getTime()) / 60000)} min elapsed
+                                    {Math.floor((currentTime - new Date(item.firedAt).getTime()) / 60000)} min elapsed
                                   </span>
                                   
                                   {/* Progress bar */}
@@ -374,12 +402,12 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                                       <div 
                                         className={cn(
                                           "h-full rounded-full",
-                                          ((Date.now() - new Date(item.firedAt).getTime()) / 1000) > item.menuItem.prep_seconds
+                                          ((currentTime - new Date(item.firedAt).getTime()) / 1000) > item.menuItem.prep_seconds
                                             ? "bg-red-500" // Overdue
                                             : "bg-green-500" // On time
                                         )}
                                         style={{
-                                          width: `${Math.min(100, ((Date.now() - new Date(item.firedAt).getTime()) / 1000 / item.menuItem.prep_seconds) * 100)}%`
+                                          width: `${Math.min(100, ((currentTime - new Date(item.firedAt).getTime()) / 1000 / item.menuItem.prep_seconds) * 100)}%`
                                         }}
                                       />
                                     </div>
