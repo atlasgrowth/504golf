@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { OrderStatusBadge } from "@/components/ui/order-status-badge";
-import { TimerBadge } from "@/components/ui/timer-badge";
+import { ElapsedClock } from "@/components/ui/ElapsedClock";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { OrderSummary, OrderWithItems } from "@shared/schema";
@@ -156,9 +156,8 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
                     <OrderStatusBadge status={getOrderStatus(order)} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <TimerBadge 
-                      minutes={order.timeElapsed} 
-                      isDelayed={order.isDelayed}
+                    <ElapsedClock 
+                      createdAt={order.createdAt}
                     />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -234,8 +233,8 @@ export default function ActiveOrdersTable({ orders, statusFilter }: ActiveOrders
               
               <div>
                 <div className="text-sm text-neutral-500">Time Elapsed</div>
-                <div className={`font-medium ${selectedOrder.isDelayed ? 'text-danger' : ''}`}>
-                  {selectedOrder.timeElapsed} minutes
+                <div className="font-medium">
+                  <ElapsedClock createdAt={selectedOrder.createdAt} />
                 </div>
               </div>
               
