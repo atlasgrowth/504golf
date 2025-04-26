@@ -22,6 +22,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { MenuItem, Category, getItemPriceCents, formatPriceAsDollars } from "../../types/menu";
 
 interface SimpleOrderDrawerProps {
   open: boolean;
@@ -66,22 +67,8 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
 
   // Menu data type
   type MenuDataType = Array<{
-    category: {
-      id: number;
-      name: string;
-      slug: string;
-    };
-    items: Array<{
-      id: string;
-      name: string;
-      description: string | null;
-      category: string;
-      price_cents: number;
-      station: string;
-      prep_seconds: number;
-      image_url: string | null;
-      active: boolean;
-    }>;
+    category: Category;
+    items: MenuItem[];
   }>;
   
   // Get menu data
@@ -100,35 +87,14 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
   // Extract categories and menu items from data
   const categories = menuData ? menuData.map(item => item.category) : [];
   const menuItems = menuData ? menuData.flatMap(category => category.items) : [];
-  
-  // Type definition for menu item
-  type MenuItem = {
-    id: string;
-    name: string;
-    description: string | null;
-    category: string;
-    price_cents?: number;
-    priceCents?: number;
-    station: string;
-    prep_seconds?: number;
-    prepSeconds?: number;
-    image_url?: string | null;
-    imageUrl?: string | null;
-    active: boolean;
-  };
 
   // Handle adding an item to the cart
   const handleAddToCart = (item: MenuItem, quantity: number) => {
     // Check if item already exists in cart
     const existingItemIndex = cart.findIndex(cartItem => cartItem.menuItemId === item.id);
     
-    // Ensure price_cents is a valid number
-    let priceCents = 0;
-    if (typeof item.priceCents === 'number' && !isNaN(item.priceCents)) {
-      priceCents = item.priceCents;
-    } else if (typeof item.price_cents === 'number' && !isNaN(item.price_cents)) {
-      priceCents = item.price_cents;
-    }
+    // Get price using our utility function
+    const priceCents = getItemPriceCents(item);
     
     if (existingItemIndex >= 0) {
       // Update quantity if item already exists
@@ -157,9 +123,6 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
     newCart.splice(index, 1);
     setCart(newCart);
   };
-  
-  // Calculate total price
-  const totalPrice = cart.reduce((sum, item) => sum + (item.priceCents * item.quantity) / 100, 0);
   
   // Handle order submission
   const submitOrder = async () => {
@@ -308,7 +271,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
                             <span className="font-medium">{item.quantity}x</span> {item.name}
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <span>${typeof item.priceCents === 'number' ? ((item.priceCents * item.quantity) / 100).toFixed(2) : '0.00'}</span>
+                            <span>${formatPriceAsDollars(item.priceCents * item.quantity)}</span>
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -324,7 +287,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
                     
                     <div className="flex justify-between font-bold text-lg mb-4 border-t border-primary/20 pt-2">
                       <span>Total:</span>
-                      <span>${totalPrice.toFixed(2)}</span>
+                      <span>${formatPriceAsDollars(cart.reduce((sum, item) => sum + (item.priceCents * item.quantity), 0))}</span>
                     </div>
                     
                     {/* Special Instructions */}
