@@ -68,8 +68,8 @@ export default function KitchenView() {
     inProgress: activeOrders.filter((o: OrderSummary) => o.status === 'COOKING').length || 0,
     // Orders that are READY to be served
     readyToServe: activeOrders.filter((o: OrderSummary) => o.status === 'READY').length || 0,
-    // We don't show served in kitchen view
-    served: 0,
+    // Completed orders (SERVED, DINING, PAID)
+    served: orders?.filter((o: OrderSummary) => ['SERVED', 'DINING', 'PAID'].includes(o.status)).length || 0,
     // Orders that are flagged as delayed (regardless of status)
     delayed: activeOrders.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
@@ -136,6 +136,15 @@ export default function KitchenView() {
                   )}></div>
                   <span className="mr-1 text-gray-700">Ready:</span>
                   <span className="font-semibold text-green-600">{countByStatus.readyToServe}</span>
+                </div>
+                
+                <div className="flex items-center mr-4 mb-1 sm:mb-0">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full mr-2",
+                    countByStatus.served > 0 ? "bg-purple-500" : "bg-gray-400"
+                  )}></div>
+                  <span className="mr-1 text-gray-700">Served:</span>
+                  <span className="font-semibold text-purple-600">{countByStatus.served}</span>
                 </div>
                 
                 <div className="flex items-center">

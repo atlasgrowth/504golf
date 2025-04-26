@@ -60,6 +60,17 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
       color: "green"
     },
     { 
+      id: "served", 
+      label: "Served", 
+      count: counts.served,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+        </svg>
+      ),
+      color: "purple"
+    },
+    { 
       id: "delayed", 
       label: "Delayed", 
       count: counts.delayed,
@@ -92,6 +103,11 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
         text: isActive ? "text-amber-600" : "text-neutral-600 hover:text-amber-600",
         border: isActive ? "border-amber-500" : "border-transparent hover:border-amber-200",
         bg: isActive ? "bg-amber-50" : "hover:bg-amber-50/50"
+      },
+      purple: {
+        text: isActive ? "text-purple-600" : "text-neutral-600 hover:text-purple-600",
+        border: isActive ? "border-purple-500" : "border-transparent hover:border-purple-200",
+        bg: isActive ? "bg-purple-50" : "hover:bg-purple-50/50"
       },
       red: {
         text: isActive ? "text-red-600" : "text-neutral-600 hover:text-red-600",
@@ -136,6 +152,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
                         ? tab.color === "red" ? "bg-red-500 text-white" :
                           tab.color === "amber" ? "bg-amber-500 text-white" :
                           tab.color === "green" ? "bg-green-500 text-white" :
+                          tab.color === "purple" ? "bg-purple-500 text-white" :
                           "bg-blue-500 text-white"
                         : "bg-gray-200 text-gray-800"
                     )}>
@@ -164,6 +181,18 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
           <div className="flex items-center">
             <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
             <span>Ready</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-gray-500 mr-1"></div>
+            <span>Served</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
+            <span>Dining</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-teal-500 mr-1"></div>
+            <span>Paid</span>
           </div>
           <div className="flex items-center">
             <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
