@@ -359,13 +359,13 @@ function OrderCard({
             
             {/* Add estimated ready time for orders being prepared */}
             {(order.status === 'COOKING' || order.status === 'PENDING' || order.status === 'NEW') && (
-              <div className="mt-1 flex flex-col items-end">
-                <span className="text-xs text-neutral-500">Est. ready in:</span>
+              <div className="mt-1 flex flex-col items-end border border-amber-200 bg-amber-50 px-2 py-1 rounded-md">
+                <span className="text-xs text-amber-700 font-medium">Est. ready in:</span>
                 <EstimatedTimeDisplay 
                   estimatedCompletionTime={order.estimatedCompletionTime}
                   orderItems={orderDetails?.items}
                   showLabel={false}
-                  className="text-xs font-medium"
+                  className="text-sm font-bold text-amber-900"
                 />
               </div>
             )}
