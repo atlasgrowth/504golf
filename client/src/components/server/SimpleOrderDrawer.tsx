@@ -64,8 +64,8 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
     enabled: open && bayId === null,
   });
 
-  // Get menu data
-  const { data: menuData = [], isLoading: menuLoading } = useQuery<Array<{
+  // Menu data type
+  type MenuDataType = Array<{
     category: {
       id: number;
       name: string;
@@ -82,23 +82,47 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
       image_url: string | null;
       active: boolean;
     }>;
-  }>>({
+  }>;
+  
+  // Get menu data
+  const { data: menuData = [], isLoading: menuLoading } = useQuery<MenuDataType>({
     queryKey: ['/api/menu'],
-    enabled: open,
-    onSuccess: (data) => {
-      // Debug log to check data structure
-      console.log('Menu data loaded:', data);
-    }
+    enabled: open
   });
 
+  // Debug log when component renders with menu data
+  useEffect(() => {
+    if (menuData && menuData.length > 0) {
+      console.log('Menu data loaded:', menuData);
+    }
+  }, [menuData]);
+
   // Extract categories and menu items from data
-  const categories = menuData.map(item => item.category);
-  const menuItems = menuData.flatMap(category => category.items);
+  const categories = menuData ? menuData.map(item => item.category) : [];
+  const menuItems = menuData ? menuData.flatMap(category => category.items) : [];
   
+  // Type definition for menu item
+  type MenuItem = {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string;
+    price_cents: number;
+    station: string;
+    prep_seconds: number;
+    image_url: string | null;
+    active: boolean;
+  };
+
   // Handle adding an item to the cart
-  const handleAddToCart = (item: any, quantity: number) => {
+  const handleAddToCart = (item: MenuItem, quantity: number) => {
     // Check if item already exists in cart
     const existingItemIndex = cart.findIndex(cartItem => cartItem.menuItemId === item.id);
+    
+    // Ensure price_cents is a valid number
+    const priceCents = typeof item.price_cents === 'number' && !isNaN(item.price_cents) 
+      ? item.price_cents 
+      : 0;
     
     if (existingItemIndex >= 0) {
       // Update quantity if item already exists
@@ -111,7 +135,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
         menuItemId: item.id,
         quantity: quantity,
         name: item.name,
-        priceCents: item.price_cents
+        priceCents: priceCents
       }]);
     }
     

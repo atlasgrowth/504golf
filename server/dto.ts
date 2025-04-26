@@ -15,17 +15,38 @@ export interface MenuItemDTO {
 /**
  * Maps menu item database row to DTO with consistent naming
  */
-export const toMenuItemDTO = (row: any): MenuItemDTO => ({
-  id: row.id,
-  name: row.name,
-  description: row.description,
-  category: row.category,
-  priceCents: row.priceCents || row.price_cents || 0,
-  prepSeconds: row.prepSeconds || row.prep_seconds || 0,
-  station: row.station || '',
-  imageUrl: row.imageUrl || row.image_url,
-  active: typeof row.active === 'boolean' ? row.active : true
-});
+export const toMenuItemDTO = (row: any): MenuItemDTO => {
+  // Ensure numeric values for price and prep time
+  let priceCents = 0;
+  if (row.priceCents !== undefined) {
+    priceCents = Number(row.priceCents);
+  } else if (row.price_cents !== undefined) {
+    priceCents = Number(row.price_cents);
+  }
+  
+  let prepSeconds = 0;
+  if (row.prepSeconds !== undefined) {
+    prepSeconds = Number(row.prepSeconds);
+  } else if (row.prep_seconds !== undefined) {
+    prepSeconds = Number(row.prep_seconds);
+  }
+  
+  // Ensure NaN values are replaced with defaults
+  if (isNaN(priceCents)) priceCents = 0;
+  if (isNaN(prepSeconds)) prepSeconds = 0;
+  
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    category: row.category,
+    priceCents: priceCents,
+    prepSeconds: prepSeconds,
+    station: row.station || 'Kitchen',
+    imageUrl: row.imageUrl || row.image_url,
+    active: typeof row.active === 'boolean' ? row.active : true
+  };
+};
 
 export interface OrderDTO {
   id: string;
