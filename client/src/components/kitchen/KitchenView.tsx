@@ -15,24 +15,29 @@ export default function KitchenView() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState<string>("");
   
-  // Get all active orders and filter client-side
+  // Get all active orders and filter client-side with more frequent refreshing
   const { data: orders, isLoading: ordersLoading } = useQuery<OrderSummary[]>({
     queryKey: ['/api/orders'],
+    // Refresh every 15 seconds to ensure time elapsed is updated like server-side
+    refetchInterval: 15000,
+    // Don't refetch on window focus to avoid unnecessary API calls
+    refetchOnWindowFocus: false,
   });
   
-  // Update time every minute
+  // Update time every second for a smooth clock display
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(now.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
+        second: '2-digit',
         hour12: true
       }));
     };
     
     updateTime();
-    const interval = setInterval(updateTime, 60000);
+    const interval = setInterval(updateTime, 1000);
     
     return () => clearInterval(interval);
   }, []);

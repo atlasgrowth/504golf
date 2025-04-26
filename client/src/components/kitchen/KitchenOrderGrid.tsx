@@ -29,6 +29,24 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
     return () => clearInterval(timerInterval);
   }, []);
   
+  // Refresh order data every 15 seconds to match server-side behavior
+  useEffect(() => {
+    const dataRefreshInterval = setInterval(() => {
+      // Refetch orders data
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      
+      // Also refresh any detailed order data
+      orders.forEach(order => {
+        queryClient.invalidateQueries({ queryKey: ['/api/order', order.id] });
+      });
+      
+      console.log('Refreshed kitchen order data');
+    }, 15000); // Refresh every 15 seconds
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(dataRefreshInterval);
+  }, [orders, queryClient]);
+  
   // Helper function to determine order card style
   const getOrderCardStyle = (order: OrderSummary) => {
     // First check status
@@ -257,7 +275,6 @@ function OrderCard({
               </svg>
               Placed&nbsp;
               {new Date(order.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-              &nbsp;—&nbsp;{order.timeElapsed} min ago
             </p>
           </div>
           <div className="flex flex-col items-end">
