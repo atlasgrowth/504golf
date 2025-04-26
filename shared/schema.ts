@@ -99,7 +99,7 @@ export const ItemStatus = z.enum(['QUEUED', 'COOKING', 'READY']);
 export type ItemStatus = z.infer<typeof ItemStatus>;
 
 // Order status enum using zod
-export const OrderStatus = z.enum(['PENDING', 'COOKING', 'READY', 'SERVED', 'DELAYED']);
+export const OrderStatus = z.enum(['PENDING', 'NEW', 'COOKING', 'READY', 'SERVED', 'DINING', 'PAID', 'CANCELLED', 'DELAYED']);
 export type OrderStatus = z.infer<typeof OrderStatus>;
 
 // Order items table
@@ -118,6 +118,7 @@ export const orderItems = pgTable("order_items", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }), // When the item was delivered to customer
   completed: boolean("completed").notNull().default(false), // Legacy field - true if delivered/completed
   notes: text("notes"), // Special preparation instructions
+  drop_at: timestamp("drop_at", { withTimezone: true }), // When to start cooking this item
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({

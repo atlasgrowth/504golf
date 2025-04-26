@@ -1,4 +1,4 @@
-import { OrderItemStatus, OrderStatus } from "../shared/schema";
+import { ItemStatus, OrderStatus } from "../shared/schema";
 
 export interface MenuItemDTO {
   id: string;
@@ -82,7 +82,7 @@ export interface OrderItemDTO {
   orderId: string;
   menuItemId: string;
   quantity: number;
-  status: OrderItemStatus | null;
+  status: ItemStatus | null;
   station: string | null;
   completed: boolean;
   cookSeconds: number | null;
@@ -99,12 +99,12 @@ export interface OrderItemDTO {
  * Maps order item database row to DTO with consistent naming
  */
 export const toOrderItemDTO = (row: any): OrderItemDTO => {
-  // Validate the status against OrderItemStatus enum
+  // Validate the status against ItemStatus enum
   let status = row.status;
   if (status && typeof status === 'string') {
-    // If it's a string but not a valid OrderItemStatus, set to NEW (default)
-    if (!Object.values(OrderItemStatus).includes(status as OrderItemStatus)) {
-      status = OrderItemStatus.NEW;
+    // If it's a string but not a valid ItemStatus, set to NEW (default)
+    if (!Object.values(ItemStatus).includes(status as ItemStatus)) {
+      status = ItemStatus.NEW;
     }
   } else {
     status = null;
