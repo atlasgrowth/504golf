@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useOrder } from "@/contexts/OrderContext";
 import { type Category, type MenuItem } from "@shared/schema";
-import { PlusCircle, Clock, ChefHat } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import MenuCard from "./MenuCard";
 
 interface MenuItemsProps {
   menuData: Array<{
