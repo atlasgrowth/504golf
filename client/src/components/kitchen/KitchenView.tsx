@@ -52,24 +52,34 @@ export default function KitchenView() {
     }
   }, [lastMessage, queryClient, orders, toast]);
   
-  // Count orders by status - note that delayed is a cross-cutting concern (orders can be delayed AND in a status)
+  // Get only active orders (not served or cancelled)
+  const activeOrders = orders?.filter(
+    (o: OrderSummary) => o.status !== 'SERVED' && o.status !== 'CANCELLED'
+  ) || [];
+  
+  // Count orders by status
   const countByStatus = {
-    all: orders?.length || 0,
-    pending: orders?.filter((o: OrderSummary) => o.status === 'PENDING' || o.status === 'NEW').length || 0,
-    preparing: orders?.filter((o: OrderSummary) => o.status === 'COOKING').length || 0,
-    ready: orders?.filter((o: OrderSummary) => o.status === 'READY').length || 0,
-    served: orders?.filter((o: OrderSummary) => o.status === 'SERVED').length || 0,
-    delayed: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
+    // All active orders
+    all: activeOrders.length || 0,
+    // Orders that are NEW or PENDING (not started yet)
+    pending: activeOrders.filter((o: OrderSummary) => o.status === 'PENDING' || o.status === 'NEW').length || 0,
+    // Orders in COOKING status
+    inProgress: activeOrders.filter((o: OrderSummary) => o.status === 'COOKING').length || 0,
+    // Orders that are READY to be served
+    readyToServe: activeOrders.filter((o: OrderSummary) => o.status === 'READY').length || 0,
+    // We don't show served in kitchen view
+    served: 0,
+    // Orders that are flagged as delayed (regardless of status)
+    delayed: activeOrders.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
   
   // Filter orders based on active tab
   const filteredOrders = orders?.filter((order: OrderSummary) => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'delayed') return order.isDelayed;
-    if (activeTab === 'pending') return order.status === 'PENDING' || order.status === 'NEW';
-    if (activeTab === 'preparing') return order.status === 'COOKING';
-    if (activeTab === 'ready') return order.status === 'READY';
-    if (activeTab === 'served') return order.status === 'SERVED';
+    if (activeTab === 'all') return order.status !== 'SERVED' && order.status !== 'CANCELLED';
+    if (activeTab === 'delayed') return order.isDelayed && order.status !== 'SERVED' && order.status !== 'CANCELLED';
+    if (activeTab === 'pending') return (order.status === 'PENDING' || order.status === 'NEW');
+    if (activeTab === 'inProgress') return order.status === 'COOKING';
+    if (activeTab === 'readyToServe') return order.status === 'READY';
     return false;
   }) || [];
   
@@ -101,7 +111,14 @@ export default function KitchenView() {
       <OrderPriorityTabs 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        counts={countByStatus}
+        counts={{
+          all: countByStatus.all,
+          pending: countByStatus.pending,
+          inProgress: countByStatus.inProgress,
+          readyToServe: countByStatus.readyToServe,
+          served: countByStatus.served,
+          delayed: countByStatus.delayed
+        }}
       />
       
       {/* Kitchen Order Grid */}
