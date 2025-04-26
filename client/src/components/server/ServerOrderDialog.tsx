@@ -290,7 +290,7 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                         })
                         .map((category) => (
                           <button
-                            key={category.id}
+                            key={`category-${category.id}`}
                             className={`px-4 py-2 rounded-md transition-all duration-200 ${
                               selectedTab === category.slug 
                                 ? "bg-primary text-white font-medium" 
