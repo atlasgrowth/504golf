@@ -52,12 +52,13 @@ export default function KitchenView() {
     }
   }, [lastMessage, queryClient, orders, toast]);
   
-  // Count orders by status
+  // Count orders by status - note that delayed is a cross-cutting concern (orders can be delayed AND in a status)
   const countByStatus = {
     all: orders?.length || 0,
     pending: orders?.filter((o: OrderSummary) => o.status === 'PENDING' || o.status === 'NEW').length || 0,
     preparing: orders?.filter((o: OrderSummary) => o.status === 'COOKING').length || 0,
     ready: orders?.filter((o: OrderSummary) => o.status === 'READY').length || 0,
+    served: orders?.filter((o: OrderSummary) => o.status === 'SERVED').length || 0,
     delayed: orders?.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
   

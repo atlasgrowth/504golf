@@ -55,7 +55,7 @@ export default function OrderSummary({ bayNumber }: OrderSummaryProps) {
       
       toast({
         title: "Order Placed",
-        description: `Your order #${newOrder.orderNumber || 'XXX'} has been placed successfully!`,
+        description: `Your order #${newOrder.id || 'unknown'} has been placed successfully!`,
       });
     } catch (error) {
       console.error("Failed to place order:", error);
