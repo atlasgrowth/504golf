@@ -136,7 +136,7 @@ export default function KitchenView() {
                   <span className="font-semibold text-green-600">{countByStatus.readyToServe}</span>
                 </div>
                 
-                <div className="flex items-center animate-pulse">
+                <div className="flex items-center">
                   <div className={cn(
                     "w-2 h-2 rounded-full mr-2",
                     countByStatus.delayed > 0 ? "bg-red-500" : "bg-gray-400"

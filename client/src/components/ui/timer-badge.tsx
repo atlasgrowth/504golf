@@ -47,14 +47,11 @@ export function TimerPill({ minutes, isDelayed = false, className }: TimerBadgeP
   // Determine styles based on time and delay status
   let bgColor = 'bg-gray-200';
   let textColor = 'text-gray-700';
-  let animationClass = '';
-  let iconClass = '';
+  let iconClass = 'inline-block mr-1';
   
   if (isDelayed) {
     bgColor = 'bg-red-500';
     textColor = 'text-white';
-    animationClass = 'animate-pulse';
-    iconClass = 'inline-block mr-1';
   } else if (minutes > 20) {
     bgColor = 'bg-red-500';
     textColor = 'text-white';
@@ -86,7 +83,6 @@ export function TimerPill({ minutes, isDelayed = false, className }: TimerBadgeP
       "text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center",
       bgColor,
       textColor,
-      animationClass,
       className
     )}>
       {isDelayed && (

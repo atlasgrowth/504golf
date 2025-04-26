@@ -17,7 +17,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   // Helper function to determine order card style
   const getOrderCardStyle = (order: OrderSummary) => {
     if (order.isDelayed) {
-      return "bg-red-50 border border-red-200 shadow-md animate-pulse";
+      return "bg-red-50 border border-red-200 shadow-md";
     } else if (order.timeElapsed > 15) {
       return "bg-amber-50 border border-amber-200 shadow-md";
     } else {
@@ -168,7 +168,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         "w-2 h-2 rounded-full mr-2",
                         order.status === "READY" ? "bg-green-500" : 
                         order.status === "COOKING" ? "bg-amber-500" : 
-                        order.isDelayed ? "bg-red-500 animate-ping" : "bg-blue-500"
+                        order.isDelayed ? "bg-red-500" : "bg-blue-500"
                       )}></div>
                       <span className={cn(
                         "text-sm font-medium uppercase tracking-wider",
@@ -179,7 +179,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                         {order.status}
                       </span>
                       {order.isDelayed && (
-                        <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full animate-pulse">
+                        <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full">
                           DELAYED
                         </span>
                       )}
@@ -205,7 +205,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                     <span className={cn(
                       "mt-1 text-xs font-medium px-2 py-0.5 rounded-full",
                       order.isDelayed 
-                        ? "bg-red-100 text-red-800 animate-pulse" 
+                        ? "bg-red-100 text-red-800" 
                         : order.timeElapsed > 15 
                           ? "bg-amber-100 text-amber-800" 
                           : "bg-green-100 text-green-800"
@@ -228,7 +228,22 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                       Error loading items: {error.message}
                     </div>
                   ) : orderDetails?.items && orderDetails.items.length > 0 ? (
-                    orderDetails.items.map((item) => (
+                    // Sort items by cook time (longer cook times first) and then by status
+                    [...orderDetails.items]
+                      .sort((a, b) => {
+                        // First sort by status priority: NEW > COOKING > READY
+                        const statusPriority = { "NEW": 0, "PENDING": 1, "COOKING": 2, "READY": 3 };
+                        const statusDiff = (statusPriority[a.status as keyof typeof statusPriority] || 0) - 
+                                           (statusPriority[b.status as keyof typeof statusPriority] || 0);
+                        
+                        if (statusDiff !== 0) return statusDiff;
+                        
+                        // Then sort by cook time (descending)
+                        const aCookTime = a.menuItem?.prep_seconds || 0;
+                        const bCookTime = b.menuItem?.prep_seconds || 0;
+                        return bCookTime - aCookTime;
+                      })
+                      .map((item) => (
                       <div 
                         key={item.id} 
                         className={cn(
@@ -273,14 +288,33 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                             )}>
                               {item.quantity}x {item.menuItem?.name || 'Unknown Item'}
                             </span>
-                            <span className="text-xs text-neutral-500">
-                              {item.menuItem?.station || item.station || 'Kitchen'}
+                            <div className="flex items-center text-xs">
+                              <span className="text-neutral-500">
+                                {item.menuItem?.station || item.station || 'Kitchen'}
+                              </span>
+                              
+                              {/* Cook time indicator */}
+                              <div className="flex items-center ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                </svg>
+                                <span className={cn(
+                                  "ml-1 font-medium",
+                                  (item.menuItem?.prep_seconds || 0) > 600 ? "text-red-600" :
+                                  (item.menuItem?.prep_seconds || 0) > 300 ? "text-amber-600" : 
+                                  "text-green-600"
+                                )}>
+                                  {Math.floor((item.menuItem?.prep_seconds || 0) / 60)}m cook
+                                </span>
+                              </div>
+                              
+                              {/* For cooking items, show elapsed cooking time */}
                               {item.status === "COOKING" && item.firedAt && (
-                                <span className="ml-2 text-amber-600">
-                                  Cooking {Math.floor((Date.now() - new Date(item.firedAt).getTime()) / 60000)} min
+                                <span className="ml-2 bg-amber-100 text-amber-700 px-1 py-0.5 rounded text-[10px] font-medium">
+                                  {Math.floor((Date.now() - new Date(item.firedAt).getTime()) / 60000)} min elapsed
                                 </span>
                               )}
-                            </span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex flex-col items-end justify-center ml-2">
