@@ -14,9 +14,7 @@ export type WebSocketMessageType =
   | "bay_updated"
   | "item_cooking"
   | "item_ready"
-  | "item_delivered"
-  | "ITEM_DROP_ALERT"
-  | "ORDER_DELAYED";
+  | "item_delivered";
 
 /**
  * Base WebSocket message interface
@@ -143,33 +141,5 @@ export interface ItemDeliveredMessage extends WebSocketMessage {
     bayId: number;
     bayNumber: number;
     status: string;
-  };
-}
-
-/**
- * Item drop alert message - sent when an item needs to be dropped (started cooking) soon
- */
-export interface ItemDropAlertMessage extends WebSocketMessage {
-  type: "ITEM_DROP_ALERT";
-  data: {
-    orderId: string;
-    itemId: string;
-    secondsRemaining: number;
-    station: string;
-    bayNumber: number;
-  };
-}
-
-/**
- * Order delayed message - sent when an order is taking longer than expected
- */
-export interface OrderDelayedMessage extends WebSocketMessage {
-  type: "ORDER_DELAYED";
-  data: {
-    orderId: string;
-    secondsLate: number;
-    bayId: number;
-    bayNumber: number;
-    expectedReadyAt: string;
   };
 }

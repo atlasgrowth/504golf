@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
 import { 
-  insertOrderSchema, type Cart, ItemStatus, OrderStatus
+  insertOrderSchema, type Cart, OrderItemStatus, OrderStatus
 } from "@shared/schema";
 import {
   WebSocketMessage, WebSocketMessageType, 
@@ -85,9 +85,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
               
               // Group items by status
-              const newItems = items.filter(item => item.status === ItemStatus.NEW);
-              const cookingItems = items.filter(item => item.status === ItemStatus.COOKING);
-              const readyItems = items.filter(item => item.status === ItemStatus.READY);
+              const newItems = items.filter(item => item.status === OrderItemStatus.NEW);
+              const cookingItems = items.filter(item => item.status === OrderItemStatus.COOKING);
+              const readyItems = items.filter(item => item.status === OrderItemStatus.READY);
               
               // Send the station items to the kitchen client
               const stationMessage: WebSocketMessage = {
@@ -507,16 +507,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Legacy endpoint - Update order item completion status
-  const updateItemStatusSchema = z.object({
+  const updateOrderItemStatusSchema = z.object({
     completed: z.boolean(),
   });
   
   app.put('/api/orderitem/:id/status', async (req: Request, res: Response) => {
     try {
       const orderItemId = req.params.id;
-      const { completed } = updateItemStatusSchema.parse(req.body);
+      const { completed } = updateOrderItemStatusSchema.parse(req.body);
       
-      const updatedOrderItem = await storage.updateItemStatus(orderItemId, completed);
+      const updatedOrderItem = await storage.updateOrderItemStatus(orderItemId, completed);
       
       if (!updatedOrderItem) {
         return res.status(404).json({ message: 'Order item not found' });
@@ -611,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           readyAt: updatedItem.readyAt!.toISOString(),
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: ItemStatus.COOKING
+          status: OrderItemStatus.COOKING
         }
       };
       
@@ -667,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           elapsedSeconds,
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: ItemStatus.READY
+          status: OrderItemStatus.READY
         }
       };
       
@@ -723,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalCookTime,
           bayId: order.bayId,
           bayNumber: bay?.number || order.bayId,
-          status: ItemStatus.DELIVERED
+          status: OrderItemStatus.DELIVERED
         }
       };
       
@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if all items for this order are delivered
       const orderItems = await storage.getOrderItems(order.id);
-      const allItemsDelivered = orderItems.every(item => item.status === ItemStatus.DELIVERED || item.completed);
+      const allItemsDelivered = orderItems.every(item => item.status === OrderItemStatus.DELIVERED || item.completed);
       
       // If all items delivered, update order status to SERVED
       if (allItemsDelivered && order.status !== OrderStatus.SERVED) {

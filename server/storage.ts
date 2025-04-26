@@ -6,7 +6,7 @@ import {
   orders, type Order, type InsertOrder, 
   orderItems, type OrderItem, type InsertOrderItem,
   type OrderWithItems, type OrderSummary, type Cart,
-  ItemStatus, OrderStatus, type ItemStatus as ItemStatusType
+  OrderItemStatus, OrderStatus
 } from "@shared/schema";
 
 export interface IStorage {
@@ -49,7 +49,7 @@ export interface IStorage {
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
   
   // Legacy method (to be deprecated) - updates completed flag
-  updateItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined>;
+  updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined>;
   
   // Methods to support enhanced status tracking
   markFired(id: string): Promise<OrderItem | undefined>;
@@ -443,13 +443,13 @@ export class DatabaseStorage implements IStorage {
     return newOrderItem;
   }
 
-  async updateItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined> {
+  async updateOrderItemStatus(id: string, completed: boolean): Promise<OrderItem | undefined> {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({ 
         completed,
         // Also update status based on completed flag for backward compatibility
-        status: completed ? ItemStatus.DELIVERED : ItemStatus.NEW,
+        status: completed ? OrderItemStatus.DELIVERED : OrderItemStatus.NEW,
         // Set deliveredAt timestamp if completed=true
         deliveredAt: completed ? new Date() : null
       })
@@ -483,7 +483,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: ItemStatus.COOKING,
+        status: OrderItemStatus.COOKING,
         firedAt: now,
         readyAt: readyAt,
         station: station, // Set the station from menu item if not already set
@@ -535,7 +535,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: ItemStatus.READY,
+        status: OrderItemStatus.READY,
         readyAt: now, // Update the actual ready time
         station: station // Ensure station is set
       })
@@ -560,7 +560,7 @@ export class DatabaseStorage implements IStorage {
     if (items.length === 0) return;
     
     // If any item is cooking, the order is cooking
-    const hasCookingItems = items.some(item => item.status === ItemStatus.COOKING);
+    const hasCookingItems = items.some(item => item.status === OrderItemStatus.COOKING);
     if (hasCookingItems) {
       await this.updateOrderStatus(orderId, OrderStatus.COOKING);
       return;
@@ -568,10 +568,10 @@ export class DatabaseStorage implements IStorage {
     
     // If all items are READY or DELIVERED, and at least one is READY, order is READY
     const allReadyOrDelivered = items.every(item => 
-      item.status === ItemStatus.READY || 
-      item.status === ItemStatus.DELIVERED
+      item.status === OrderItemStatus.READY || 
+      item.status === OrderItemStatus.DELIVERED
     );
-    const hasReadyItems = items.some(item => item.status === ItemStatus.READY);
+    const hasReadyItems = items.some(item => item.status === OrderItemStatus.READY);
     
     if (allReadyOrDelivered && hasReadyItems) {
       await this.updateOrderStatus(orderId, OrderStatus.READY);
@@ -579,7 +579,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // If all items are DELIVERED, order is SERVED
-    const allDelivered = items.every(item => item.status === ItemStatus.DELIVERED);
+    const allDelivered = items.every(item => item.status === OrderItemStatus.DELIVERED);
     if (allDelivered) {
       await this.updateOrderStatus(orderId, OrderStatus.SERVED);
       return;
@@ -605,7 +605,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedOrderItem] = await db
       .update(orderItems)
       .set({
-        status: ItemStatus.DELIVERED,
+        status: OrderItemStatus.DELIVERED,
         deliveredAt: now,
         station: station, // Ensure station is set
         completed: true // Maintain backward compatibility
