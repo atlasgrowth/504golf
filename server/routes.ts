@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add estimatedCompletionTime and required fields to order data
       const orderWithEstimatedTime = {
         ...order,
-        status: OrderStatus.NEW,
+        status: OrderStatus.PENDING,
         estimatedCompletionTime
       };
       
@@ -377,6 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update order status
   const updateOrderStatusSchema = z.object({
     status: z.enum([
+      OrderStatus.PENDING,
       OrderStatus.NEW, 
       OrderStatus.COOKING, 
       OrderStatus.READY, 
