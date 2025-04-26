@@ -372,15 +372,20 @@ function OrderCard({
                   item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id &&
-                    "border-2 border-blue-500 shadow-md"
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id &&
+                    "border-2 border-blue-500 shadow-md",
+                  // Add pulsing effect when an item is done cooking but not yet marked ready
+                  item.status === "COOKING" && 
+                    item.firedAt && 
+                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prepSeconds || 0) &&
+                    "border-2 border-green-500 shadow-md animate-pulse"
                 )}
               >
                 {/* Next Up Badge */}
                 {item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id && (
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id && (
                       <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
                         NEXT UP
                       </div>
@@ -460,8 +465,46 @@ function OrderCard({
                     {/* Show timing info */}
                     {item.firedAt && (
                       <div className="mt-1 text-[10px] text-neutral-500">
-                        {item.status === "READY" ? "Ready at: " : "Fired at: "}
-                        {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                        {item.status === "READY" ? (
+                          <>Ready at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
+                        ) : item.status === "COOKING" ? (
+                          <>
+                            {(() => {
+                              // Calculate time elapsed since firing
+                              const totalCookSeconds = item.menuItem?.prepSeconds || 0;
+                              const firedTime = new Date(item.firedAt).getTime();
+                              const currentTime = new Date().getTime();
+                              const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
+                              
+                              // Calculate remaining time
+                              const remainingSeconds = Math.max(0, totalCookSeconds - elapsedSeconds);
+                              const minutes = Math.floor(remainingSeconds / 60);
+                              const seconds = remainingSeconds % 60;
+                              
+                              // Format display
+                              if (remainingSeconds <= 0) {
+                                return (
+                                  <span className="font-semibold text-green-600">
+                                    READY TO CHECK
+                                  </span>
+                                );
+                              } else {
+                                return (
+                                  <span className={cn(
+                                    "font-medium",
+                                    remainingSeconds < 30 ? "text-green-600" : 
+                                    remainingSeconds < 60 ? "text-amber-600" : 
+                                    "text-neutral-600"
+                                  )}>
+                                    {minutes}:{seconds.toString().padStart(2, '0')} remaining
+                                  </span>
+                                );
+                              }
+                            })()}
+                          </>
+                        ) : (
+                          <>Fired at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
+                        )}
                       </div>
                     )}
                   </div>
