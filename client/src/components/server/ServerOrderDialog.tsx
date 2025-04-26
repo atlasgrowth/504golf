@@ -266,32 +266,41 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="grid grid-flow-col auto-cols-max overflow-x-auto pb-3 gap-0 border-b">
+                    <div className="flex flex-wrap gap-1 pb-3 border-b">
                       <button 
                         key="all-items"
-                        className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
+                        className={`px-4 py-2 rounded-md transition-all duration-200 ${
                           selectedTab === "all" 
-                            ? "border-primary text-primary font-medium" 
-                            : "border-transparent text-neutral-700 hover:text-neutral-900"
+                            ? "bg-primary text-white font-medium" 
+                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                         }`}
                         onClick={() => setSelectedTab("all")}
                       >
                         All Items
                       </button>
                       
-                      {categories.map((category) => (
-                        <button
-                          key={category.id}
-                          className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
-                            selectedTab === category.slug 
-                              ? "border-primary text-primary font-medium" 
-                              : "border-transparent text-neutral-700 hover:text-neutral-900"
-                          }`}
-                          onClick={() => setSelectedTab(category.slug)}
-                        >
-                          {category.name}
-                        </button>
-                      ))}
+                      {/* Sort categories to put main food categories before desserts */}
+                      {[...categories]
+                        .sort((a, b) => {
+                          // Put desserts at the end
+                          if (a.name.toLowerCase().includes('dessert')) return 1;
+                          if (b.name.toLowerCase().includes('dessert')) return -1;
+                          // Sort alphabetically
+                          return a.name.localeCompare(b.name);
+                        })
+                        .map((category) => (
+                          <button
+                            key={category.id}
+                            className={`px-4 py-2 rounded-md transition-all duration-200 ${
+                              selectedTab === category.slug 
+                                ? "bg-primary text-white font-medium" 
+                                : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                            }`}
+                            onClick={() => setSelectedTab(category.slug)}
+                          >
+                            {category.name}
+                          </button>
+                        ))}
                     </div>
                   </div>
                 )}
