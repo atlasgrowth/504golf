@@ -107,10 +107,13 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
     name: string;
     description: string | null;
     category: string;
-    price_cents: number;
+    price_cents?: number;
+    priceCents?: number;
     station: string;
-    prep_seconds: number;
-    image_url: string | null;
+    prep_seconds?: number;
+    prepSeconds?: number;
+    image_url?: string | null;
+    imageUrl?: string | null;
     active: boolean;
   };
 
@@ -120,9 +123,12 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
     const existingItemIndex = cart.findIndex(cartItem => cartItem.menuItemId === item.id);
     
     // Ensure price_cents is a valid number
-    const priceCents = typeof item.price_cents === 'number' && !isNaN(item.price_cents) 
-      ? item.price_cents 
-      : 0;
+    let priceCents = 0;
+    if (typeof item.priceCents === 'number' && !isNaN(item.priceCents)) {
+      priceCents = item.priceCents;
+    } else if (typeof item.price_cents === 'number' && !isNaN(item.price_cents)) {
+      priceCents = item.price_cents;
+    }
     
     if (existingItemIndex >= 0) {
       // Update quantity if item already exists

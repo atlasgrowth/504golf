@@ -2,25 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, ChefHat, Utensils, Pizza, Coffee } from "lucide-react";
-
-// Define menu item type
-interface MenuItem {
-  id: string;
-  name: string;
-  category: string;
-  price_cents: number;
-  station: string;
-  prep_seconds: number;
-  description: string | null;
-  image_url: string | null;
-  active: boolean;
-}
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-}
+import { MenuItem, Category, getItemPriceCents, getItemPrepSeconds, formatPriceAsDollars, formatSecondsAsMinutes } from "../../types/menu";
 
 interface MenuGridProps {
   categories: Category[];
@@ -95,7 +77,7 @@ export default function MenuGrid({ categories, menuItems, onSelectItem }: MenuGr
                 <div className="text-xs text-muted-foreground">
                   <div className="flex items-center">
                     <Clock size={12} className="mr-1" />
-                    <span>{typeof item.prep_seconds === 'number' ? Math.ceil(item.prep_seconds / 60) : 0} min</span>
+                    <span>{formatSecondsAsMinutes(getItemPrepSeconds(item))}</span>
                   </div>
                   <div className="flex items-center">
                     <ChefHat size={12} className="mr-1" />
@@ -104,7 +86,7 @@ export default function MenuGrid({ categories, menuItems, onSelectItem }: MenuGr
                 </div>
                 
                 <div className="text-primary font-semibold">
-                  ${typeof item.price_cents === 'number' ? (item.price_cents / 100).toFixed(2) : '0.00'}
+                  ${formatPriceAsDollars(getItemPriceCents(item))}
                 </div>
               </div>
             </CardContent>
