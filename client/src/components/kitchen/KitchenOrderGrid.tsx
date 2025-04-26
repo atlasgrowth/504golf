@@ -163,25 +163,62 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   };
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {orders.length === 0 ? (
-        <div className="col-span-3 p-8 text-center text-neutral-500 bg-white rounded-md shadow-md">
-          No orders in this category
-        </div>
-      ) : (
-        orders.map((order) => (
-          <OrderCard 
-            key={order.id}
-            order={order}
-            getOrderCardStyle={getOrderCardStyle}
-            getTimeStatusText={getTimeStatusText}
-            getTimeStatusColor={getTimeStatusColor}
-            toggleItemCompletion={toggleItemCompletion}
-            markOrderAsReady={markOrderAsReady}
-            currentTime={currentTime}
-          />
-        ))
-      )}
+    <div className="relative">
+      {/* Left scroll button */}
+      <button 
+        className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={() => {
+          const container = document.getElementById('orders-scroll-container');
+          if (container) {
+            container.scrollBy({ left: -300, behavior: 'smooth' });
+          }
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      {/* Right scroll button */}
+      <button 
+        className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={() => {
+          const container = document.getElementById('orders-scroll-container');
+          if (container) {
+            container.scrollBy({ left: 300, behavior: 'smooth' });
+          }
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      
+      <div 
+        id="orders-scroll-container"
+        className="flex overflow-x-auto pb-4 pt-2 px-10 gap-4 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        {orders.length === 0 ? (
+          <div className="flex-shrink-0 min-w-full p-8 text-center text-neutral-500 bg-white rounded-md shadow-md">
+            No orders in this category
+          </div>
+        ) : (
+          orders.map((order) => (
+            <div key={order.id} className="flex-shrink-0 w-80 snap-start">
+              <OrderCard 
+                order={order}
+                getOrderCardStyle={getOrderCardStyle}
+                getTimeStatusText={getTimeStatusText}
+                getTimeStatusColor={getTimeStatusColor}
+                toggleItemCompletion={toggleItemCompletion}
+                markOrderAsReady={markOrderAsReady}
+                currentTime={currentTime}
+              />
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
