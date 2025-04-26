@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TimerPill } from "@/components/ui/timer-badge";
 import { TimerDisplay } from "@/components/ui/timer-display";
+import { EstimatedTimeDisplay } from "@/components/ui/estimated-time-display";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
