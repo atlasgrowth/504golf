@@ -184,7 +184,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
               {orders
                 .sort((a, b) => {
                   // Define order priority
-                  const statusPriority = {
+                  const statusPriority: Record<string, number> = {
                     "COOKING": 1,
                     "NEW": 2,
                     "READY": 3,
@@ -194,7 +194,8 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                     "CANCELLED": 7
                   };
                   
-                  return (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
+                  return (statusPriority[a.status as keyof typeof statusPriority] || 99) - 
+                         (statusPriority[b.status as keyof typeof statusPriority] || 99);
                 })
                 .map((order) => (
                 <div key={order.id} className="flex-shrink-0 w-[350px] mr-4">
@@ -338,7 +339,7 @@ function OrderCard({
                 <div className="flex flex-wrap items-center gap-1.5">
                   {orderDetails.items
                     .filter(i => i.status === "NEW" || i.status === "COOKING")
-                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))
+                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))
                     .slice(0, 3)
                     .map((item, idx) => (
                       <div key={item.id} className={cn(
@@ -348,7 +349,7 @@ function OrderCard({
                         "bg-gray-100 text-gray-700"
                       )}>
                         {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({(() => {
-                          const totalSeconds = item.menuItem?.prepSeconds || 0;
+                          const totalSeconds = item.menuItem?.prep_seconds || 0;
                           const minutes = Math.floor(totalSeconds / 60);
                           return minutes === 0 && totalSeconds > 0 ? 1 : minutes;
                         })()}m)
@@ -369,7 +370,7 @@ function OrderCard({
             </div>
           ) : error ? (
             <div className="p-2 bg-white rounded-md text-red-500">
-              Error loading items: {error.message}
+              Error loading items: {(error as Error).message}
             </div>
           ) : orderDetails?.items && orderDetails.items.length > 0 ? (
             // Sort items by cook time (longer cook times first) and then by status
@@ -384,8 +385,8 @@ function OrderCard({
                 if (statusDiff !== 0) return statusDiff;
                 
                 // Then sort by cook time (descending)
-                const aCookTime = a.menuItem?.prepSeconds || 0;
-                const bCookTime = b.menuItem?.prepSeconds || 0;
+                const aCookTime = a.menuItem?.prep_seconds || 0;
+                const bCookTime = b.menuItem?.prep_seconds || 0;
                 return bCookTime - aCookTime;
               })
               .map((item) => (
@@ -403,12 +404,12 @@ function OrderCard({
                   item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id &&
+                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id &&
                     "border-2 border-blue-500 shadow-md",
                   // Add pulsing effect when an item is done cooking but not yet marked ready
                   item.status === "COOKING" && 
                     item.firedAt && 
-                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prepSeconds || 0) &&
+                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prep_seconds || 0) &&
                     "border-2 border-green-500 shadow-md animate-pulse"
                 )}
               >
@@ -416,7 +417,7 @@ function OrderCard({
                 {item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id && (
+                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id && (
                       <>
                         <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
                           NEXT UP
@@ -440,33 +441,36 @@ function OrderCard({
                           let earliestReadyTime = Infinity;
                           cookingItems.forEach(cookingItem => {
                             if (cookingItem.firedAt) {
-                              const cookingItemTotal = cookingItem.menuItem?.prepSeconds || 0;
+                              const cookingItemTotal = cookingItem.menuItem?.prep_seconds || 0;
                               const firedTime = new Date(cookingItem.firedAt).getTime();
                               const currentTime = new Date().getTime();
                               const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
                               const remainingSeconds = Math.max(0, cookingItemTotal - elapsedSeconds);
                               
-                              // Update earliestReadyTime if this item will be ready sooner
                               if (remainingSeconds < earliestReadyTime) {
                                 earliestReadyTime = remainingSeconds;
                               }
                             }
                           });
                           
-                          // Calculate when we should start cooking the next item
-                          const nextItemPrepSeconds = item.menuItem?.prepSeconds || 0;
+                          // Calculate when this pending item should be started to finish with the rest of the order
+                          const pendingItemTotal = item.menuItem?.prep_seconds || 0;
                           
-                          // Determine if we should start now or wait
-                          // If the next item takes longer than the current cooking items, start now
-                          // Otherwise, wait until [earliestReadyTime - nextItemPrepSeconds]
-                          const startInSeconds = Math.max(0, earliestReadyTime - nextItemPrepSeconds);
+                          // If this item takes longer to cook than the remaining time on cooking items, 
+                          // we should start it now
+                          if (pendingItemTotal > earliestReadyTime) {
+                            return (
+                              <div className="absolute -top-2 right-2 bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
+                                START NOW
+                              </div>
+                            );
+                          }
                           
-                          // Format the start time
-                          const minutes = Math.floor(startInSeconds / 60);
-                          const seconds = startInSeconds % 60;
+                          // Otherwise, we should start it after some delay to finish at the same time
+                          const startInSeconds = earliestReadyTime - pendingItemTotal;
                           
+                          // Format the start in time
                           if (startInSeconds <= 0) {
-                            // Should start now
                             return (
                               <div className="absolute -top-2 right-2 bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
                                 START NOW
@@ -476,182 +480,140 @@ function OrderCard({
                             // Start soon (less than a minute)
                             return (
                               <div className="absolute -top-2 right-2 bg-amber-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
-                                START IN {seconds}s
+                                START IN {startInSeconds}s
                               </div>
                             );
                           } else {
-                            // Start later
+                            // Start in minutes
+                            const minutes = Math.floor(startInSeconds / 60);
+                            const seconds = startInSeconds % 60;
                             return (
-                              <div className="absolute -top-2 right-2 bg-green-600 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
-                                START IN {minutes}:{seconds.toString().padStart(2, '0')}
+                              <div className="absolute -top-2 right-2 bg-green-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                                START IN {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
                               </div>
                             );
                           }
                         })()}
                       </>
-                )}
+                    )
+                }
                 
-                <div className="flex items-center flex-1">
-                  <div className="mr-2 flex-shrink-0">
-                    {item.status === "READY" ? (
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    ) : item.status === "COOKING" ? (
-                      <Checkbox
-                        className="w-6 h-6 data-[state=checked]:bg-green-500 border-amber-300 bg-amber-100"
-                        checked={item.status === "READY"}
-                        onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean, item.status || undefined)}
-                      />
-                    ) : (
-                      <Checkbox
-                        className="w-6 h-6 data-[state=checked]:bg-amber-500"
-                        checked={item.status === "COOKING"}
-                        onCheckedChange={(checked) => toggleItemCompletion(item.id, checked as boolean)}
-                      />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center text-sm font-medium">
-                      <span className="inline-block mr-1.5 truncate">{item.menuItem?.name || "Unknown Item"}</span>
-                      {item.quantity > 1 && (
-                        <span className="bg-neutral-100 px-1.5 py-0.5 text-xs rounded-full">
-                          x{item.quantity}
-                        </span>
-                      )}
+                {/* "READY TO CHECK" badge for items that are done cooking */}
+                {item.status === "COOKING" && 
+                  item.firedAt && 
+                  (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prep_seconds || 0) && (
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
+                      READY TO CHECK
                     </div>
-                    
-                    <div className="flex items-center mt-1">
-                      <div className="flex items-center">
-                        {/* Calculate prep time minutes - add 1 if there are remaining seconds */}
-                        {(() => {
-                          const totalSeconds = item.menuItem?.prepSeconds || 0;
-                          const minutes = Math.floor(totalSeconds / 60);
-                          const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
-                          return (
-                            <>
-                              <div className={cn(
-                                "h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] font-medium mr-1",
-                                totalSeconds > 600 ? "bg-red-100 text-red-700 border border-red-200" :
-                                totalSeconds > 300 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
-                                "bg-green-100 text-green-700 border border-green-200"
-                              )}>
-                                {displayMinutes}m
-                              </div>
-                              <span className="text-xs text-neutral-500 truncate">
-                                {item.menuItem?.station || "Kitchen"}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
+                  )
+                }
+                
+                <div className="flex-grow">
+                  <div className="flex gap-3 items-center">
+                    <Checkbox 
+                      id={`item-${item.id}`}
+                      className="h-5 w-5"
+                      checked={item.status === "COOKING" || item.status === "READY"}
+                      onCheckedChange={(checked) => {
+                        toggleItemCompletion(item.id, checked as boolean, item.status || null);
+                      }}
+                    />
+                    <div className="flex-grow">
+                      <label 
+                        htmlFor={`item-${item.id}`} 
+                        className="flex justify-between cursor-pointer"
+                      >
+                        <div>
+                          <span className="font-medium">
+                            {item.menuItem?.name}
+                          </span>
+                          <div className="text-xs text-neutral-500">
+                            {item.menuItem?.station} • {item.quantity > 1 ? `${item.quantity}x` : ''} {item.notes && 
+                              <span className="italic text-gray-500">({item.notes})</span>
+                            }
+                          </div>
+                        </div>
+                      </label>
                     </div>
-                  </div>
-                  
-                  <div className="ml-2 flex flex-col items-end">
-                    <div className={cn(
-                      "px-2 py-0.5 rounded text-xs font-medium",
-                      item.status === "READY" ? "bg-green-100 text-green-700" :
-                      item.status === "COOKING" ? "bg-amber-100 text-amber-700" :
-                      "bg-blue-100 text-blue-700"
-                    )}>
-                      {item.status === "READY" ? "READY" : 
-                       item.status === "COOKING" ? "COOKING" : "PENDING"}
-                    </div>
-                    
-                    {/* Show timing info */}
-                    {item.firedAt && (
-                      <div className="mt-1 text-[10px] text-neutral-500">
-                        {item.status === "READY" ? (
-                          <>Ready at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
-                        ) : item.status === "COOKING" ? (
-                          <>
-                            {(() => {
-                              // Calculate time elapsed since firing
-                              const totalCookSeconds = item.menuItem?.prepSeconds || 0;
-                              const firedTime = new Date(item.firedAt).getTime();
-                              const currentTime = new Date().getTime();
-                              const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
-                              
-                              // Calculate remaining time
-                              const remainingSeconds = Math.max(0, totalCookSeconds - elapsedSeconds);
-                              const minutes = Math.floor(remainingSeconds / 60);
-                              const seconds = remainingSeconds % 60;
-                              
-                              // Format display
-                              if (remainingSeconds <= 0) {
-                                return (
-                                  <span className="font-semibold text-green-600">
-                                    READY TO CHECK
-                                  </span>
-                                );
-                              } else {
-                                return (
-                                  <span className={cn(
-                                    "font-medium",
-                                    remainingSeconds < 30 ? "text-green-600" : 
-                                    remainingSeconds < 60 ? "text-amber-600" : 
-                                    "text-neutral-600"
-                                  )}>
-                                    {minutes}:{seconds.toString().padStart(2, '0')} remaining
-                                  </span>
-                                );
-                              }
-                            })()}
-                          </>
-                        ) : (
-                          <>Fired at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
+                
+                {/* Cook timer for COOKING items */}
+                {item.status === "COOKING" && item.firedAt && (
+                  <div className="ml-2 flex flex-col items-end">
+                    {/* Display remaining time if firing in progress */}
+                    {(() => {
+                      const cookSeconds = item.menuItem?.prep_seconds || 0;
+                      if (cookSeconds > 0) {
+                        const firedTime = new Date(item.firedAt).getTime();
+                        const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
+                        const remainingSeconds = Math.max(0, cookSeconds - elapsedSeconds);
+                        
+                        // Format the time
+                        const minutes = Math.floor(remainingSeconds / 60);
+                        const seconds = remainingSeconds % 60;
+                        const timeDisplay = `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+                        
+                        let bgColorClass = "";
+                        let textColorClass = "";
+                        
+                        // Determine color based on remaining time
+                        if (remainingSeconds === 0) {
+                          // Done cooking
+                          bgColorClass = "bg-green-100";
+                          textColorClass = "text-green-800";
+                        } else if (remainingSeconds < 30) {
+                          // Almost done (less than 30 seconds)
+                          bgColorClass = "bg-green-100";
+                          textColorClass = "text-green-800";
+                        } else if (remainingSeconds < 60) {
+                          // Getting close (less than a minute)
+                          bgColorClass = "bg-amber-100";
+                          textColorClass = "text-amber-800";
+                        } else {
+                          // Still cooking
+                          bgColorClass = "bg-blue-100";
+                          textColorClass = "text-blue-800";
+                        }
+                        
+                        return (
+                          <div className={`flex items-center ${remainingSeconds === 0 ? 'animate-pulse' : ''}`}>
+                            <TimerPill
+                              value={timeDisplay}
+                              bgColorClass={bgColorClass}
+                              textColorClass={textColorClass}
+                            />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                )}
               </div>
             ))
-          ) : null}
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              <span className={cn(
-                "text-sm font-medium",
-                order.isDelayed ? "text-red-600" : "text-neutral-600"
-              )}>
-                {order.status === "READY" ? (
-                  <span className="flex items-center text-green-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Order Ready To Serve
-                  </span>
-                ) : (
-                  <span>
-                    {orderDetails?.items?.filter(i => i.status === "READY").length || 0} of {orderDetails?.items?.length || 0} items ready
-                  </span>
-                )}
-              </span>
+          ) : (
+            <div className="p-2 bg-white rounded-md text-center text-neutral-400">
+              No items in this order
             </div>
-            
-            {order.status !== "READY" && (
-              <button 
-                className={cn(
-                  "px-4 py-2 rounded-md text-sm font-medium flex items-center shadow-sm transition-all",
-                  order.isDelayed
-                    ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "bg-green-500 hover:bg-green-600 text-white"
-                )}
-                onClick={() => markOrderAsReady(order.id)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                Mark Order Ready
-              </button>
-            )}
-          </div>
+          )}
         </div>
+        
+        {/* Action button to mark order as ready */}
+        {orderDetails?.status === "COOKING" && 
+         orderDetails.items?.every(item => item.status === "READY") && (
+          <div className="mt-4">
+            <button
+              onClick={() => markOrderAsReady(order.id)}
+              className="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Mark Order as Ready
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
