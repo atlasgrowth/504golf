@@ -76,7 +76,7 @@ export default function MenuGrid({ categories, menuItems, onSelectItem }: MenuGr
       </div>
       
       {/* Menu items grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {filteredItems.map(item => (
           <Card 
             key={item.id} 
@@ -88,23 +88,23 @@ export default function MenuGrid({ categories, menuItems, onSelectItem }: MenuGr
               setQuantity(1);
             }}
           >
-            <CardContent className="p-3">
-              <div className="font-medium text-sm mb-1 line-clamp-2">{item.name}</div>
+            <CardContent className="p-2">
+              <div className="font-medium text-sm mb-1 line-clamp-2 h-10">{item.name}</div>
               
-              <div className="flex justify-between items-end mt-2">
+              <div className="flex justify-between items-end mt-1">
                 <div className="text-xs text-muted-foreground">
                   <div className="flex items-center">
                     <Clock size={12} className="mr-1" />
-                    <span>{Math.ceil(item.prep_seconds / 60)} min</span>
+                    <span>{typeof item.prep_seconds === 'number' ? Math.ceil(item.prep_seconds / 60) : 0} min</span>
                   </div>
                   <div className="flex items-center">
                     <ChefHat size={12} className="mr-1" />
-                    <span>{item.station}</span>
+                    <span>{item.station || 'Kitchen'}</span>
                   </div>
                 </div>
                 
                 <div className="text-primary font-semibold">
-                  ${(item.price_cents / 100).toFixed(2)}
+                  ${typeof item.price_cents === 'number' ? (item.price_cents / 100).toFixed(2) : '0.00'}
                 </div>
               </div>
             </CardContent>

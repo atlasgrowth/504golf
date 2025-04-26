@@ -85,6 +85,10 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
   }>>({
     queryKey: ['/api/menu'],
     enabled: open,
+    onSuccess: (data) => {
+      // Debug log to check data structure
+      console.log('Menu data loaded:', data);
+    }
   });
 
   // Extract categories and menu items from data
@@ -150,6 +154,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
     setIsSubmitting(true);
     
     try {
+      // Ensure items have numeric price and quantity
       const payload = {
         order: {
           bayId: selectedBayId,
@@ -158,7 +163,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
         cart: {
           items: cart.map(item => ({
             menuItemId: item.menuItemId,
-            quantity: item.quantity
+            quantity: Number(item.quantity)
           }))
         }
       };
@@ -195,7 +200,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle className="text-xl text-primary">
             {selectedBayId ? `New Order - Bay ${selectedBayId}` : 'New Order'}
@@ -232,8 +237,9 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
           
           {/* Menu section - show only if bay is selected */}
           {selectedBayId && (
-            <div className="space-y-6">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Menu Grid - 2/3 of the space */}
+              <div className="md:col-span-2">
                 <h3 className="font-medium text-base mb-3">Menu</h3>
                 {menuLoading ? (
                   <div className="space-y-2">
@@ -245,18 +251,18 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
                     </div>
                   </div>
                 ) : (
-                  <MenuGrid 
-                    categories={categories} 
-                    menuItems={menuItems} 
-                    onSelectItem={handleAddToCart}
-                  />
+                  <div className="h-[400px] overflow-y-auto pr-2">
+                    <MenuGrid 
+                      categories={categories} 
+                      menuItems={menuItems} 
+                      onSelectItem={handleAddToCart}
+                    />
+                  </div>
                 )}
               </div>
               
-              <Separator />
-              
-              {/* Order summary */}
-              <div>
+              {/* Order Summary - 1/3 of the space */}
+              <div className="border-l pl-4 md:pl-6">
                 <h3 className="font-medium text-base mb-3">Order Summary</h3>
                 
                 {cart.length === 0 ? (
@@ -265,14 +271,14 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
                   </div>
                 ) : (
                   <div>
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-2 mb-4 max-h-[300px] overflow-y-auto pr-2">
                       {cart.map((item, index) => (
                         <div key={index} className="flex justify-between items-center border-b pb-2">
-                          <div>
+                          <div className="pr-2">
                             <span className="font-medium">{item.quantity}x</span> {item.name}
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span>${((item.priceCents * item.quantity) / 100).toFixed(2)}</span>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span>${typeof item.priceCents === 'number' ? ((item.priceCents * item.quantity) / 100).toFixed(2) : '0.00'}</span>
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -286,7 +292,7 @@ export default function SimpleOrderDrawer({ open, onOpenChange, bayId }: SimpleO
                       ))}
                     </div>
                     
-                    <div className="flex justify-between font-bold text-lg mb-4">
+                    <div className="flex justify-between font-bold text-lg mb-4 border-t border-primary/20 pt-2">
                       <span>Total:</span>
                       <span>${totalPrice.toFixed(2)}</span>
                     </div>
