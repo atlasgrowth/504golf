@@ -1,6 +1,6 @@
 import { Link, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import MenuCategories from "./MenuCategories";
 import MenuItems from "./MenuItems";
 import OrderSummary from "./OrderSummary";
@@ -17,6 +17,7 @@ interface CustomerViewProps {
 export default function CustomerView({ bayNumber }: CustomerViewProps) {
   const { toast } = useToast();
   const { lastMessage } = useWebSocket(bayNumber);
+  const [selectedCategory, setSelectedCategory] = useState("");
   
   const { data: bay, isLoading: bayLoading } = useQuery<{
     id: number;
@@ -111,7 +112,11 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
           </div>
         ) : (
           <div className="mb-6">
-            <MenuCategories categories={menu?.map(item => item.category) || []} />
+            <MenuCategories 
+              categories={menu?.map(item => item.category) || []} 
+              selected={selectedCategory}
+              onChange={setSelectedCategory}
+            />
           </div>
         )}
         
@@ -136,7 +141,7 @@ export default function CustomerView({ bayNumber }: CustomerViewProps) {
             ))}
           </div>
         ) : (
-          <MenuItems menuData={menu || []} />
+          <MenuItems menuData={menu || []} selectedCat={selectedCategory} />
         )}
       </main>
       

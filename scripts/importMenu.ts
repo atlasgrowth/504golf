@@ -10,9 +10,9 @@ import { menuItems } from "../shared/schema";
     id: crypto.randomUUID(),
     name: r.name,
     category: r.category || "Other", // Default category
-    price_cents: Number(r.priceCents),
+    price_cents: Number(r.priceCents) || 0, // Ensure numeric value
     station: r.station,
-    prep_seconds: Number(r.cookSeconds),
+    prep_seconds: Number(r.cookSeconds) || 0, // Ensure numeric value
   })));
   console.log(`Imported ${rows.length} items`);
 })();
