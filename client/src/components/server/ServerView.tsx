@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BaySelection from "./BaySelection";
 import ActiveOrdersTable from "./ActiveOrdersTable";
-import ServerOrderDrawer from "./ServerOrderDrawer";
+import SimpleOrderDrawer from "./SimpleOrderDrawer";
 import BayTabs from "./BayTabs";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +128,7 @@ export default function ServerView() {
       )}
       
       {/* New Order Drawer */}
-      <ServerOrderDrawer 
+      <SimpleOrderDrawer 
         open={drawer.open} 
         onOpenChange={(open) => setDrawer({ ...drawer, open })} 
         bayId={drawer.bayId}
