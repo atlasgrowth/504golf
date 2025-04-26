@@ -208,12 +208,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const statusParam = req.params.status;
       
+      // Special case for 'pending' to include both PENDING and NEW orders
+      if (statusParam.toLowerCase() === 'pending') {
+        // Get all orders first and then filter for NEW or PENDING status
+        const allOrders = await storage.getActiveOrders();
+        const pendingOrders = allOrders.filter(order => 
+          order.status === OrderStatus.PENDING || order.status === OrderStatus.NEW
+        );
+        return res.json(pendingOrders);
+      }
+      
       // Map the UI-friendly status names to OrderStatus enum values
       let status: string;
       switch (statusParam.toLowerCase()) {
-        case 'pending':
-          status = OrderStatus.PENDING;
-          break;
         case 'preparing':
           status = OrderStatus.COOKING;
           break;
