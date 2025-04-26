@@ -5,7 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function BaySelection() {
+interface BaySelectionProps {
+  onBayClick?: (bayId: number) => void;
+}
+
+export default function BaySelection({ onBayClick }: BaySelectionProps) {
   const [selectedFloor, setSelectedFloor] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -126,13 +130,20 @@ export default function BaySelection() {
                     'bg-white border-2 border-emerald-200 text-emerald-800 hover:border-emerald-400'}
                   py-4 h-20
                 `}
+                onClick={() => onBayClick && onBayClick(bay.id)}
               >
                 <div className="absolute -top-1 -right-1 bg-white rounded-bl-md px-1.5 py-0.5 text-xs font-medium text-emerald-800 border-b border-l border-emerald-200">
                   {bay.floor}F
                 </div>
                 <span className="text-xl font-bold">{formatBayNumber(bay.number)}</span>
                 <div className="mt-1">
-                  <BayStatusBadge status={bay.status} />
+                  {bay.orders && bay.orders.length > 0 ? (
+                    <div className="text-xs font-medium">
+                      {bay.totalItems || bay.orders.length} items • {bay.status}
+                    </div>
+                  ) : (
+                    <BayStatusBadge status={bay.status} />
+                  )}
                 </div>
                 
                 {/* Hover effect with golf ball */}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BaySelection from "./BaySelection";
 import ActiveOrdersTable from "./ActiveOrdersTable";
-import ServerOrderDialog from "./ServerOrderDialog";
+import ServerOrderDrawer from "./ServerOrderDrawer";
 import BayTabs from "./BayTabs";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +17,7 @@ export default function ServerView() {
   const queryClient = useQueryClient();
   const { lastMessage } = useWebSocket();
   const [serverName, setServerName] = useState("Alex Johnson");
-  const [newOrderDialogOpen, setNewOrderDialogOpen] = useState(false);
+  const [drawer, setDrawer] = useState<{ open: boolean, bayId: number | null }>({ open: false, bayId: null });
   const [statusFilter, setStatusFilter] = useState("PENDING"); // Default to PENDING tab to see new orders
 
   // Get active orders
@@ -72,9 +72,9 @@ export default function ServerView() {
     return order.status.toUpperCase() === statusFilter;
   });
 
-  const toggleNewOrderDialog = () => {
-    console.log("Opening new order dialog");
-    setNewOrderDialogOpen(!newOrderDialogOpen);
+  const toggleNewOrderDrawer = () => {
+    console.log("Opening new order drawer");
+    setDrawer({ open: !drawer.open, bayId: null });
   };
 
   return (
@@ -98,7 +98,7 @@ export default function ServerView() {
           </button>
           <button 
             className="px-4 py-2.5 bg-primary text-white rounded-lg flex items-center hover:brightness-110 transition-all shadow-md"
-            onClick={toggleNewOrderDialog}
+            onClick={toggleNewOrderDrawer}
           >
             <Plus className="h-4 w-4 mr-2" />
             <span>New Order</span>
@@ -107,7 +107,9 @@ export default function ServerView() {
       </div>
       
       {/* Bay Selection */}
-      <BaySelection />
+      <BaySelection 
+        onBayClick={(bayId) => setDrawer({ open: true, bayId })}
+      />
       
       {/* Status Tabs and Active Orders Table */}
       {ordersLoading ? (
@@ -125,13 +127,12 @@ export default function ServerView() {
         </div>
       )}
       
-      {/* New Order Dialog - conditionally render instead of using open prop */}
-      {newOrderDialogOpen && (
-        <ServerOrderDialog 
-          open={newOrderDialogOpen} 
-          onOpenChange={setNewOrderDialogOpen} 
-        />
-      )}
+      {/* New Order Drawer */}
+      <ServerOrderDrawer 
+        open={drawer.open} 
+        onOpenChange={(open) => setDrawer({ ...drawer, open })} 
+        bayId={drawer.bayId}
+      />
     </div>
   );
 }
