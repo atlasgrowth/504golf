@@ -104,7 +104,7 @@ export default function KitchenView() {
             </div>
             <div>
               <h1 className="font-poppins font-bold text-2xl text-primary leading-none mb-1">
-                SwingEats Kitchen
+                504 Creole Tavern
               </h1>
               <div className="flex flex-wrap items-center text-sm">
                 <div className="flex items-center mr-4 mb-1 sm:mb-0">

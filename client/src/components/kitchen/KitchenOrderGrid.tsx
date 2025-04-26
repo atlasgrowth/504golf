@@ -321,14 +321,14 @@ function OrderCard({
                 order.isDelayed ? "bg-red-500" : "bg-blue-500"
               )}></div>
               <span className={cn(
-                "text-sm font-medium uppercase tracking-wider",
-                order.status === "READY" ? "text-green-600" : 
-                order.status === "COOKING" ? "text-amber-600" :
-                order.status === "SERVED" ? "text-gray-600" :
-                order.status === "DINING" ? "text-purple-600" :
-                order.status === "PAID" ? "text-teal-600" :
-                order.status === "CANCELLED" ? "text-red-600" :
-                order.isDelayed ? "text-red-600" : "text-blue-600"
+                "text-sm font-medium uppercase tracking-wider px-2 py-0.5 rounded",
+                order.status === "READY" ? "text-green-700 bg-green-50 border border-green-200" : 
+                order.status === "COOKING" ? "text-amber-700 bg-amber-50 border border-amber-200" :
+                order.status === "SERVED" ? "text-gray-700 bg-gray-50 border border-gray-200" :
+                order.status === "DINING" ? "text-purple-700 bg-purple-50 border border-purple-200" :
+                order.status === "PAID" ? "text-teal-700 bg-teal-50 border border-teal-200" :
+                order.status === "CANCELLED" ? "text-red-700 bg-red-50 border border-red-200" :
+                order.isDelayed ? "text-red-700 bg-red-50 border border-red-200" : "text-blue-700 bg-blue-50 border border-blue-200"
               )}>
                 {order.status}
               </span>
