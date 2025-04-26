@@ -266,7 +266,8 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                   </div>
                 ) : (
                   <div className="mb-6">
-                    <div className="grid grid-flow-col auto-cols-max overflow-x-auto pb-3 gap-0 border-b">
+                    <div className="flex overflow-x-auto pb-2 border-b">
+                      {/* "All Items" first */}
                       <button 
                         key="all-items"
                         className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
@@ -279,32 +280,15 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                         All Items
                       </button>
                       
-                      {[...categories]
-                        .sort((a, b) => {
-                          // Put Desserts at the end
+                      {/* Categories sorted with food first, then desserts */}
+                      {(() => {
+                        // Create a copy of categories for sorting
+                        return [...categories].sort((a, b) => {
+                          // Put desserts at the end
                           if (a.name.toLowerCase().includes('dessert')) return 1;
                           if (b.name.toLowerCase().includes('dessert')) return -1;
-                          
-                          // Preferred order: Starters/Appetizers, Mains/Entrées, etc.
-                          const categoryOrder = {
-                            'starters': 1,
-                            'shareables': 2,
-                            'entrées & mains': 3,
-                            'handhelds': 4,
-                            'smashburgers': 5,
-                            'pizza & flatbreads': 6,
-                            'salads & soups': 7,
-                            'sides': 8,
-                            'kids': 9,
-                            'beverages': 10
-                          };
-                          
-                          const aOrder = categoryOrder[a.name.toLowerCase()] || 99;
-                          const bOrder = categoryOrder[b.name.toLowerCase()] || 99;
-                          
-                          return aOrder - bOrder;
-                        })
-                        .map((category) => (
+                          return a.name.localeCompare(b.name);
+                        }).map((category) => (
                           <button
                             key={category.id}
                             className={`px-6 py-3 whitespace-nowrap transition-all duration-200 border-b-2 ${
@@ -316,7 +300,8 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                           >
                             {category.name}
                           </button>
-                        ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}
@@ -329,33 +314,8 @@ export default function ServerOrderDialog({ open, onOpenChange }: ServerOrderDia
                 ) : (
                   <div className="space-y-8 mb-8">
                     {selectedTab === "all" ? (
-                      // Display items grouped by category in proper order
-                      [...menuData]
-                        .sort((a, b) => {
-                          // Put Desserts at the end
-                          if (a.category.name.toLowerCase().includes('dessert')) return 1;
-                          if (b.category.name.toLowerCase().includes('dessert')) return -1;
-                          
-                          // Preferred order: Starters/Appetizers, Mains/Entrées, etc.
-                          const categoryOrder = {
-                            'starters': 1,
-                            'shareables': 2, 
-                            'entrées & mains': 3,
-                            'handhelds': 4,
-                            'smashburgers': 5,
-                            'pizza & flatbreads': 6,
-                            'salads & soups': 7,
-                            'sides': 8,
-                            'kids': 9,
-                            'beverages': 10
-                          };
-                          
-                          const aOrder = categoryOrder[a.category.name.toLowerCase()] || 99;
-                          const bOrder = categoryOrder[b.category.name.toLowerCase()] || 99;
-                          
-                          return aOrder - bOrder;
-                        })
-                        .map((categoryGroup) => (
+                      // Display items grouped by category
+                      menuData.map((categoryGroup) => (
                         <div key={categoryGroup.category.id} className="space-y-4">
                           <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-3">
                             {categoryGroup.category.name}
