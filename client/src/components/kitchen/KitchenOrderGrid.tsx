@@ -61,10 +61,9 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
     }
   };
   
-  // Load full order details
-  const getOrderDetails = (orderId: string) =>
-    useQuery<OrderWithItems | null>({
-      // API route is /api/order/:id  (singular)
+  // Load full order details - properly encapsulated inside a custom hook
+  const useOrderDetails = (orderId: string) => {
+    return useQuery<OrderWithItems | null>({
       queryKey: ["/api/order", orderId],
       queryFn: async () => {
         try {
@@ -89,6 +88,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
       refetchOnWindowFocus: false,
       retry: 1, // Only retry once to avoid flooding the server with requests
     });
+  };
   
   // Toggle item status between NEW -> COOKING -> READY
   const toggleItemCompletion = async (orderItemId: string, completed: boolean, currentStatus?: string | null) => {
@@ -162,7 +162,7 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
         </div>
       ) : (
         orders.map((order) => {
-          const { data: orderDetails, isLoading, error } = getOrderDetails(order.id);
+          const { data: orderDetails, isLoading, error } = useOrderDetails(order.id);
           
           console.log(`Order ${order.id} details:`, { orderDetails, isLoading, error });
           
