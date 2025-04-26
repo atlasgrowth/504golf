@@ -294,6 +294,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           or(
+            eq(orders.status, "PENDING"),  // Added PENDING status - this is the key fix!
             eq(orders.status, "NEW"),
             eq(orders.status, "COOKING"),
             eq(orders.status, "READY")
