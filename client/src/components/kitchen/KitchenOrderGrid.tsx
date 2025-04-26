@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TimerPill } from "@/components/ui/timer-badge";
 import { TimerDisplay } from "@/components/ui/timer-display";
-import { EstimatedTimeDisplay } from "@/components/ui/estimated-time-display";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -356,20 +355,6 @@ function OrderCard({
           </div>
           <div className="flex flex-col items-end">
             <TimerDisplay createdAt={order.createdAt} isDelayed={order.isDelayed} />
-            
-            {/* Add estimated ready time for orders being prepared */}
-            {(order.status === 'COOKING' || order.status === 'PENDING' || order.status === 'NEW') && (
-              <div className="mt-1 flex flex-col items-end">
-                <span className="text-xs text-neutral-500">Est. ready in:</span>
-                <EstimatedTimeDisplay 
-                  estimatedCompletionTime={order.estimatedCompletionTime}
-                  orderItems={orderDetails?.items}
-                  showLabel={false}
-                  className="text-xs font-medium"
-                />
-              </div>
-            )}
-            
             <span className={cn(
               "mt-1 text-xs font-medium px-2 py-0.5 rounded-full",
               order.isDelayed 
@@ -398,7 +383,7 @@ function OrderCard({
                 <div className="flex flex-wrap items-center gap-1.5">
                   {orderDetails.items
                     .filter(i => i.status === "NEW" || i.status === "COOKING")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))
                     .slice(0, 3)
                     .map((item, idx) => (
                       <div key={item.id} className={cn(
@@ -408,7 +393,7 @@ function OrderCard({
                         "bg-gray-100 text-gray-700"
                       )}>
                         {item.menuItem?.name?.substring(0, 15)}{item.menuItem?.name?.length > 15 ? '...' : ''} ({(() => {
-                          const totalSeconds = item.menuItem?.prep_seconds || 0;
+                          const totalSeconds = item.menuItem?.prepSeconds || 0;
                           const minutes = Math.floor(totalSeconds / 60);
                           return minutes === 0 && totalSeconds > 0 ? 1 : minutes;
                         })()}m)
@@ -444,8 +429,8 @@ function OrderCard({
                 if (statusDiff !== 0) return statusDiff;
                 
                 // Then sort by cook time (descending)
-                const aCookTime = a.menuItem?.prep_seconds || 0;
-                const bCookTime = b.menuItem?.prep_seconds || 0;
+                const aCookTime = a.menuItem?.prepSeconds || 0;
+                const bCookTime = b.menuItem?.prepSeconds || 0;
                 return bCookTime - aCookTime;
               })
               .map((item) => (
@@ -463,12 +448,12 @@ function OrderCard({
                   item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id &&
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id &&
                     "border-2 border-blue-500 shadow-md",
                   // Add pulsing effect when an item is done cooking but not yet marked ready
                   item.status === "COOKING" && 
                     item.firedAt && 
-                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prep_seconds || 0) &&
+                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prepSeconds || 0) &&
                     "border-2 border-green-500 shadow-md animate-pulse"
                 )}
               >
@@ -476,7 +461,7 @@ function OrderCard({
                 {item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id && (
+                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id && (
                       <>
                         <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
                           NEXT UP
@@ -500,7 +485,7 @@ function OrderCard({
                           let earliestReadyTime = Infinity;
                           cookingItems.forEach(cookingItem => {
                             if (cookingItem.firedAt) {
-                              const cookingItemTotal = cookingItem.menuItem?.prep_seconds || 0;
+                              const cookingItemTotal = cookingItem.menuItem?.prepSeconds || 0;
                               const firedTime = new Date(cookingItem.firedAt).getTime();
                               const currentTime = new Date().getTime();
                               const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
@@ -514,7 +499,7 @@ function OrderCard({
                           });
                           
                           // Calculate when we should start cooking the next item
-                          const nextItemPrepSeconds = item.menuItem?.prep_seconds || 0;
+                          const nextItemPrepSeconds = item.menuItem?.prepSeconds || 0;
                           
                           // Determine if we should start now or wait
                           // If the next item takes longer than the current cooking items, start now
@@ -588,7 +573,7 @@ function OrderCard({
                       <div className="flex items-center">
                         {/* Calculate prep time minutes - add 1 if there are remaining seconds */}
                         {(() => {
-                          const totalSeconds = item.menuItem?.prep_seconds || 0;
+                          const totalSeconds = item.menuItem?.prepSeconds || 0;
                           const minutes = Math.floor(totalSeconds / 60);
                           const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
                           return (
@@ -631,7 +616,7 @@ function OrderCard({
                           <>
                             {(() => {
                               // Calculate time elapsed since firing
-                              const totalCookSeconds = item.menuItem?.prep_seconds || 0;
+                              const totalCookSeconds = item.menuItem?.prepSeconds || 0;
                               const firedTime = new Date(item.firedAt).getTime();
                               const currentTime = new Date().getTime();
                               const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
