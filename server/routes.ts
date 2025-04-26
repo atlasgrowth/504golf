@@ -741,6 +741,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (allItemsDelivered && order.status !== OrderStatus.SERVED) {
         await storage.updateOrderStatus(order.id, OrderStatus.SERVED);
         
+        // After a short delay, automatically transition to DINING status
+        // This represents that customers are eating their food
+        setTimeout(async () => {
+          // Double-check order hasn't been updated to something else
+          const currentOrder = await storage.getOrderById(order.id);
+          if (currentOrder && currentOrder.status === OrderStatus.SERVED) {
+            await storage.updateOrderStatus(order.id, OrderStatus.DINING);
+            
+            // Broadcast updated orders
+            const updatedOrders = await storage.getActiveOrders();
+            broadcastUpdate('ordersUpdate', updatedOrders);
+          }
+        }, 10000); // 10 seconds delay for demo purposes (could be longer in production)
+        
         // Broadcast updated orders
         const updatedOrders = await storage.getActiveOrders();
         broadcastUpdate('ordersUpdate', updatedOrders);

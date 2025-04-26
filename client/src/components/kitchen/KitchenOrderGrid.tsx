@@ -30,6 +30,24 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
   
   // Helper function to determine order card style
   const getOrderCardStyle = (order: OrderSummary) => {
+    // First check status
+    if (order.status === "READY") {
+      return "bg-green-50 border border-green-200 shadow-md";
+    } else if (order.status === "COOKING") {
+      return "bg-amber-50 border border-amber-200 shadow-md";
+    } else if (order.status === "PENDING" || order.status === "NEW") {
+      return "bg-blue-50 border border-blue-200 shadow-md";
+    } else if (order.status === "SERVED") {
+      return "bg-gray-50 border border-gray-300 shadow-md";
+    } else if (order.status === "DINING") {
+      return "bg-purple-50 border border-purple-200 shadow-md";
+    } else if (order.status === "PAID") {
+      return "bg-teal-50 border border-teal-200 shadow-md";
+    } else if (order.status === "CANCELLED") {
+      return "bg-red-50 border border-red-300 shadow-md";
+    }
+    
+    // If no status match, fall back to time/delay based styling
     if (order.isDelayed) {
       return "bg-red-50 border border-red-200 shadow-md";
     } else if (order.timeElapsed > 15) {
@@ -181,13 +199,21 @@ export default function KitchenOrderGrid({ orders }: KitchenOrderGridProps) {
                       <div className={cn(
                         "w-2 h-2 rounded-full mr-2",
                         order.status === "READY" ? "bg-green-500" : 
-                        order.status === "COOKING" ? "bg-amber-500" : 
+                        order.status === "COOKING" ? "bg-amber-500" :
+                        order.status === "SERVED" ? "bg-gray-500" :
+                        order.status === "DINING" ? "bg-purple-500" :
+                        order.status === "PAID" ? "bg-teal-500" :
+                        order.status === "CANCELLED" ? "bg-red-500" :
                         order.isDelayed ? "bg-red-500" : "bg-blue-500"
                       )}></div>
                       <span className={cn(
                         "text-sm font-medium uppercase tracking-wider",
                         order.status === "READY" ? "text-green-600" : 
-                        order.status === "COOKING" ? "text-amber-600" : 
+                        order.status === "COOKING" ? "text-amber-600" :
+                        order.status === "SERVED" ? "text-gray-600" :
+                        order.status === "DINING" ? "text-purple-600" :
+                        order.status === "PAID" ? "text-teal-600" :
+                        order.status === "CANCELLED" ? "text-red-600" :
                         order.isDelayed ? "text-red-600" : "text-blue-600"
                       )}>
                         {order.status}

@@ -3,13 +3,15 @@
  * 
  * This module handles background tasks like automatically checking
  * for items that should be marked as ready based on their timer.
+ * Also handles automatic transitions through order lifecycle states.
  */
 
 import { storage } from './storage';
 import { broadcastUpdate, sendBayUpdate } from './ws';
-import { toOrderItemDTO } from './dto';
+import { toOrderItemDTO, toOrderDTO } from './dto';
 import { db } from './db';
 import { sql } from 'drizzle-orm';
+import { OrderStatus } from '@shared/schema';
 
 /**
  * Check for items that are cooking and should be ready
@@ -70,6 +72,78 @@ export async function checkCookingItems() {
 }
 
 /**
+ * Check for orders in DINING status and transition to PAID after a delay
+ * This simulates customers finishing their meal and paying
+ */
+export async function checkDiningOrders() {
+  try {
+    console.log('Checking for orders in DINING status...');
+    
+    // Get all orders in DINING status
+    const orders = await storage.getOrdersByStatus(OrderStatus.DINING);
+    
+    // Filter for orders that have been in DINING status for more than 2 minutes
+    // (in production this would be much longer, but shortened for demo)
+    const now = new Date();
+    const ordersReadyForPayment = orders.filter(order => {
+      // If createdAt is actually a string, parse it to a Date first
+      const createdAt = typeof order.createdAt === 'string' 
+        ? new Date(order.createdAt) 
+        : order.createdAt;
+      
+      // Calculate minutes in dining status (normally would track a status change timestamp)
+      const minutesElapsed = Math.floor((now.getTime() - createdAt.getTime()) / 60000);
+      
+      // In a real system, we'd track when the status changed to DINING
+      // For demo purposes, we're using a short timeout
+      return minutesElapsed > 2;
+    });
+    
+    console.log(`Found ${ordersReadyForPayment.length} orders to transition to PAID status`);
+    
+    // Transition each order to PAID status
+    for (const order of ordersReadyForPayment) {
+      try {
+        await storage.updateOrderStatus(order.id, OrderStatus.PAID);
+        console.log(`Transitioned order ${order.id} from DINING to PAID status`);
+        
+        // Broadcast the update
+        const updatedOrders = await storage.getActiveOrders();
+        broadcastUpdate('ordersUpdate', updatedOrders);
+        
+        // Get full order for detailed update
+        const fullOrder = await storage.getOrderWithItems(order.id);
+        
+        if (fullOrder) {
+          // Create order update message
+          const orderUpdatedMessage = {
+            type: 'order_updated',
+            data: {
+              order: toOrderDTO(order),
+              items: fullOrder.items.map(item => toOrderItemDTO(item)),
+              status: OrderStatus.PAID,
+              timeElapsed: Math.round((Date.now() - new Date(fullOrder.createdAt).getTime()) / 60000),
+              estimatedCompletionTime: fullOrder.estimatedCompletionTime 
+                ? new Date(fullOrder.estimatedCompletionTime).toISOString() 
+                : null,
+              completionTime: new Date().toISOString(),
+              isDelayed: false
+            }
+          };
+          
+          // Send update to the specific bay
+          sendBayUpdate(order.bayId, 'order_updated', orderUpdatedMessage.data);
+        }
+      } catch (orderError) {
+        console.error(`Error transitioning order ${order.id} to PAID status:`, orderError);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking dining orders:', error);
+  }
+}
+
+/**
  * Start the background timer process
  */
 export function startTimers() {
@@ -77,4 +151,7 @@ export function startTimers() {
   
   // Check cooking items every 5 seconds
   setInterval(checkCookingItems, 5000);
+  
+  // Check dining orders every 30 seconds
+  setInterval(checkDiningOrders, 30000);
 }
