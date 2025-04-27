@@ -612,31 +612,7 @@ function OrderCard({
                       )}
                     </div>
                     
-                    <div className="flex items-center mt-1">
-                      <div className="flex items-center">
-                        {/* Calculate prep time minutes - add 1 if there are remaining seconds */}
-                        {(() => {
-                          const totalSeconds = item.menuItem?.prepSeconds || 0;
-                          const minutes = Math.floor(totalSeconds / 60);
-                          const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
-                          return (
-                            <>
-                              <div className={cn(
-                                "h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] font-medium mr-1",
-                                totalSeconds > 600 ? "bg-red-100 text-red-700 border border-red-200" :
-                                totalSeconds > 300 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
-                                "bg-green-100 text-green-700 border border-green-200"
-                              )}>
-                                {displayMinutes}m
-                              </div>
-                              <span className="text-xs text-neutral-500 truncate">
-                                {item.menuItem?.station || "Kitchen"}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
+                    {/* Cook time and station information removed as requested */}
                   </div>
                   
                   <div className="ml-2 flex flex-col items-end">
