@@ -53,22 +53,15 @@ export default function ServerView() {
   const filteredOrders = orders.filter(order => {
     const orderStatus = order.status.toUpperCase();
     
-    // For the COMPLETE tab, show completed orders (SERVED, DINING, PAID)
-    if (statusFilter === 'COMPLETE') {
-      return ['SERVED', 'DINING', 'PAID'].includes(orderStatus);
-    }
-    
-    // For specific tabs for completed statuses
-    if (statusFilter === 'SERVED') {
+    // Special filters for completed/delivered orders
+    // For delivered tab (formerly served)
+    if (statusFilter === 'DELIVERED') {
       return orderStatus === 'SERVED';
     }
     
-    if (statusFilter === 'DINING') {
-      return orderStatus === 'DINING';
-    }
-    
-    if (statusFilter === 'PAID') {
-      return orderStatus === 'PAID';
+    // For the combined completed orders tab
+    if (statusFilter === 'COMPLETE') {
+      return ['SERVED', 'DINING', 'PAID'].includes(orderStatus);
     }
     
     // For all other tabs, exclude completed orders

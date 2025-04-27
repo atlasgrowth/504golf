@@ -29,7 +29,7 @@ const statusConfig = {
   served: {
     background: 'bg-primary bg-opacity-10',
     text: 'text-primary',
-    label: 'Served'
+    label: 'Delivered'
   },
   dining: {
     background: 'bg-purple-100',

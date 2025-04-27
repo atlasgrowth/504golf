@@ -89,11 +89,9 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
                 activeTab === tab.id
                   ? tab.id === "COMPLETE" 
                       ? "bg-gray-700 text-white" 
-                      : tab.id === "SERVED" 
+                      : tab.id === "DELIVERED" 
                           ? "bg-primary text-white"
-                          : tab.id === "DINING"
-                              ? "bg-purple-500 text-white"
-                              : "bg-teal-500 text-white"
+                          : "bg-teal-500 text-white"
                   : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
               )}
             >
