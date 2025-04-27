@@ -10,6 +10,7 @@ interface OrderPriorityTabsProps {
     readyToServe: number;
     served: number;
     delayed: number;
+    delivered?: number; // New "delivered" status count
   };
 }
 
@@ -66,6 +67,18 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
           <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+        </svg>
+      ),
+      color: "purple"
+    },
+    { 
+      id: "delivered", 
+      label: "Delivered", 
+      count: counts.delivered || 0,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-5h2a1 1 0 00.9-.55l4-8a1 1 0 00-.9-1.45H5a1 1 0 00-1 1v5a1 1 0 001 1h1a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
         </svg>
       ),
       color: "purple"
