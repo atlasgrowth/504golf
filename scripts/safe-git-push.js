@@ -1,6 +1,4 @@
 
-#!/usr/bin/env node
-
 const { execSync } = require('child_process');
 
 // Get commit message from command line args or use a default
