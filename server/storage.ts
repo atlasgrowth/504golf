@@ -635,36 +635,25 @@ export class DatabaseStorage implements IStorage {
     return this.markOrderItemDelivered(id);
   }
   
-  // Automatically find and mark items as ready that have exceeded their cook time
+  // Find items that have completed cooking but don't auto-mark them as ready
+  // This function is now modified to NOT automatically mark items as ready
+  // It only returns items that WOULD be ready based on cook time
   async autoFlipReady(): Promise<OrderItem[]> {
     const now = new Date();
     
-    // Use direct SQL query to avoid Drizzle ORM operator issues
+    // Use direct SQL query to avoid Drizzle ORM operator issues - just find items that would be ready
     const { rows: readyItems } = await pool.query(`
       SELECT * FROM order_items 
       WHERE status = 'COOKING' 
-      AND ready_at IS NOT NULL 
-      AND ready_at <= NOW()
+      AND fired_at IS NOT NULL 
+      AND fired_at <= (NOW() - (prep_seconds * INTERVAL '1 second'))
     `);
     
-    console.log(`Found ${readyItems.length} items to mark as ready`);
+    console.log(`Found ${readyItems.length} items that should be marked as ready`);
     
-    const results: OrderItem[] = [];
-    
-    // Process each item
-    for (const item of readyItems) {
-      try {
-        // Mark it as ready automatically
-        const updatedItem = await this.markOrderItemReady(item.id);
-        if (updatedItem) {
-          results.push(updatedItem);
-        }
-      } catch (error) {
-        console.error(`Error marking item ${item.id} as ready:`, error);
-      }
-    }
-    
-    return results;
+    // We're returning the items that are done cooking, but NOT auto-marking them as ready
+    // The kitchen staff will need to manually verify and check them off
+    return readyItems as OrderItem[];
   }
 
   async getOrderItemsByStation(station: string, status?: string): Promise<OrderItem[]> {
