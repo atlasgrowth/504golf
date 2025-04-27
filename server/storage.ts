@@ -642,11 +642,12 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     
     // Use direct SQL query to avoid Drizzle ORM operator issues - just find items that would be ready
+    // We need to use cook_seconds column from order_items table
     const { rows: readyItems } = await pool.query(`
       SELECT * FROM order_items 
       WHERE status = 'COOKING' 
       AND fired_at IS NOT NULL 
-      AND fired_at <= (NOW() - (prep_seconds * INTERVAL '1 second'))
+      AND fired_at <= (NOW() - (cook_seconds * INTERVAL '1 second'))
     `);
     
     console.log(`Found ${readyItems.length} items that should be marked as ready`);
