@@ -200,27 +200,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
           </div>
         </div>
         
-        <div className="flex flex-wrap items-center space-x-2">
-          <div className="font-medium text-gray-700 mr-1">Cook Time:</div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-green-100 text-green-700 border border-green-200 mr-1">
-              <span>&lt;5</span>
-            </div>
-            <span>Fast</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200 mr-1">
-              <span>5-10</span>
-            </div>
-            <span>Medium</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-bold bg-red-100 text-red-700 border border-red-200 mr-1">
-              <span>&gt;10</span>
-            </div>
-            <span>Slow</span>
-          </div>
-        </div>
+        {/* Cook Time legend removed as requested */}
       </div>
     </div>
   );
