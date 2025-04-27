@@ -166,42 +166,7 @@ export default function OrderPriorityTabs({ activeTab, setActiveTab, counts }: O
         </nav>
       </div>
 
-      {/* Status and cook time legend */}
-      <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 mb-3">
-        <div className="flex flex-wrap items-center space-x-2 mb-1 sm:mb-0">
-          <div className="font-medium text-gray-700 mr-1">Status:</div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
-            <span>Pending</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-amber-500 mr-1"></div>
-            <span>Cooking</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-            <span>Ready</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-gray-500 mr-1"></div>
-            <span>Served</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
-            <span>Dining</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-teal-500 mr-1"></div>
-            <span>Paid</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-2 h-2 rounded-full bg-red-500 mr-1"></div>
-            <span>Delayed</span>
-          </div>
-        </div>
-        
-        {/* Cook Time legend removed as requested */}
-      </div>
+      {/* Status and cook time legends removed as requested */}
     </div>
   );
 }

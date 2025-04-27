@@ -106,66 +106,7 @@ export default function KitchenView() {
               <h1 className="font-poppins font-bold text-2xl text-primary leading-none mb-1">
                 504 Creole Tavern
               </h1>
-              <div className="flex flex-wrap items-center text-sm">
-                <div className="flex items-center mr-4 mb-1 sm:mb-0">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.all > 0 ? "bg-blue-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Active:</span>
-                  <span className="font-semibold text-blue-600">{countByStatus.all}</span>
-                </div>
-                
-                <div className="flex items-center mr-4 mb-1 sm:mb-0">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.pending > 0 ? "bg-blue-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Pending:</span>
-                  <span className="font-semibold text-blue-600">{countByStatus.pending}</span>
-                </div>
-                
-                <div className="flex items-center mr-4 mb-1 sm:mb-0">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.inProgress > 0 ? "bg-amber-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Cooking:</span>
-                  <span className="font-semibold text-amber-600">{countByStatus.inProgress}</span>
-                </div>
-                
-                <div className="flex items-center mr-4 mb-1 sm:mb-0">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.readyToServe > 0 ? "bg-green-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Ready:</span>
-                  <span className="font-semibold text-green-600">{countByStatus.readyToServe}</span>
-                </div>
-                
-                <div className="flex items-center mr-4 mb-1 sm:mb-0">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.served > 0 ? "bg-purple-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Served:</span>
-                  <span className="font-semibold text-purple-600">{countByStatus.served}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full mr-2",
-                    countByStatus.delayed > 0 ? "bg-red-500" : "bg-gray-400"
-                  )}></div>
-                  <span className="mr-1 text-gray-700">Delayed:</span>
-                  <span className={cn(
-                    "font-semibold",
-                    countByStatus.delayed > 0 ? "text-red-600" : "text-gray-600"
-                  )}>
-                    {countByStatus.delayed}
-                  </span>
-                </div>
-              </div>
+              {/* Status indicators removed as requested */}
             </div>
           </div>
           
