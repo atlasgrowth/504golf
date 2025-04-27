@@ -414,7 +414,7 @@ function OrderCard({
                   item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id &&
+                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id &&
                     "border-2 border-blue-500 shadow-md",
                   // Add pulsing effect when an item is done cooking but not yet marked ready
                   item.status === "COOKING" && 
@@ -578,23 +578,27 @@ function OrderCard({
                       )}
                     </div>
                     
-                    {/* Cook time and station information removed as requested */}
+                    <div className="text-xs text-neutral-500 mt-1">
+                      {/* Show cook time in minutes */}
+                      {(() => {
+                        const totalSeconds = item.menuItem?.prep_seconds || 0;
+                        const minutes = Math.floor(totalSeconds / 60);
+                        const displayMinutes = minutes === 0 && totalSeconds > 0 ? 1 : minutes;
+                        return (
+                          <>
+                            Cook time: {displayMinutes}m
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                   
                   <div className="ml-2 flex flex-col items-end">
-                    <div className={cn(
-                      "px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 whitespace-nowrap",
-                      item.status === "READY" ? "bg-green-100 text-green-700 border border-green-200" :
-                      item.status === "COOKING" ? "bg-amber-100 text-amber-700 border border-amber-200" :
-                      "bg-blue-100 text-blue-700 border border-blue-200"
-                    )}>
-                      {item.status === "READY" ? "READY" : 
-                       item.status === "COOKING" ? "COOKING" : "PENDING"}
-                    </div>
+                    {/* Status badge removed as requested */}
                     
                     {/* Show timing info */}
                     {item.firedAt && (
-                      <div className="mt-1 text-[10px] text-neutral-500">
+                      <div className="text-[10px] text-neutral-500">
                         {item.status === "READY" ? (
                           <>Ready at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
                         ) : item.status !== "COOKING" ? (
