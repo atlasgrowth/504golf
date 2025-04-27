@@ -75,6 +75,8 @@ export default function KitchenView() {
     readyToServe: activeOrders.filter((o: OrderSummary) => o.status === 'READY').length || 0,
     // Completed orders (SERVED, DINING, PAID)
     served: orders?.filter((o: OrderSummary) => ['SERVED', 'DINING', 'PAID'].includes(o.status)).length || 0,
+    // Orders that are delivered
+    delivered: orders?.filter((o: OrderSummary) => o.status === 'SERVED').length || 0,
     // Orders that are flagged as delayed (regardless of status)
     delayed: activeOrders.filter((o: OrderSummary) => o.isDelayed).length || 0,
   };
@@ -83,6 +85,7 @@ export default function KitchenView() {
   const filteredOrders = orders?.filter((order: OrderSummary) => {
     if (activeTab === 'all') return !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(order.status);
     if (activeTab === 'served') return ['SERVED', 'DINING', 'PAID'].includes(order.status);
+    if (activeTab === 'delivered') return order.status === 'SERVED'; // New "delivered" filter
     if (activeTab === 'delayed') return order.isDelayed && !['SERVED', 'DINING', 'PAID', 'CANCELLED'].includes(order.status);
     if (activeTab === 'pending') return (order.status === 'PENDING' || order.status === 'NEW');
     if (activeTab === 'inProgress') return order.status === 'COOKING';
@@ -145,6 +148,7 @@ export default function KitchenView() {
           inProgress: countByStatus.inProgress,
           readyToServe: countByStatus.readyToServe,
           served: countByStatus.served,
+          delivered: countByStatus.delivered,
           delayed: countByStatus.delayed
         }}
       />

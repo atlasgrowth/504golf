@@ -29,7 +29,7 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   const paid = orders.filter(o => o.status.toUpperCase() === "PAID").length;
   const completed = served + dining + paid;
   
-  // Main pipeline tabs + Completed Orders submenu
+  // Main pipeline tabs + Completed Orders
   const tabs = [
     { id: "ALL", label: "All Active", count: activeOrders.length },
     { id: "PENDING", label: "Pending", count: pending },
@@ -37,9 +37,7 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
     { id: "READY", label: "Ready", count: ready },
     { id: "DELAYED", label: "Delayed", count: delayed },
     { id: "COMPLETE", label: "Completed", count: completed },
-    { id: "SERVED", label: "Served", count: served },
-    { id: "DINING", label: "Dining", count: dining },
-    { id: "PAID", label: "Paid", count: paid }
+    { id: "DELIVERED", label: "Delivered", count: served } // Renamed SERVED to DELIVERED for better UX
   ];
   
   // When tab changes, notify parent
@@ -53,7 +51,7 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   
   // Group tabs for better organization
   const activeTabs = tabs.slice(0, 5); // ALL, PENDING, COOKING, READY, DELAYED
-  const completedTabs = tabs.slice(5); // COMPLETE and the individual completed statuses
+  const completedTabs = tabs.slice(5); // COMPLETE and DELIVERED
   
   return (
     <div className="mb-4">
