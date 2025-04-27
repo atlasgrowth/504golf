@@ -419,7 +419,7 @@ function OrderCard({
                   // Add pulsing effect when an item is done cooking but not yet marked ready
                   item.status === "COOKING" && 
                     item.firedAt && 
-                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prepSeconds || 0) &&
+                    (new Date().getTime() - new Date(item.firedAt).getTime()) / 1000 >= (item.menuItem?.prep_seconds || 0) &&
                     "border-2 border-green-500 shadow-md animate-pulse"
                 )}
               >
@@ -427,7 +427,7 @@ function OrderCard({
                 {item.status === "NEW" && 
                   orderDetails.items
                     .filter(i => i.status === "NEW")
-                    .sort((a, b) => (b.menuItem?.prepSeconds || 0) - (a.menuItem?.prepSeconds || 0))[0]?.id === item.id && (
+                    .sort((a, b) => (b.menuItem?.prep_seconds || 0) - (a.menuItem?.prep_seconds || 0))[0]?.id === item.id && (
                       <>
                         <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
                           NEXT UP
@@ -451,7 +451,7 @@ function OrderCard({
                           let earliestReadyTime = Infinity;
                           cookingItems.forEach(cookingItem => {
                             if (cookingItem.firedAt) {
-                              const cookingItemTotal = cookingItem.menuItem?.prepSeconds || 0;
+                              const cookingItemTotal = cookingItem.menuItem?.prep_seconds || 0;
                               const firedTime = new Date(cookingItem.firedAt).getTime();
                               const currentTime = new Date().getTime();
                               const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
@@ -465,7 +465,7 @@ function OrderCard({
                           });
                           
                           // Calculate when we should start cooking the next item
-                          const nextItemPrepSeconds = item.menuItem?.prepSeconds || 0;
+                          const nextItemPrepSeconds = item.menuItem?.prep_seconds || 0;
                           
                           // Determine if we should start now or wait
                           // If the next item takes longer than the current cooking items, start now
@@ -506,7 +506,7 @@ function OrderCard({
                 {item.status === "COOKING" && item.firedAt && (
                   (() => {
                     // Calculate time elapsed since firing
-                    const totalCookSeconds = item.menuItem?.prepSeconds || 0;
+                    const totalCookSeconds = item.menuItem?.prep_seconds || 0;
                     const firedTime = new Date(item.firedAt).getTime();
                     const currentTime = new Date().getTime();
                     const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
