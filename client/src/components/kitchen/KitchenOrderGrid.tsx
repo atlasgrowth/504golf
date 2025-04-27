@@ -395,8 +395,8 @@ function OrderCard({
                 if (statusDiff !== 0) return statusDiff;
                 
                 // Then sort by cook time (descending)
-                const aCookTime = a.menuItem?.prepSeconds || 0;
-                const bCookTime = b.menuItem?.prepSeconds || 0;
+                const aCookTime = a.menuItem?.prep_seconds || 0; 
+                const bCookTime = b.menuItem?.prep_seconds || 0;
                 return bCookTime - aCookTime;
               })
               .map((item) => (
