@@ -29,7 +29,7 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   const paid = orders.filter(o => o.status.toUpperCase() === "PAID").length;
   const completed = served + dining + paid;
   
-  // Main pipeline tabs + Completed Orders
+  // Main pipeline tabs + Completed Orders submenu
   const tabs = [
     { id: "ALL", label: "All Active", count: activeOrders.length },
     { id: "PENDING", label: "Pending", count: pending },
@@ -37,7 +37,9 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
     { id: "READY", label: "Ready", count: ready },
     { id: "DELAYED", label: "Delayed", count: delayed },
     { id: "COMPLETE", label: "Completed", count: completed },
-    { id: "DELIVERED", label: "Delivered", count: served } // Renamed SERVED to DELIVERED for better UX
+    { id: "SERVED", label: "Served", count: served },
+    { id: "DINING", label: "Dining", count: dining },
+    { id: "PAID", label: "Paid", count: paid }
   ];
   
   // When tab changes, notify parent
@@ -51,7 +53,7 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
   
   // Group tabs for better organization
   const activeTabs = tabs.slice(0, 5); // ALL, PENDING, COOKING, READY, DELAYED
-  const completedTabs = tabs.slice(5); // COMPLETE and DELIVERED
+  const completedTabs = tabs.slice(5); // COMPLETE and the individual completed statuses
   
   return (
     <div className="mb-4">
@@ -89,9 +91,11 @@ export default function BayTabs({ orders, onTabChange }: BayTabsProps) {
                 activeTab === tab.id
                   ? tab.id === "COMPLETE" 
                       ? "bg-gray-700 text-white" 
-                      : tab.id === "DELIVERED" 
+                      : tab.id === "SERVED" 
                           ? "bg-primary text-white"
-                          : "bg-teal-500 text-white"
+                          : tab.id === "DINING"
+                              ? "bg-purple-500 text-white"
+                              : "bg-teal-500 text-white"
                   : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
               )}
             >
