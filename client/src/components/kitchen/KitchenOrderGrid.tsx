@@ -536,6 +536,49 @@ function OrderCard({
                       </>
                 )}
                 
+                {/* Cooking Timer Badge - show in same position as start timer */}
+                {item.status === "COOKING" && item.firedAt && (
+                  (() => {
+                    // Calculate time elapsed since firing
+                    const totalCookSeconds = item.menuItem?.prepSeconds || 0;
+                    const firedTime = new Date(item.firedAt).getTime();
+                    const currentTime = new Date().getTime();
+                    const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
+                    
+                    // Calculate remaining time
+                    const remainingSeconds = Math.max(0, totalCookSeconds - elapsedSeconds);
+                    const minutes = Math.floor(remainingSeconds / 60);
+                    const seconds = remainingSeconds % 60;
+                    
+                    // Format display
+                    if (remainingSeconds <= 0) {
+                      return (
+                        <div className="absolute -top-2 right-2 bg-green-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm animate-pulse">
+                          READY TO CHECK
+                        </div>
+                      );
+                    } else if (remainingSeconds < 30) {
+                      return (
+                        <div className="absolute -top-2 right-2 bg-green-600 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                          COOKING {minutes}:{seconds.toString().padStart(2, '0')}
+                        </div>
+                      );
+                    } else if (remainingSeconds < 60) {
+                      return (
+                        <div className="absolute -top-2 right-2 bg-amber-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                          COOKING {minutes}:{seconds.toString().padStart(2, '0')}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="absolute -top-2 right-2 bg-blue-500 text-white px-2 py-0.5 text-xs font-bold rounded shadow-sm">
+                          COOKING {minutes}:{seconds.toString().padStart(2, '0')}
+                        </div>
+                      );
+                    }
+                  })()
+                )}
+                
                 <div className="flex items-center flex-1">
                   <div className="mr-2 flex-shrink-0">
                     {item.status === "READY" ? (
@@ -612,44 +655,9 @@ function OrderCard({
                       <div className="mt-1 text-[10px] text-neutral-500">
                         {item.status === "READY" ? (
                           <>Ready at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
-                        ) : item.status === "COOKING" ? (
-                          <>
-                            {(() => {
-                              // Calculate time elapsed since firing
-                              const totalCookSeconds = item.menuItem?.prepSeconds || 0;
-                              const firedTime = new Date(item.firedAt).getTime();
-                              const currentTime = new Date().getTime();
-                              const elapsedSeconds = Math.floor((currentTime - firedTime) / 1000);
-                              
-                              // Calculate remaining time
-                              const remainingSeconds = Math.max(0, totalCookSeconds - elapsedSeconds);
-                              const minutes = Math.floor(remainingSeconds / 60);
-                              const seconds = remainingSeconds % 60;
-                              
-                              // Format display
-                              if (remainingSeconds <= 0) {
-                                return (
-                                  <span className="font-semibold text-green-600">
-                                    READY TO CHECK
-                                  </span>
-                                );
-                              } else {
-                                return (
-                                  <span className={cn(
-                                    "font-medium",
-                                    remainingSeconds < 30 ? "text-green-600" : 
-                                    remainingSeconds < 60 ? "text-amber-600" : 
-                                    "text-neutral-600"
-                                  )}>
-                                    {minutes}:{seconds.toString().padStart(2, '0')} remaining
-                                  </span>
-                                );
-                              }
-                            })()}
-                          </>
-                        ) : (
+                        ) : item.status !== "COOKING" ? (
                           <>Fired at: {new Date(item.firedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</>
-                        )}
+                        ) : null}
                       </div>
                     )}
                   </div>
