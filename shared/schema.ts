@@ -89,10 +89,14 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   specialInstructions: true,
   orderType: true,
   estimatedCompletionTime: true,
+  square_order_id: true,
+  payment_status: true,
 }).transform(data => ({
   ...data,
   // Use PENDING as default if status is not specified
-  status: data.status === "pending" ? OrderStatus.PENDING : (data.status || OrderStatus.PENDING)
+  status: data.status === "pending" ? OrderStatus.PENDING : (data.status || OrderStatus.PENDING),
+  // Use OPEN as default payment status if not specified
+  payment_status: data.payment_status || "OPEN"
 }));
 
 // Order item status enum
@@ -141,6 +145,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
   quantity: true,
   notes: true,
   station: true,
+  square_line_item_id: true,
 });
 
 // Define relations
