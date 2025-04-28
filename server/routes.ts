@@ -847,6 +847,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Special CSV mode route: Mark order as paid directly (for testing/demo)
+  app.post('/api/csv/mark-paid/:orderId', async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      
+      if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required' });
+      }
+      
+      console.log(`[CSV Mode] Marking order ${orderId} as PAID directly`);
+      
+      // Get order by ID
+      const order = await storage.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      
+      // Update payment status to COMPLETED
+      await storage.updateOrderPaymentStatus(
+        orderId, 
+        'COMPLETED',
+        `CSV_DIRECT_${Date.now()}`
+      );
+      
+      // Update order status to PAID
+      const updatedOrder = await storage.updateOrderStatus(orderId, OrderStatus.PAID);
+      
+      // Broadcast update via WebSocket
+      if (updatedOrder) {
+        broadcastUpdate({
+          type: "order_updated", 
+          data: toOrderDTO(updatedOrder)
+        });
+      }
+      
+      console.log(`[CSV Mode] Order ${orderId} marked as PAID successfully`);
+      
+      // Return success response
+      res.json({
+        success: true,
+        message: 'Order marked as paid',
+        order: updatedOrder
+      });
+      
+    } catch (error: any) {
+      console.error('[CSV Mode] Error marking order as paid:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to mark order as paid',
+        error: error.toString()
+      });
+    }
+  });
+  
   // Handle Square webhooks
   app.post('/api/square/webhook', async (req: Request, res: Response) => {
     try {
