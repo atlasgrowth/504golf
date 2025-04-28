@@ -32,6 +32,7 @@ export const insertCategorySchema = createInsertSchema(categories).pick({
 // Menu items table
 export const menuItems = pgTable("menu_items", {
   id: uuid("id").primaryKey().defaultRandom(),
+  square_id: text("square_id").unique(), // Square catalog item ID
   name: text("name").notNull(),
   category: text("category").notNull(),  // Shareables, Smashburgers, etc.
   price_cents: integer("price_cents").notNull(), // Price in cents
@@ -51,6 +52,7 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
   description: true,
   image_url: true,
   active: true,
+  square_id: true,
 });
 
 // Bays table
@@ -77,6 +79,8 @@ export const orders = pgTable("orders", {
   specialInstructions: text("special_instructions"),
   orderType: text("order_type").notNull().default("customer"), // customer, server
   estimatedCompletionTime: timestamp("estimated_completion_time"), // New field for P2
+  square_order_id: text("square_order_id"), // Square order ID
+  payment_status: text("payment_status").default("OPEN"), // OPEN, PAID, FAILED
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
@@ -128,6 +132,7 @@ export const orderItems = pgTable("order_items", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }), // When the item was delivered to customer
   completed: boolean("completed").notNull().default(false), // Legacy field - true if delivered/completed
   notes: text("notes"), // Special preparation instructions
+  square_line_item_id: text("square_line_item_id"), // Square line item ID
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
