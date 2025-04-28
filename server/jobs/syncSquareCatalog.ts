@@ -16,9 +16,12 @@ export async function syncCatalog() {
     // Fetch catalog items from Square
     console.log("Requesting catalog items from Square API...");
     
-    const response = await catalogApi.list({
-      types: "ITEM,ITEM_VARIATION,CATEGORY"
+    // AFTER (correct)
+    const response = await catalogApi.listCatalog({
+      types: ["ITEM", "ITEM_VARIATION", "CATEGORY"]
     });
+    const catalogObjects = response.result.objects || [];
+
     
     // Extract catalog objects from response
     const catalogObjects = response.objects || [];
