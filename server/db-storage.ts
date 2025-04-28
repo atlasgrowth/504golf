@@ -110,6 +110,12 @@ export class DatabaseStorage {
       .where(eq(schema.orders.id, id));
     return order;
   }
+  
+  async getOrderBySquareId(squareOrderId: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(schema.orders)
+      .where(eq(schema.orders.square_order_id, squareOrderId));
+    return order;
+  }
 
   async getOrdersByBayId(bayId: number): Promise<Order[]> {
     return await db.select().from(schema.orders)

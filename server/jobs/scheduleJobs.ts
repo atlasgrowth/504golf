@@ -29,6 +29,9 @@ export function initializeScheduledJobs() {
     syncCatalog()
       .then(() => console.log('Development catalog sync completed successfully'))
       .catch(error => console.error('Error in development catalog sync:', error));
+  }, {
+    scheduled: true,
+    timezone: "America/Chicago" // America/Chicago timezone
   });
 
   // Also run the catalog sync immediately when the server starts
@@ -39,7 +42,7 @@ export function initializeScheduledJobs() {
 
   // Log all scheduled jobs
   console.log('Scheduled jobs initialized:');
-  console.log('- Square Catalog Sync: daily at 3:00 AM ET');
+  console.log('- Square Catalog Sync: daily at 3:00 AM America/Chicago');
 
   // Return the scheduled jobs so they can be managed if needed
   return {

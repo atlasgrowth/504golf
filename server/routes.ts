@@ -21,6 +21,7 @@ import {
 } from './ws';
 import { startTimers } from './timers';
 import { processPayment, checkPaymentStatus } from './integrations/squarePayments';
+import { handleSquareWebhook } from './routes/squareWebhook';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);

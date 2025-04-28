@@ -4,14 +4,15 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cron from "node-cron";
 import { syncCatalog } from "./jobs/syncSquareCatalog";
-import { webhook } from "./routes/squareWebhook";
+import { handleSquareWebhook } from "./routes/squareWebhook";
 import { initializeScheduledJobs } from "./jobs/scheduleJobs";
 
 const app = express();
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(webhook); // Mount the Square webhook routes
+// Register Square webhook route
+app.post('/api/square/webhook', handleSquareWebhook);
 
 app.use((req, res, next) => {
   const start = Date.now();

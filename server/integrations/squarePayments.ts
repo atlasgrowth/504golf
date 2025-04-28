@@ -46,7 +46,7 @@ export async function processPayment(orderId: string, sourceId: string, amount: 
               name: `SwingEats Order #${orderId}`,
               quantity: "1",
               basePriceMoney: {
-                amount: BigInt(amount),
+                amount: amount,
                 currency: "USD",
               },
             },
