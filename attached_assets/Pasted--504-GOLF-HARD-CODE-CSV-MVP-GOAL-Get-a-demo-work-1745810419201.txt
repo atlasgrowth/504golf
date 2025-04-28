@@ -1,0 +1,113 @@
+🔧  504-GOLF  —  HARD-CODE CSV MVP
+=================================
+
+GOAL
+----
+Get a demo working TODAY without Square API calls:
+• Load menu_items from CSV → DB
+• Orders flow to kitchen screen
+• /square/webhook flips ticket to PAID
+• No catalog sync, no Square SDK errors
+
+STEPS
+=====
+
+1. 📦  Add a seed script
+   •  NEW file scripts/seedMenu.ts
+
+```ts
+import fs from "fs";
+import parse from "csv-parse/lib/sync";
+import { db } from "../server/db";
+import { menuItems } from "../shared/schema";
+
+async function main() {
+  const csv = fs.readFileSync("scripts/creole_tavern_full_menu_square.csv", "utf8");
+  const rows = parse(csv, { columns: true, skip_empty_lines: true });
+
+  await db.transaction(async (tx) => {
+    await tx.delete(menuItems).execute();
+    for (const r of rows) {
+      await tx.insert(menuItems).values({
+        square_id: r.Name,                             // temp unique key
+        name: r.Name,
+        price_cents: Math.round(parseFloat(r.Price) * 100),
+        category: r.Category,
+        cook_seconds: 300,
+        description: r.Description || null,
+        image_url: null,
+        active: true,
+      });
+    }
+  });
+
+  console.log(`Seeded ${rows.length} items`);
+}
+
+main().catch(console.error);
+➕ Add NPM script • Edit package.json "scripts":
+
+diff
+Copy
+Edit
+   "scripts": {
+     "dev": "tsx server/index.ts",
++    "seed:menu": "tsx scripts/seedMenu.ts",
+     "build": "...",
+     "start": "..."
+   },
+🗑️ Disable Square catalog sync • In server/index.ts (or wherever jobs run) comment out:
+
+ts
+Copy
+Edit
+// cron.schedule("*/15 * * * *", syncCatalog);
+// cron.schedule("0 3 * * *", syncCatalog, { timezone: "America/Chicago" });
+💉 Stub the Square wrapper • Replace server/integrations/square.ts with:
+
+ts
+Copy
+Edit
+// Temporary stub – replace with real SDK later
+export const catalogApi = null;
+
+export const ordersApi = {
+  async createOrder({ order }) {
+    return {
+      result: { order: { id: `MOCK_${Date.now()}`, lineItems: order.lineItems } },
+    };
+  },
+};
+
+export const paymentsApi = null;
+🏷️ Update imports • Any file that previously imported { catalogApi } and uses it should be safe; only ordersApi.createOrder is needed now.
+
+🧪 Quick manual test script • After agent finishes:
+
+bash
+Copy
+Edit
+npm run seed:menu         # loads CSV into DB
+npm run dev               # start server+client
+# in browser: create an order, kitchen screen shows ticket
+
+# mark ticket paid
+curl -X POST http://localhost:5000/square/webhook \
+  -H 'x-square-signature: stub' \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"payment.created","data":{"object":{"payment":{"order_id":"MOCK_123"}}}}'
+# ticket turns green
+📝 Commit & push git add . git commit -m "CSV-seed MVP; Square stubbed" git push origin main
+
+END
+After completing all steps print ✅ DONE
+
+pgsql
+Copy
+Edit
+
+**What this gives you**
+
+* A working local demo in ~5 minutes.  
+* You can show order entry, kitchen timers, and “payment” without Square headaches.  
+* Later, when the owner is ready, you just swap the stub for the real Square client and re-enable the nightly 

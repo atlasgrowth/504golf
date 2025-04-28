@@ -11,42 +11,14 @@ import { syncCatalog } from './syncSquareCatalog';
  * Initialize all scheduled jobs
  */
 export function initializeScheduledJobs() {
-  // Schedule the Square catalog sync to run every day at 3:00 AM
-  // This ensures our menu stays in sync with Square
-  const catalogSyncJob = cron.schedule('0 3 * * *', () => {
-    console.log('Running scheduled Square catalog sync job');
-    syncCatalog()
-      .then(() => console.log('Scheduled catalog sync completed successfully'))
-      .catch(error => console.error('Error in scheduled catalog sync:', error));
-  }, {
-    scheduled: true,
-    timezone: "America/Chicago" // America/Chicago timezone
-  });
-
-  // Development sync job - runs every 15 minutes for testing
-  const devSyncJob = cron.schedule('*/15 * * * *', () => {
-    console.log('Running development Square catalog sync job');
-    syncCatalog()
-      .then(() => console.log('Development catalog sync completed successfully'))
-      .catch(error => console.error('Error in development catalog sync:', error));
-  }, {
-    scheduled: true,
-    timezone: "America/Chicago" // America/Chicago timezone
-  });
-
-  // Also run the catalog sync immediately when the server starts
-  console.log('Running initial Square catalog sync');
-  syncCatalog()
-    .then(() => console.log('Initial catalog sync completed successfully'))
-    .catch(error => console.error('Error in initial catalog sync:', error));
-
+  console.log('Running in CSV-based mode - Square catalog sync jobs disabled');
+  
+  // Jobs are disabled for MVP demo mode
+  
   // Log all scheduled jobs
   console.log('Scheduled jobs initialized:');
-  console.log('- Square Catalog Sync: daily at 3:00 AM America/Chicago');
+  console.log('- CSV mode active: Square sync disabled');
 
-  // Return the scheduled jobs so they can be managed if needed
-  return {
-    catalogSyncJob,
-    devSyncJob
-  };
+  // Return empty object since jobs are disabled
+  return {};
 }

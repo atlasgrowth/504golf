@@ -37,28 +37,12 @@ function verifyWebhookSignature(body: string, signature: string): boolean {
 }
 
 /**
- * Process Square webhook events
+ * Process Square webhook events - STUB VERSION FOR CSV MVP
  */
 export async function handleSquareWebhook(req: Request, res: Response) {
   try {
-    // Get the signature from headers
-    const squareSignature = req.header('Square-Signature');
-    
-    if (!squareSignature) {
-      console.error('Missing Square-Signature header');
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-    
-    // Get the raw body as a string
-    const rawBody = JSON.stringify(req.body);
-    
-    // Verify the webhook signature
-    const isValidSignature = verifyWebhookSignature(rawBody, squareSignature);
-    
-    if (!isValidSignature) {
-      console.error('Invalid Square webhook signature');
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
+    // In stub mode, we don't verify signatures
+    console.log('[STUB] Received Square webhook event, skipping signature verification');
     
     // Process the webhook payload
     const eventType = req.body.type;

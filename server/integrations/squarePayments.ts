@@ -1,21 +1,20 @@
 /**
- * Square Payment Processing Integration
+ * Square Payment Processing Integration - STUB VERSION FOR CSV MVP
  * 
- * This module handles payment processing through the Square API
+ * This module provides stubbed methods for payment processing
  */
-import { paymentsApi, ordersApi } from "./square";
 import { dbStorage } from "../db-storage";
 import { OrderStatus } from "../../shared/schema";
 
 /**
- * Process payment for a SwingEats order using Square
+ * Process payment for a SwingEats order - STUB VERSION
  * @param orderId The SwingEats order ID
  * @param sourceId The Square payment source ID (card nonce, etc)
  * @param amount Amount in cents
  */
 export async function processPayment(orderId: string, sourceId: string, amount: number) {
   try {
-    console.log(`Processing payment for order ${orderId} with amount ${amount} cents`);
+    console.log(`[STUB] Processing payment for order ${orderId} with amount ${amount} cents`);
     
     // Get our order from the database
     const order = await dbStorage.getOrderById(orderId);
@@ -23,97 +22,30 @@ export async function processPayment(orderId: string, sourceId: string, amount: 
       throw new Error(`Order not found: ${orderId}`);
     }
     
-    // Get the location ID from environment variables
-    const locationId = process.env.SQUARE_ENV === "production"
-      ? process.env.SQUARE_PROD_LOCATION
-      : process.env.SQUARE_SANDBOX_LOCATION;
-      
-    if (!locationId) {
-      throw new Error("Square location ID not configured");
-    }
+    // Mock Square order ID
+    const mockSquareOrderId = `MOCK_${Date.now()}`;
     
-    // If the order doesn't have a Square order ID yet, create one
-    let squareOrderId = order.square_order_id || null;
+    // Update our order with the mock Square order ID
+    await dbStorage.updateOrderSquareId(orderId, mockSquareOrderId);
     
-    if (!squareOrderId) {
-      // Create a Square order first
-      const createOrderResponse = await ordersApi.create({
-        order: {
-          locationId,
-          referenceId: orderId,
-          lineItems: [
-            {
-              name: `SwingEats Order #${orderId}`,
-              quantity: "1",
-              basePriceMoney: {
-                amount: amount,
-                currency: "USD",
-              },
-            },
-          ],
-        },
-        idempotencyKey: `swing-eats-order-${orderId}-${Date.now()}`,
-      });
-      
-      if (createOrderResponse.order && createOrderResponse.order.id) {
-        squareOrderId = createOrderResponse.order.id;
-        
-        // Update our order with the Square order ID
-        await dbStorage.updateOrderSquareId(orderId, squareOrderId);
-      } else {
-        throw new Error("Failed to create Square order");
-      }
-    }
+    // Update order status to PAID - in real implementation this would happen via webhook
+    await dbStorage.updateOrderStatus(orderId, OrderStatus.PAID);
     
-    // Process the payment with Square
-    const paymentResponse = await paymentsApi.create({
-      sourceId,
-      idempotencyKey: `swing-eats-payment-${orderId}-${Date.now()}`,
-      amountMoney: {
-        amount: BigInt(amount),
-        currency: "USD",
-      },
-      orderId: squareOrderId,
-      locationId,
-      // Include customer data if needed
-    });
+    // Store payment status
+    await dbStorage.updateOrderPaymentStatus(
+      orderId, 
+      "PAID", 
+      `MOCK_PAYMENT_${Date.now()}`
+    );
     
-    // Check if payment was successful
-    if (paymentResponse.payment && paymentResponse.payment.status === "COMPLETED") {
-      // Update our order status to PAID
-      await dbStorage.updateOrderStatus(orderId, OrderStatus.PAID);
-      // Store payment ID for reference
-      await dbStorage.updateOrderPaymentStatus(
-        orderId, 
-        "PAID", 
-        paymentResponse.payment.id
-      );
-      
-      return {
-        success: true,
-        paymentId: paymentResponse.payment.id,
-        status: paymentResponse.payment.status,
-      };
-    } else {
-      // Payment wasn't completed
-      const paymentStatus = paymentResponse.payment?.status || "FAILED";
-      const paymentId = paymentResponse.payment?.id;
-      
-      await dbStorage.updateOrderPaymentStatus(
-        orderId,
-        paymentStatus,
-        paymentId
-      );
-      
-      return {
-        success: false,
-        status: paymentStatus,
-        message: "Payment not completed",
-      };
-    }
+    return {
+      success: true,
+      mockSquareOrderId,
+      status: "COMPLETED",
+    };
     
   } catch (error: any) {
-    console.error("Square payment processing error:", error);
+    console.error("[STUB] Payment processing error:", error);
     
     // Update order payment status to failed
     try {
@@ -126,13 +58,12 @@ export async function processPayment(orderId: string, sourceId: string, amount: 
       success: false,
       status: "FAILED",
       message: error.message || "Payment processing failed",
-      error: error,
     };
   }
 }
 
 /**
- * Check payment status for an order
+ * Check payment status for an order - STUB VERSION
  * @param orderId The SwingEats order ID
  */
 export async function checkPaymentStatus(orderId: string) {
@@ -151,35 +82,14 @@ export async function checkPaymentStatus(orderId: string) {
       };
     }
     
-    // If we don't have a payment_id field in our schema yet
-    if (!order.payment_status) {
-      return {
-        status: order.payment_status || "UNKNOWN",
-        message: `Payment status: ${order.payment_status || "UNKNOWN"}`,
-      };
-    }
-    
-    // If we have a payment_id, get payment details from Square
-    const paymentId = (order as any).payment_id;
-    if (paymentId) {
-      const paymentResponse = await paymentsApi.get(paymentId);
-      
-      return {
-        success: paymentResponse.payment?.status === "COMPLETED",
-        status: paymentResponse.payment?.status || "UNKNOWN",
-        paymentId: paymentId,
-        updatedAt: paymentResponse.payment?.updatedAt,
-      };
-    }
-    
-    // Default response if we don't have enough info
+    // Return stored payment status
     return {
       status: order.payment_status || "UNKNOWN",
       message: `Payment status from local database: ${order.payment_status}`,
     };
     
   } catch (error: any) {
-    console.error("Error checking payment status:", error);
+    console.error("[STUB] Error checking payment status:", error);
     return {
       success: false,
       status: "ERROR",
