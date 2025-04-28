@@ -1,0 +1,165 @@
+🔧  504-GOLF ORDER SYSTEM — FULL UPGRADE SPEC  (copy entire block)
+==================================================================
+
+### ENV setup (.env.example)
+# General
+SQUARE_ENV=sandbox
+SQUARE_API_VERSION=2025-01-23
+
+# Sandbox creds   (fill via Replit → Secrets, not in git)
+SQUARE_SANDBOX_TOKEN=
+SQUARE_SANDBOX_LOCATION=
+SQUARE_SANDBOX_APP_ID=            # optional deep-link
+
+# Prod creds      (leave blank until owner gives them)
+SQUARE_PROD_TOKEN=
+SQUARE_PROD_LOCATION=
+SQUARE_PROD_APP_ID=
+
+# Webhook
+SQUARE_WEBHOOK_SECRET=
+
+### Dependencies
+npm i @square/square node-cron
+npm i -D @types/node-cron
+
+### 1. Square SDK wrapper  — server/integrations/square.ts
+----------------------------------------------------------
+import { Client } from "@square/square";
+
+export const sq = new Client({
+  environment: process.env.SQUARE_ENV === "production" ? "production" : "sandbox",
+  accessToken: process.env.SQUARE_ENV === "production"
+    ? process.env.SQUARE_PROD_TOKEN
+    : process.env.SQUARE_SANDBOX_TOKEN
+});
+export const { catalogApi, ordersApi } = sq;
+
+### 2. Drizzle migrations  — add menu_items + Square IDs
+-------------------------------------------------------
+export const menuItems = pgTable("menu_items", {
+  id: serial("id").primaryKey(),
+  square_id: text("square_id").unique().notNull(),
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
+  category: text("category")          // drinks vs food
+});
+
+orders.addColumn("square_order_id", text("square_order_id"));
+orders.addColumn("payment_status", text("payment_status").default("OPEN"));
+orderItems.addColumn("square_line_item_id", text("square_line_item_id"));
+
+### 3. Nightly catalog sync  — server/jobs/syncSquareCatalog.ts
+--------------------------------------------------------------
+import { catalogApi } from "../integrations/square";
+import { menuItems } from "../db/schema";
+
+export async function syncCatalog() {
+  const { objects } = await catalogApi.listCatalog(undefined, "ITEM,ITEM_VARIATION,CATEGORY");
+  if (!objects) return;
+  const categories = Object.fromEntries(
+    objects.filter(o => o.type === "CATEGORY").map(c => [c.id, c.categoryData?.name])
+  );
+  const rows = objects
+    .filter(o => o.type === "ITEM_VARIATION")
+    .map(v => ({
+      square_id: v.id,
+      name: v.itemVariationData?.name ?? "",
+      price: v.itemVariationData?.priceMoney?.amount ?? 0,
+      category: categories[v.itemVariationData?.itemId ?? ""] ?? "Misc"
+    }));
+  await db.insert(menuItems).values(rows)
+    .onConflictDoUpdate({ target: menuItems.square_id });
+}
+
+### 4. Cron registration  — in server/index.ts
+---------------------------------------------
+import cron from "node-cron";
+cron.schedule("0 3 * * *", syncCatalog);   // 3 AM every night
+
+### 5. Order API  — server/routes/orders.ts  (replaces old “new order” logic)
+----------------------------------------------------------------------------
+router.post("/", async (req, res) => {
+  const { bay, items } = req.body;          // items: [{id, qty}]
+  const dbItems = await db.select().from(menuItems)
+        .where(inArray(menuItems.id, items.map(i => i.id)));
+
+  const lineItems = dbItems.map(d => ({
+    catalogObjectId: d.square_id,
+    quantity: String(items.find(i => i.id === d.id)!.qty)
+  }));
+
+  const { result } = await ordersApi.createOrder({
+    idempotencyKey: crypto.randomUUID(),
+    order: {
+      locationId: process.env.SQUARE_ENV === "production"
+        ? process.env.SQUARE_PROD_LOCATION
+        : process.env.SQUARE_SANDBOX_LOCATION,
+      state: "OPEN",
+      lineItems,
+      fulfillments: [{
+        type: "PICKUP",
+        pickupDetails: { recipient: { displayName: `Bay ${bay}` } }
+      }]
+    }
+  });
+
+  const sqOrder = result.order!;
+  const orderId = crypto.randomUUID();
+  await db.transaction(async tx => {
+    await tx.insert(orders).values({ id: orderId, bay, square_order_id: sqOrder.id });
+    await tx.insert(orderItems).values(
+      sqOrder.lineItems!.map(li => ({
+        order_id: orderId,
+        menu_item_id: dbItems.find(d => d.square_id === li.catalogObjectId)!.id,
+        qty: Number(li.quantity),
+        square_line_item_id: li.uid!
+      }))
+    );
+  });
+
+  wsHub.broadcast("new-order", { orderId, bay, items: dbItems });
+  res.json({ orderId, squareOrderId: sqOrder.id });
+});
+
+### 6. Webhook route  — server/routes/squareWebhook.ts
+------------------------------------------------------
+router.post("/square/webhook",
+  express.raw({ type: "*/*" }), async (req, res) => {
+
+  const sig = req.get("x-square-signature") || "";
+  const bodyStr = req.body.toString("utf8");
+  const hash = crypto.createHmac("sha1", process.env.SQUARE_WEBHOOK_SECRET!)
+                     .update(req.originalUrl + bodyStr).digest("base64");
+  if (hash !== sig) return res.sendStatus(401);
+
+  const event = JSON.parse(bodyStr);
+  if (event.type === "payment.created") {
+    const orderId = event.data.object.payment.order_id;
+    await db.update(orders).set({ payment_status: "PAID" })
+          .where(eq(orders.square_order_id, orderId));
+  }
+  res.sendStatus(200);
+});
+
+### 7. Client tweaks
+--------------------
+* Load menu with `GET /api/menu` (returns grouped by category so drinks show first if desired).
+* Keep existing cart UI.
+* **Send** → POST /api/orders.
+* **Charge** → deep-link (optional):
+  window.location.href =
+    `square-commerce-v1://payment/create?order_id=${squareOrderId}`;
+
+### 8. NPM scripts
+------------------
+"scripts": {
+  "dev": "tsx watch server/index.ts",
+  "sync:catalog": "tsx server/jobs/syncSquareCatalog.ts"
+}
+
+### 9. README patch
+-------------------
+Add setup & sandbox testing instructions.
+
+==================================================================
