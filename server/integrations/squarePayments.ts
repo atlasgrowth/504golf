@@ -3,7 +3,7 @@
  * 
  * This module handles payment processing through the Square API
  */
-import { payments, orders } from "./square";
+import { paymentsApi, ordersApi } from "./square";
 import { dbStorage } from "../db-storage";
 import { OrderStatus } from "../../shared/schema";
 
@@ -37,7 +37,7 @@ export async function processPayment(orderId: string, sourceId: string, amount: 
     
     if (!squareOrderId) {
       // Create a Square order first
-      const createOrderResponse = await orders.create({
+      const createOrderResponse = await ordersApi.create({
         order: {
           locationId,
           referenceId: orderId,
@@ -66,7 +66,7 @@ export async function processPayment(orderId: string, sourceId: string, amount: 
     }
     
     // Process the payment with Square
-    const paymentResponse = await payments.create({
+    const paymentResponse = await paymentsApi.create({
       sourceId,
       idempotencyKey: `swing-eats-payment-${orderId}-${Date.now()}`,
       amountMoney: {
@@ -162,7 +162,7 @@ export async function checkPaymentStatus(orderId: string) {
     // If we have a payment_id, get payment details from Square
     const paymentId = (order as any).payment_id;
     if (paymentId) {
-      const paymentResponse = await payments.get(paymentId);
+      const paymentResponse = await paymentsApi.get(paymentId);
       
       return {
         success: paymentResponse.payment?.status === "COMPLETED",

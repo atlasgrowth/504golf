@@ -20,7 +20,15 @@ export function initializeScheduledJobs() {
       .catch(error => console.error('Error in scheduled catalog sync:', error));
   }, {
     scheduled: true,
-    timezone: "America/New_York" // Adjust timezone as needed
+    timezone: "America/Chicago" // America/Chicago timezone
+  });
+
+  // Development sync job - runs every 15 minutes for testing
+  const devSyncJob = cron.schedule('*/15 * * * *', () => {
+    console.log('Running development Square catalog sync job');
+    syncCatalog()
+      .then(() => console.log('Development catalog sync completed successfully'))
+      .catch(error => console.error('Error in development catalog sync:', error));
   });
 
   // Also run the catalog sync immediately when the server starts
@@ -35,6 +43,7 @@ export function initializeScheduledJobs() {
 
   // Return the scheduled jobs so they can be managed if needed
   return {
-    catalogSyncJob
+    catalogSyncJob,
+    devSyncJob
   };
 }

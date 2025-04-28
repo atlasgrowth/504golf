@@ -4,7 +4,7 @@
  * This job synchronizes the Square catalog with our local database.
  * It retrieves items from Square and updates our menu_items table.
  */
-import { catalog } from "../integrations/square";
+import { catalogApi } from "../integrations/square";
 import { db } from "../db";
 import { menuItems } from "../../shared/schema";
 import { eq } from "drizzle-orm";
@@ -16,26 +16,12 @@ export async function syncCatalog() {
     // Fetch catalog items from Square
     console.log("Requesting catalog items from Square API...");
     
-    const response = await catalog.list({
+    const response = await catalogApi.list({
       types: "ITEM,ITEM_VARIATION,CATEGORY"
     });
     
-    // Square SDK returns a Page, we need to access the data
-    const catalogObjects = [];
-    let page = response;
-    
-    // Process the first page
-    if (page && page.data) {
-      catalogObjects.push(...page.data);
-    }
-    
-    // Fetch additional pages if there are more
-    while (page && page.hasNextPage()) {
-      page = await page.getNextPage();
-      if (page && page.data) {
-        catalogObjects.push(...page.data);
-      }
-    }
+    // Extract catalog objects from response
+    const catalogObjects = response.objects || [];
     
     console.log(`Retrieved ${catalogObjects.length} catalog objects from initial Square API response`);
     
