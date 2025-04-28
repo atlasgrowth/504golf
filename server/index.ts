@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cron from "node-cron";
+import { syncCatalog } from "./jobs/syncSquareCatalog";
 
 const app = express();
 app.use(cors({ origin: '*', credentials: true }));
@@ -40,6 +42,14 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Schedule nightly catalog sync at 3 AM
+  cron.schedule("0 3 * * *", () => {
+    log("Running scheduled Square catalog sync");
+    syncCatalog()
+      .then(() => log("Square catalog sync completed"))
+      .catch(err => log("Square catalog sync failed:", err));
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

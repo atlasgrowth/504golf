@@ -86,15 +86,31 @@ export async function debouncedOrdersUpdate() {
 /**
  * Send update to all connected clients
  */
-export function broadcastUpdate(type: WebSocketMessageType, data: any) {
+export function broadcastUpdate(
+  typeOrMessage: string | WebSocketMessage, 
+  data?: any
+) {
+  // Handle both the new format (passing in a WebSocketMessage object)
+  // and the old format (passing type and data separately)
+  let message: WebSocketMessage;
+  
+  if (typeof typeOrMessage === 'string') {
+    // Old format: broadcastUpdate(type, data)
+    message = { 
+      type: typeOrMessage as WebSocketMessageType, 
+      data 
+    };
+  } else {
+    // New format: broadcastUpdate({ type, data })
+    message = typeOrMessage;
+  }
+  
   // If this is an order update, use the debounced version instead
-  if (type === 'ordersUpdate') {
+  if (message.type === 'ordersUpdate') {
     return debouncedOrdersUpdate();
   }
   
   // Otherwise, proceed with normal broadcast
-  const message: WebSocketMessage = { type, data };
-  
   clients.forEach(client => {
     if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(JSON.stringify(message));

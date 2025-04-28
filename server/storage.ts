@@ -65,6 +65,13 @@ export interface IStorage {
   
   // Initialize with sample data
   initializeData(): Promise<void>;
+  
+  // Square Integration Methods
+  updateOrderSquareId(orderId: string, squareOrderId: string): Promise<Order | undefined>;
+  updateOrderPaymentStatus(orderId: string, paymentStatus: string, paymentId?: string): Promise<Order | undefined>;
+  getMenuItemBySquareId(squareId: string): Promise<MenuItem | undefined>;
+  updateMenuItemSquareId(menuItemId: string, squareId: string): Promise<MenuItem | undefined>;
+  updateOrderItemSquareId(orderItemId: string, squareLineItemId: string): Promise<OrderItem | undefined>;
 }
 
 // Import database instance and helpers
@@ -73,6 +80,86 @@ import { eq, asc, desc, and, or, isNotNull, isNull, lt } from "drizzle-orm";
 
 // Implement the Database Storage
 export class DatabaseStorage implements IStorage {
+  // Square Integration Methods
+  async updateOrderSquareId(orderId: string, squareOrderId: string): Promise<Order | undefined> {
+    try {
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({ square_order_id: squareOrderId })
+        .where(eq(orders.id, orderId))
+        .returning();
+      return updatedOrder;
+    } catch (error) {
+      console.error(`Error updating Square order ID for ${orderId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async updateOrderPaymentStatus(
+    orderId: string, 
+    paymentStatus: string, 
+    paymentId?: string
+  ): Promise<Order | undefined> {
+    try {
+      // Update payment status and optionally the payment ID if provided
+      const setValues: Record<string, any> = { payment_status: paymentStatus };
+      if (paymentId) {
+        setValues.payment_id = paymentId;
+      }
+      
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(setValues)
+        .where(eq(orders.id, orderId))
+        .returning();
+      return updatedOrder;
+    } catch (error) {
+      console.error(`Error updating payment status for ${orderId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async getMenuItemBySquareId(squareId: string): Promise<MenuItem | undefined> {
+    try {
+      const [menuItem] = await db
+        .select()
+        .from(menuItems)
+        .where(eq(menuItems.square_id, squareId))
+        .execute();
+      return menuItem;
+    } catch (error) {
+      console.error(`Error fetching menu item by Square ID ${squareId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async updateMenuItemSquareId(menuItemId: string, squareId: string): Promise<MenuItem | undefined> {
+    try {
+      const [updatedMenuItem] = await db
+        .update(menuItems)
+        .set({ square_id: squareId })
+        .where(eq(menuItems.id, menuItemId))
+        .returning();
+      return updatedMenuItem;
+    } catch (error) {
+      console.error(`Error updating Square ID for menu item ${menuItemId}:`, error);
+      return undefined;
+    }
+  }
+  
+  async updateOrderItemSquareId(orderItemId: string, squareLineItemId: string): Promise<OrderItem | undefined> {
+    try {
+      const [updatedOrderItem] = await db
+        .update(orderItems)
+        .set({ square_line_item_id: squareLineItemId })
+        .where(eq(orderItems.id, orderItemId))
+        .returning();
+      return updatedOrderItem;
+    } catch (error) {
+      console.error(`Error updating Square line item ID for order item ${orderItemId}:`, error);
+      return undefined;
+    }
+  }
   // Users
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

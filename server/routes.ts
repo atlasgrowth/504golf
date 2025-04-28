@@ -7,7 +7,7 @@ import {
   insertOrderSchema, type Cart, OrderItemStatus, OrderStatus
 } from "@shared/schema";
 import {
-  WebSocketMessage, WebSocketMessageType, 
+  WebSocketMessage, 
   OrderCreatedMessage, OrderUpdatedMessage, OrderItemUpdatedMessage,
   ClientRegistrationMessage, BayUpdatedMessage,
   ItemCookingMessage, ItemReadyMessage, ItemDeliveredMessage
@@ -20,6 +20,7 @@ import {
   broadcastUpdate, sendBayUpdate, sendStationUpdate 
 } from './ws';
 import { startTimers } from './timers';
+import { processPayment, checkPaymentStatus } from './integrations/squarePayments';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -782,6 +783,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching station items:', error);
       res.status(500).json({ message: 'Failed to fetch items by station' });
+    }
+  });
+  
+  // Square payment processing routes
+  
+  // Process payment for an order
+  app.post('/api/payment/process', async (req: Request, res: Response) => {
+    try {
+      const { orderId, sourceId, amount } = req.body;
+      
+      if (!orderId || !sourceId || !amount) {
+        return res.status(400).json({ 
+          message: 'Missing required fields: orderId, sourceId, amount' 
+        });
+      }
+      
+      // Call payment processing function
+      const result = await processPayment(orderId, sourceId, amount);
+      
+      if (result.success) {
+        // Send order status update via WebSocket
+        const order = await storage.getOrderById(orderId);
+        if (order) {
+          broadcastUpdate({
+            type: "order_updated",
+            data: toOrderDTO(order)
+          });
+        }
+        
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      console.error('Payment processing error:', error);
+      res.status(500).json({ 
+        message: error.message || 'Payment processing failed',
+        error: error.toString()
+      });
+    }
+  });
+  
+  // Check payment status for an order
+  app.get('/api/payment/status/:orderId', async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      
+      if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required' });
+      }
+      
+      const statusResult = await checkPaymentStatus(orderId);
+      res.json(statusResult);
+      
+    } catch (error: any) {
+      console.error('Error checking payment status:', error);
+      res.status(500).json({ 
+        message: error.message || 'Failed to check payment status',
+        error: error.toString()
+      });
+    }
+  });
+  
+  // Handle Square webhooks
+  app.post('/api/square/webhook', async (req: Request, res: Response) => {
+    try {
+      // Get the Square-Signature header
+      const signature = req.headers['square-signature'];
+      
+      if (!signature) {
+        console.warn('Received webhook without Square signature header');
+        return res.status(400).send('Missing Square signature header');
+      }
+      
+      // Get the webhook secret from environment variables
+      const webhookSecret = process.env.SQUARE_WEBHOOK_SECRET;
+      
+      if (!webhookSecret) {
+        console.error('Square webhook secret not configured');
+        return res.status(500).send('Webhook configuration error');
+      }
+      
+      // Process the webhook event
+      const eventType = req.body.type;
+      const eventData = req.body.data;
+      
+      console.log(`Received Square webhook event: ${eventType}`);
+      
+      switch (eventType) {
+        case 'payment.updated':
+          // Handle payment status changes
+          if (eventData && eventData.object && eventData.object.payment) {
+            const payment = eventData.object.payment;
+            const orderId = payment.orderId;
+            const status = payment.status;
+            
+            // Find our order by Square order ID
+            // Update payment status in our system
+            console.log(`Payment updated: ${orderId} to ${status}`);
+            
+            // Additional handling based on status
+          }
+          break;
+          
+        case 'order.updated':
+          // Handle order updates
+          console.log('Order updated webhook received');
+          break;
+          
+        default:
+          console.log(`Unhandled webhook event type: ${eventType}`);
+      }
+      
+      // Acknowledge the webhook
+      res.status(200).send('Webhook received');
+      
+    } catch (error: any) {
+      console.error('Error processing Square webhook:', error);
+      res.status(500).json({ 
+        message: 'Failed to process webhook',
+        error: error.toString()
+      });
     }
   });
   

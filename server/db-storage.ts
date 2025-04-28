@@ -385,6 +385,67 @@ export class DatabaseStorage {
   async createCategory(category: any): Promise<any> {
     throw new Error('Categories not implemented in database storage');
   }
+
+  // Square integration methods
+  async updateOrderSquareId(orderId: string, squareOrderId: string): Promise<Order | undefined> {
+    const [updatedOrder] = await db.update(schema.orders)
+      .set({ square_order_id: squareOrderId })
+      .where(eq(schema.orders.id, orderId))
+      .returning();
+    
+    return updatedOrder;
+  }
+
+  async updateOrderPaymentStatus(
+    orderId: string, 
+    paymentStatus: string, 
+    paymentId?: string
+  ): Promise<Order | undefined> {
+    const updates: any = { payment_status: paymentStatus };
+    
+    // Only update payment_id if provided
+    if (paymentId) {
+      updates.payment_id = paymentId;
+    }
+    
+    const [updatedOrder] = await db.update(schema.orders)
+      .set(updates)
+      .where(eq(schema.orders.id, orderId))
+      .returning();
+    
+    return updatedOrder;
+  }
+
+  async getMenuItemBySquareId(squareId: string): Promise<MenuItem | undefined> {
+    const [item] = await db.select().from(schema.menuItems)
+      .where(eq(schema.menuItems.square_id, squareId));
+    
+    return item;
+  }
+
+  async updateMenuItemSquareId(
+    menuItemId: string, 
+    squareId: string
+  ): Promise<MenuItem | undefined> {
+    const [updatedItem] = await db.update(schema.menuItems)
+      .set({ square_id: squareId })
+      .where(eq(schema.menuItems.id, menuItemId))
+      .returning();
+    
+    return updatedItem;
+  }
+
+  async updateOrderItemSquareId(
+    orderItemId: string,
+    squareLineItemId: string
+  ): Promise<OrderItem | undefined> {
+    const [updatedItem] = await db.update(schema.orderItems)
+      .set({ square_line_item_id: squareLineItemId })
+      .where(eq(schema.orderItems.id, orderItemId))
+      .returning();
+    
+    return updatedItem;
+  }
 }
 
 // Create an instance of the storage
